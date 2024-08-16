@@ -1,0 +1,52 @@
+table {
+    border-collapse: collapse;
+    width: 100%;
+  }
+
+  th, td {
+    border: 1px solid black;
+    padding: 8px;
+  }
+
+  th {
+    background-color: #f2f2f2;
+  }
+
+.hidden {
+    display: none !important;
+  }
+
+
+  .no-border {
+    border: none !important;
+  }
+
+.info-container {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+  }
+
+  .info-section {
+    flex: 1;
+  }
+
+  .info-section div {
+    margin-bottom: 10px;
+  }
+
+  input, textarea {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .sales-tax-container {
+    display: flex;
+    align-items: center;
+  }
+
+  .sales-tax-container input {
+    width: auto;
+    margin-right: 5px;
+  }
