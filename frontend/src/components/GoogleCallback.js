@@ -14,7 +14,7 @@ const GoogleCallback = ({ setIsAuthenticated }) => {
 
         if (code) {
             const csrftoken = getCookie('csrftoken');
-            axios.post(`${apiUrl}/auth/google/`, {
+            axios.post(`${apiUrl}/api/auth/google/`, {
                 code: code,
             }, {
                 headers: {

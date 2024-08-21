@@ -13,7 +13,7 @@ function UploadedText() {
 
     const fetchData = async () => {
         try {
-            const response = await axios.post(`${apiUrl}/photo/`);
+            const response = await axios.post(`${apiUrl}/api/photo/`);
             setData(response.data.strings); // **Update to directly access response.data
         } catch (error) {
             console.error('Error fetching data:', error);
