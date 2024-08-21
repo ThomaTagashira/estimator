@@ -7,11 +7,6 @@ load_dotenv()
 SECRET_KEY = os.getenv('SECRET_KEY')
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 
-GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID')
-GOOGLE_SECRET_KEY = os.getenv('GOOGLE_SECRET_KEY')
-
-GITHUB_CLIENT_ID = os.getenv('GITHUB_CLIENT_ID')
-GITHUB_SECRET_KEY = os.getenv('GITHUB_SECRET_KEY')
 
 DB_ENGINE = os.getenv('DB_ENGINE')
 DB_NAME = os.getenv('DB_DB1')

@@ -1,9 +1,12 @@
 from openai import OpenAI
 from django.conf import settings
 from .vector_store import db
+from dotenv import load_dotenv
+import os
 
+load_dotenv()
 client = OpenAI()
-OpenAI.api_key = settings.OPENAI_API_KEY
+OpenAI.api_key = os.getenv('OPENAI_API_KEY')
 
 EMBEDDING_MODEL = 'text-embedding-3-small'
 
