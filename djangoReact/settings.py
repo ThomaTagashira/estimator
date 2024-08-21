@@ -89,7 +89,7 @@ MIDDLEWARE = [
 ]
 CORS_ALLOWED_ORIGINS = [
     'https://thomatagashira.com',
-    'http://localhost',
+    'http://localhost:3000',
   
 ]
 
