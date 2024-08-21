@@ -47,7 +47,7 @@ const PhotoUploadForm = ({ onSearch }) => {
 
         try {
             console.log('Making API request with file:', selectedFile);
-            const response = await axios.post(`${apiUrl}/index/photo/`, formData, {
+            const response = await axios.post(`${apiUrl}/api/photo/`, formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },
