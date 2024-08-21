@@ -14,7 +14,7 @@ const GitHubCallback = ({ setIsAuthenticated }) => {
 
         if (code) {
             const csrftoken = getCookie('csrftoken');
-            axios.post(`${apiUrl}/auth/github/`, {
+            axios.post(`${apiUrl}/api/auth/github/`, {
                 code: code,
             }, {
                 headers: {

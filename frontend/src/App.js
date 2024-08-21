@@ -58,7 +58,7 @@ function App() {
     setLoading(true);
     setError(null);
 
-    axios.post(`${apiUrl}/index/`, { input_text: inputText })
+    axios.post(`${apiUrl}/api/index/`, { input_text: inputText })
       .then(response => {
         setTextResults(response.data);
         setScopeResults(null);
@@ -74,7 +74,7 @@ function App() {
     setLoading(true);
     setError(null);
 
-    axios.post(`${apiUrl}/scope/`, { job_scope: jobScope })
+    axios.post(`${apiUrl}/api/scope/`, { job_scope: jobScope })
       .then(response => {
         setScopeResults(response.data);
         setTextResults({});
@@ -100,7 +100,7 @@ function App() {
     setError(null);
 
     try {
-      const response = await axios.post(`${apiUrl}/line/`, { Line: lines });
+      const response = await axios.post(`${apiUrl}/api/line/`, { Line: lines });
       setSearchResult(response.data);
 
       const context = response.data.response;
