@@ -31,17 +31,14 @@ function App() {
   const [showPaymentForm, setShowPaymentForm] = useState(false);
 
   const handleLogout = () => {
-      // Remove tokens from localStorage
+
       localStorage.removeItem('access_token');
       localStorage.removeItem('refresh_token');
 
-      // Remove the authorization header from axios
       delete axios.defaults.headers.common['Authorization'];
 
-      // Update the authenticated state
       setIsAuthenticated(false);
 
-      // Redirect the user to the login page
       redirect('/login');  // Correct usage
   };
 
