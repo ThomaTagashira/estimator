@@ -71,7 +71,7 @@ const Login = ({ setIsAuthenticated }) => {
 
     return (
         <div>
-            <h2>Login</h2>
+            <h2>Greetings Humans(?)</h2>
             <form onSubmit={handleSubmit}>
                 <input
                     type="text"
@@ -85,7 +85,7 @@ const Login = ({ setIsAuthenticated }) => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                 />
-                <button type="submit">Login</button>
+                <button type="submit">Login using Username</button>
             </form>
             {error && <p>{error}</p>}
             <p>Don't have an account? <Link to="/register">Register</Link></p>
