@@ -2,9 +2,9 @@ name: Django CI
 
 on:
   push:
-    branches: [ "Dev" ]
+    branches: ["Dev"]
   pull_request:
-    branches: [ "Dev" ]
+    branches: ["Dev"]
 
 jobs:
   build:
@@ -20,19 +20,19 @@ jobs:
         ports:
           - 5432:5432
         env:
-          POSTGRES_DB: ${{ secrets.DB_DB1 }}
-          POSTGRES_USER: ${{ secrets.DB_USER }}
-          POSTGRES_PASSWORD: ${{ secrets.DB_POSTGRES_PASS }}
+          POSTGRES_DB: test_db
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_password  # Add this line
         options: >-
-          --health-cmd pg_isready
+          --health-cmd "pg_isready -U test_user"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
 
     env:
-      DATABASE_URL: postgres://${{ secrets.DB_USER }}:${{ secrets.DB_POSTGRES_PASS }}@localhost:5432/${{ secrets.DB_DB1 }}
+      DATABASE_URL: postgres://test_user:test_password@localhost:5432/test_db
       DJANGO_SECRET_KEY: ${{ secrets.SECRET_KEY }}
-
+      # Other necessary environment variables
 
     steps:
     - uses: actions/checkout@v4
@@ -51,7 +51,7 @@ jobs:
       run: |
         until pg_isready -h localhost -p 5432; do
           echo "Waiting for Postgres...";
-          sleep 2;
+          sleep 5;
         done
 
     - name: Run Migrations
