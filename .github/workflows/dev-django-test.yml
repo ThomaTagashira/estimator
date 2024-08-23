@@ -21,8 +21,8 @@ jobs:
           - 5432:5432
         env:
           POSTGRES_DB: test_db
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: Deadfetus12290!
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: H4lfbreed!
         options: >-
           --health-cmd "pg_isready -U test_user"
           --health-interval 10s
@@ -30,8 +30,9 @@ jobs:
           --health-retries 5
 
     env:
-      DATABASE_URL: postgres://postgres:Deadfetus12290@localhost:5432/test_db
+      DATABASE_URL: postgres://test_user:H4lfbreed!@localhost:5432/test_db
       DJANGO_SECRET_KEY: ${{ secrets.SECRET_KEY }}
+      ENVIRONMENT: testing
 
     steps:
     - uses: actions/checkout@v4
