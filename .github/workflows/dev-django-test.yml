@@ -20,9 +20,10 @@ jobs:
         ports:
           - 5432:5432
         env:
-          POSTGRES_DB: test_db
-          POSTGRES_USER: test_user
-          POSTGRES_PASSWORD: H4lfbreed!
+            POSTGRES_DB: mock_test_db
+            POSTGRES_USER: test_user
+            POSTGRES_PASSWORD: test_password
+            POSTGRES_HOST_AUTH_METHOD: trust  # Use trust to avoid authentication issues
         options: >-
           --health-cmd "pg_isready -U test_user"
           --health-interval 10s
