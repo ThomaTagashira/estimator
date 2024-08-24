@@ -8,13 +8,6 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 
 
-DB_ENGINE = os.getenv('DB_ENGINE')
-DB_NAME = os.getenv('DB_DB1')
-DB_USER = os.getenv('DB_USER')
-DB_PASSWORD = os.getenv('DB_POSTGRES_PASS')
-DB_HOST = os.getenv('DB_HOST')
-DB_PORT = os.getenv('DB_PORT')
-
 BASE_DIR = Path(__file__).resolve().parent.parent
 REACT_APP_BUILD_PATH='frontend/build'
 
@@ -114,14 +107,14 @@ WSGI_APPLICATION = 'djangoReact.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': DB_ENGINE,
-        'NAME': DB_NAME,
-        'USER': DB_USER,
-        'PASSWORD': DB_PASSWORD,
-        'HOST': DB_HOST,
-        'PORT': DB_PORT,
-        }
+        'ENGINE': os.getenv('DB_ENGINE', 'django.db.backends.postgresql'),
+        'NAME': os.getenv('TEST_DB_NAME', os.getenv('DB_DB1')),
+        'USER': os.getenv('TEST_DB_USER', os.getenv('DB_USER')),
+        'PASSWORD': os.getenv('TEST_DB_PASSWORD', os.getenv('DB_POSTGRES_PASS')),
+        'HOST': os.getenv('DB_HOST', 'localhost'),
+        'PORT': os.getenv('DB_PORT', '5432'),
     }
+}
 
 
 
