@@ -14,11 +14,7 @@ REACT_APP_BUILD_PATH='frontend/build'
 
 DEBUG = True
 
-ALLOWED_HOSTS = ['54.244.104.221', 
-                 'thomatagashira.com',
-                 'http://localhost:8000',
-                 '127.0.0.1',
-                 'localhost']
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',')
 
 
 INSTALLED_APPS = [
@@ -75,11 +71,10 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'allauth.account.middleware.AccountMiddleware',
 ]
-CORS_ALLOWED_ORIGINS = [
-    'https://thomatagashira.com',
-    'http://localhost:3000',
+
+CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', '').split(',')
   
-]
+
 
 ROOT_URLCONF = 'djangoReact.urls'
 
