@@ -23,11 +23,6 @@ jobs:
           POSTGRES_DB: mock_test_db
           POSTGRES_USER: test_user
           POSTGRES_PASSWORD: test_password
-        options: >-
-          --health-cmd "pg_isready -U test_user"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
 
     env:
         DB_ENGINE: django.db.backends.postgresql
@@ -37,6 +32,7 @@ jobs:
         DB_HOST: localhost
         DB_PORT: 5432
         DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
+        DJANGO_SETTINGS_MODULE: djangoReact.settings
 
     steps:
     - uses: actions/checkout@v4
@@ -58,15 +54,6 @@ jobs:
           sleep 5;
         done
 
-    - name: Setup Postgres User as Superuser
-      run: |
-        docker exec ${{ job.services.postgres.id }} psql -U test_user -d mock_test_db -c "ALTER USER test_user WITH SUPERUSER;"
-
-    - name: Confirm User Permissions
-      run: |
-        docker exec ${{ job.services.postgres.id }} psql -U test_user -d mock_test_db -c "\du"
-
-
     - name: Print Environment Variables
       run: |
         echo "DB_ENGINE=$DB_ENGINE"
@@ -75,8 +62,21 @@ jobs:
         echo "DB_PASSWORD=$DB_PASSWORD"
         echo "DB_HOST=$DB_HOST"
         echo "DB_PORT=$DB_PORT"
+        echo "DJANGO_SETTINGS_MODULE=$DJANGO_SETTINGS_MODULE"
 
-    - name: Show Django Database Configuration
+    - name: Setup Postgres User as Superuser
+      run: |
+        psql -h localhost -U test_user -d mock_test_db -c "ALTER USER test_user WITH SUPERUSER;"
+      env:
+        PGPASSWORD: test_password
+
+    - name: Confirm User Permissions
+      run: |
+        psql -h localhost -U test_user -d mock_test_db -c "\du"
+      env:
+        PGPASSWORD: test_password
+
+    - name: Check Django Database Configuration
       run: |
         python -c "from django.conf import settings; print(settings.DATABASES)"
 
