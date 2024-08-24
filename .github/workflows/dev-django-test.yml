@@ -58,9 +58,14 @@ jobs:
           sleep 5;
         done
 
-    - name: Setup Postgres Permissions
+    - name: Setup Postgres User as Superuser
       run: |
-        docker exec <postgres_container_id> psql -U postgres -c "ALTER USER test_user WITH SUPERUSER;"
+        docker exec ${{ job.services.postgres.id }} psql -U test_user -d mock_test_db -c "ALTER USER test_user WITH SUPERUSER;"
+
+    - name: Confirm User Permissions
+      run: |
+        docker exec ${{ job.services.postgres.id }} psql -U test_user -d mock_test_db -c "\du"
+
 
     - name: Print Environment Variables
       run: |
