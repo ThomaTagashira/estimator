@@ -30,11 +30,6 @@ jobs:
           --health-timeout 5s
           --health-retries 5
 
-    env:
-      DATABASE_URL: postgres://test_user:H4lfbreed!@localhost:5432/test_db
-      DJANGO_SECRET_KEY: ${{ secrets.SECRET_KEY }}
-      ENVIRONMENT: testing
-
     steps:
     - uses: actions/checkout@v4
 
