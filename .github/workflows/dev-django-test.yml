@@ -20,23 +20,14 @@ jobs:
         ports:
           - 5432:5432
         env:
-          POSTGRES_DB: mock_test_db
-          POSTGRES_USER: test_user
-          POSTGRES_PASSWORD: test_password
+          TEST_DB_NAME: mock_test_db
+          TEST_DB_USER: test_user
+          TEST_DB_PASSWORD: test_password
         options: >-
           --health-cmd "pg_isready -U test_user"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-
-    env:
-        DB_ENGINE: django.db.backends.postgresql
-        DB_NAME: mock_test_db
-        DB_USER: test_user
-        DB_PASSWORD: test_password
-        DB_HOST: localhost
-        DB_PORT: 5432
-        DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
 
     steps:
     - uses: actions/checkout@v4
