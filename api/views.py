@@ -33,7 +33,7 @@ GOOGLE_SECRET_KEY = os.getenv('GOOGLE_SECRET_KEY')
 GITHUB_CLIENT_ID = os.getenv('GITHUB_CLIENT_ID')
 GITHUB_SECRET_KEY = os.getenv('GITHUB_SECRET_KEY')
 
-STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY')
+stripe.api_key=os.getenv('STRIPE_SECRET_KEY')
 
 def serve_react(request, path, document_root=None):
     path = posixpath.normpath(path).lstrip("/")
@@ -203,8 +203,6 @@ class GitHubLoginView(APIView):
             'access_token': access_token,
         }, status=status.HTTP_200_OK)
 
-
-stripe.api_key = STRIPE_SECRET_KEY
 
 class PaymentView(APIView):
     def post(self, request):
