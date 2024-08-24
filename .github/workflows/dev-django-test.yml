@@ -57,6 +57,14 @@ jobs:
           echo "Waiting for Postgres...";
           sleep 5;
         done
+        - name: Print Environment Variables
+        run: |
+          echo "DB_ENGINE=$DB_ENGINE"
+          echo "DB_NAME=$DB_NAME"
+          echo "DB_USER=$DB_USER"
+          echo "DB_PASSWORD=$DB_PASSWORD"
+          echo "DB_HOST=$DB_HOST"
+          echo "DB_PORT=$DB_PORT"
 
     - name: Run Migrations
       run: |
