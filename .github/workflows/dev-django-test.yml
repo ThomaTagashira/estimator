@@ -68,6 +68,7 @@ jobs:
         echo "DB_PORT=$DB_PORT"
         echo "DJANGO_SETTINGS_MODULE=$DJANGO_SETTINGS_MODULE"
         echo "TEST_SECRET_KEY=$TEST_SECRET_KEY"
+        echo "TEST_OPENAI_API_KEY=$TEST_OPENAI_API_KEY"
 
     - name: Setup Postgres User as Superuser
       run: |
