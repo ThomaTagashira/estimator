@@ -36,7 +36,7 @@ jobs:
         TEST_CONNECTION_STRING: "postgresql+psycopg2://test_user:test_password@localhost:5432/mock_test_db"
         TEST_COLLECTION_NAME: 'test_cost_vectors'
         DJANGO_SETTINGS_MODULE: djangoReact.settings
-        TEST_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
     steps:
     - uses: actions/checkout@v4
@@ -68,7 +68,7 @@ jobs:
         echo "DB_PORT=$DB_PORT"
         echo "DJANGO_SETTINGS_MODULE=$DJANGO_SETTINGS_MODULE"
         if [ -z "$TEST_SECRET_KEY" ]; then echo "TEST_SECRET_KEY is not set"; else echo "TEST_SECRET_KEY is set"; fi
-        if [ -z "$TEST_OPENAI_API_KEY" ]; then echo "TEST_OPENAI_API_KEY is not set"; else echo "TEST_OPENAI_API_KEY is set"; fi
+        if [ -z "$OPENAI_API_KEY" ]; then echo "OPENAI_API_KEY is not set"; else echo "OPENAI_API_KEY is set"; fi
 
     - name: Setup Postgres User as Superuser
       run: |

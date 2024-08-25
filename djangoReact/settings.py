@@ -11,7 +11,7 @@ SECRET_KEY = os.getenv('TEST_SECRET_KEY', os.getenv('SECRET_KEY'))
 if not SECRET_KEY:
     raise ImproperlyConfigured("The SECRET_KEY setting must not be empty.")
 
-OPENAI_API_KEY = os.getenv('TEST_OPENAI_API_KEY', os.getenv('OPENAI_API_KEY'))
+OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 
 if not OPENAI_API_KEY:
     raise ImproperlyConfigured("The OPENAI_API_KEY setting must not be empty.")
