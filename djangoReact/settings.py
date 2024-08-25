@@ -13,6 +13,8 @@ if not SECRET_KEY:
 
 OPENAI_API_KEY = os.getenv('TEST_OPENAI_API_KEY', os.getenv('OPENAI_API_KEY'))
 
+if not OPENAI_API_KEY:
+    raise ImproperlyConfigured("The OPENAI_API_KEY setting must not be empty.")
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 REACT_APP_BUILD_PATH='frontend/build'
