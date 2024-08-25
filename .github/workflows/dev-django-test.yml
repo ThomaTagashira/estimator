@@ -31,7 +31,7 @@ jobs:
         TEST_DB_PASSWORD: test_password
         DB_HOST: localhost
         DB_PORT: 5432
-        SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
+        SECRET_KEY: ${{ secrets.SECRET_KEY }}
         TEST_CONNECTION_STRING: "postgresql+psycopg2://test_user:test_password@localhost:5432/mock_test_db"
         TEST_COLLECTION_NAME: 'test_cost_vectors'
         DJANGO_SETTINGS_MODULE: djangoReact.settings
