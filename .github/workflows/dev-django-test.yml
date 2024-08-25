@@ -37,6 +37,7 @@ jobs:
         TEST_COLLECTION_NAME: 'test_cost_vectors'
         DJANGO_SETTINGS_MODULE: djangoReact.settings
         TEST_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+
     steps:
     - uses: actions/checkout@v4
 
