@@ -1,19 +1,20 @@
 import os
 from pathlib import Path
 from dotenv import load_dotenv
+from django.core.exceptions import ImproperlyConfigured
 
 load_dotenv()
 
-SECRET_KEY = os.getenv('SECRET_KEY')
+
+SECRET_KEY = os.getenv('TEST_SECRET_KEY', os.getenv('SECRET_KEY'))
+
+if not SECRET_KEY:
+    raise ImproperlyConfigured("The SECRET_KEY setting must not be empty.")
+
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 
-
-DB_ENGINE = os.getenv('DB_ENGINE')
-DB_NAME = os.getenv('DB_DB1')
-DB_USER = os.getenv('DB_USER')
-DB_PASSWORD = os.getenv('DB_POSTGRES_PASS')
-DB_HOST = os.getenv('DB_HOST')
-DB_PORT = os.getenv('DB_PORT')
+if not OPENAI_API_KEY:
+    raise ImproperlyConfigured("The OPENAI_API_KEY setting must not be empty.")
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 REACT_APP_BUILD_PATH='frontend/build'
@@ -21,11 +22,7 @@ REACT_APP_BUILD_PATH='frontend/build'
 
 DEBUG = True
 
-ALLOWED_HOSTS = ['54.244.104.221', 
-                 'thomatagashira.com',
-                 'http://localhost:8000',
-                 '127.0.0.1',
-                 'localhost']
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',')
 
 
 INSTALLED_APPS = [
@@ -82,11 +79,10 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'allauth.account.middleware.AccountMiddleware',
 ]
-CORS_ALLOWED_ORIGINS = [
-    'https://thomatagashira.com',
-    'http://localhost:3000',
+
+CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', '').split(',')
   
-]
+
 
 ROOT_URLCONF = 'djangoReact.urls'
 
@@ -114,17 +110,15 @@ WSGI_APPLICATION = 'djangoReact.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': DB_ENGINE,
-        'NAME': DB_NAME,
-        'USER': DB_USER,
-        'PASSWORD': DB_PASSWORD,
-        'HOST': DB_HOST,
-        'PORT': DB_PORT,
-        'OPTIONS': {
-            'sslmode': 'require',
-        }
-    },
+        'ENGINE': os.getenv('DB_ENGINE', 'django.db.backends.postgresql'),
+        'NAME': os.getenv('TEST_DB_NAME', os.getenv('DB_DB1')),
+        'USER': os.getenv('TEST_DB_USER', os.getenv('DB_USER')),
+        'PASSWORD': os.getenv('TEST_DB_PASSWORD', os.getenv('DB_POSTGRES_PASS')),
+        'HOST': os.getenv('DB_HOST', 'localhost'),
+        'PORT': os.getenv('DB_PORT', '5432'),
+    }
 }
+
 
 
 # Password validation

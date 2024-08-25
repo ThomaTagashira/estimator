@@ -17,6 +17,8 @@ env/
 venv/
 ENV/
 .env
+.env.backup
+
 # IDEs and Editors
 .idea/
 .vscode/

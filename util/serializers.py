@@ -4,6 +4,9 @@ from api.models import *
 import json
 import logging
 
+logger = logging.getLogger(__name__)
+
+
 class LangchainPgCollectionSearializer(serializers.ModelSerializer):
     class Meta:
         model = LangchainPgCollection
@@ -14,8 +17,6 @@ class LangchainPgEmbeddingSerializer(serializers.ModelSerializer):
         model = LangchainPgEmbedding
         fields = '__all__'
 
-
-logger = logging.getLogger(__name__)
 
 class MyResponseSerializer(serializers.Serializer):
     response = serializers.CharField()
@@ -50,17 +51,33 @@ class JSONFileSerializer(serializers.Serializer):
 
         return json_data
 
+
 class StringListSerializer(serializers.Serializer):
-    strings = serializers.ListField(child=serializers.CharField(max_length=100000))
+    strings = serializers.ListField(
+        child=serializers.CharField(max_length=100000)
+    )
+
+    def validate_strings(self, value):
+        if value is None or len(value) == 0:
+            raise serializers.ValidationError("The 'strings' field cannot be null or empty.")
+        return value
+
 
 class NoteSerializer(serializers.Serializer):
     key = serializers.CharField(max_length=50)
     value = serializers.CharField(max_length=200)
 
+
 class NoteDictSerializer(serializers.Serializer):
     strings = serializers.DictField(
         child=serializers.CharField(max_length=200)
     )
+
+    def validate_strings(self, value):
+        if not value:
+            raise serializers.ValidationError("The 'strings' field cannot be null or empty.")
+        return value
+
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:

@@ -20,6 +20,7 @@ from dotenv import load_dotenv
 from django.shortcuts import render
 import posixpath
 from pathlib import Path
+
 from django.utils._os import safe_join
 from django.views.static import serve as static_serve
 
@@ -33,7 +34,7 @@ GOOGLE_SECRET_KEY = os.getenv('GOOGLE_SECRET_KEY')
 GITHUB_CLIENT_ID = os.getenv('GITHUB_CLIENT_ID')
 GITHUB_SECRET_KEY = os.getenv('GITHUB_SECRET_KEY')
 
-STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY')
+stripe.api_key=os.getenv('STRIPE_SECRET_KEY')
 
 def serve_react(request, path, document_root=None):
     path = posixpath.normpath(path).lstrip("/")
@@ -65,20 +66,15 @@ def handle_scope(request):
         job_scope = request.data.get('job_scope')
         Line = request.data.get('Line')
 
-        # Handling job_scope search
         if job_scope:
             return process_job_scope(job_scope)
-
-        # Handling individual line search
         elif Line:
             return process_line(Line)
-
         else:
             return Response({'error': 'Invalid or missing input data'}, status=status.HTTP_400_BAD_REQUEST)
 
     elif request.method == 'GET':
         return Response({'message': 'Send a POST request with either job_scope or line parameter'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
-
     else:
         return Response({'error': 'Invalid request method'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
@@ -209,8 +205,6 @@ class GitHubLoginView(APIView):
         }, status=status.HTTP_200_OK)
 
 
-stripe.api_key = STRIPE_SECRET_KEY
-
 class PaymentView(APIView):
     def post(self, request):
         token = request.data.get('token')
@@ -245,11 +239,3 @@ class PaymentView(APIView):
             # Handle other errors
             return Response({'error': 'An error occurred. Please try again later.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
-
-def serve_react(request, path, document_root=None):
-    path = posixpath.normpath(path).lstrip("/")
-    fullpath = Path(safe_join(document_root, path))
-    if fullpath.is_file():
-        return static_serve(request, path, document_root)
-    else:
-        return static_serve(request, "index.html", document_root)
