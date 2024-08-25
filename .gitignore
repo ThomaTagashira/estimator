@@ -16,10 +16,7 @@ __pycache__/
 env/
 venv/
 ENV/
-<<<<<<< HEAD
 .env
-=======
->>>>>>> 893f6123022ddf2b751bb10f75a7531534baa778
 
 # IDEs and Editors
 .idea/
