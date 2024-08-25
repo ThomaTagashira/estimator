@@ -1,9 +1,5 @@
 import os
-<<<<<<< HEAD
 from pathlib import Path
-=======
-***REMOVED***
->>>>>>> 893f6123022ddf2b751bb10f75a7531534baa778
 from dotenv import load_dotenv
 
 load_dotenv()

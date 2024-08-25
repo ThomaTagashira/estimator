@@ -4,11 +4,9 @@ import os
 import sys
 
 
-<<<<<<< HEAD
+
 def main():
-=======
-***REMOVED***
->>>>>>> 893f6123022ddf2b751bb10f75a7531534baa778
+
     """Run administrative tasks."""
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'djangoReact.settings')
     try:
@@ -23,8 +21,4 @@ def main():
 
 
 if __name__ == '__main__':
-<<<<<<< HEAD
     main()
-=======
-    ***REMOVED***
->>>>>>> 893f6123022ddf2b751bb10f75a7531534baa778

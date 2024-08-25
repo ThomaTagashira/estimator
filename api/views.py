@@ -19,11 +19,8 @@ from rest_framework.permissions import AllowAny
 from dotenv import load_dotenv
 from django.shortcuts import render
 import posixpath
-<<<<<<< HEAD
 from pathlib import Path
-=======
-***REMOVED***
->>>>>>> 893f6123022ddf2b751bb10f75a7531534baa778
+
 from django.utils._os import safe_join
 from django.views.static import serve as static_serve
 
