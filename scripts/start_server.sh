@@ -4,7 +4,6 @@ cd "$BASE_DIR"
 source venv/bin/activate
 
 # Apply database migrations
-echo "Applying database migrations..."
 if python manage.py migrate; then
     echo "Database migrations applied successfully."
 else
@@ -13,7 +12,6 @@ else
 fi
 
 # Collect static files
-echo "Collecting static files..."
 if python manage.py collectstatic --noinput; then
     echo "Static files collected successfully."
 else
@@ -22,7 +20,6 @@ else
 fi
 
 # Start Gunicorn service
-echo "Restarting Gunicorn service..."
 if sudo systemctl restart gunicorn; then
     echo "Gunicorn service restarted successfully."
 else
@@ -30,20 +27,41 @@ else
     exit 1
 fi
 
-# Test Nginx configuration
-echo "Testing Nginx configuration..."
-if sudo nginx -t; then
-    echo "Nginx configuration test passed."
+# Stop Nginx temporarily to free up port 80 for Certbot
+echo "Stopping Nginx to obtain SSL certificates..."
+sudo systemctl stop nginx
+
+# Obtain SSL certificate
+echo "Obtaining SSL certificate..."
+if sudo certbot certonly --standalone -d thomatagashira.com -d www.thomatagashira.com --non-interactive --agree-tos --email your-valid-email@example.com; then
+    echo "SSL certificate obtained successfully."
 else
-    echo "Nginx configuration test failed." >&2
+    echo "Failed to obtain SSL certificate. Check Certbot logs for more information." >&2
     exit 1
 fi
 
+# Start Nginx again after obtaining SSL certificate
+echo "Starting Nginx..."
+if sudo systemctl start nginx; then
+    echo "Nginx started successfully."
+else
+    echo "Failed to start Nginx." >&2
+    exit 1
+fi
+
+# Validate Nginx configuration
+echo "Testing Nginx configuration..."
+sudo nginx -t
 # Restart Nginx to apply any configuration changes
-echo "Restarting Nginx service..."
 if sudo systemctl restart nginx; then
     echo "Nginx restarted successfully."
 else
     echo "Failed to restart Nginx." >&2
     exit 1
 fi
+
+# Check Nginx status
+sudo systemctl status nginx.service
+
+# View Nginx logs
+sudo journalctl -xeu nginx.service
