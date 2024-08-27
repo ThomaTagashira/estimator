@@ -1,9 +1,26 @@
 #install_dependencies.sh
 
-# Install Python 3.12 and related packages
-echo "Installing Python 3.12 and related packages..."
-sudo apt update
-sudo apt install python3.12 python3.12-venv python3.12-dev
+# Update package list and install prerequisites for adding a new repository over HTTPS
+echo "Updating package list and installing prerequisites..."
+sudo apt-get update
+sudo apt-get install -y software-properties-common
+
+# Install build dependencies
+echo "Installing build dependencies..."
+sudo apt-get install -y build-essential libssl-dev zlib1g-dev \
+    libncurses5-dev libncursesw5-dev libreadline-dev libsqlite3-dev \
+    libgdbm-dev libbz2-dev liblzma-dev libffi-dev uuid-dev
+
+# Download and compile Python 3.12
+echo "Downloading and compiling Python 3.12..."
+cd /usr/src
+sudo wget https://www.python.org/ftp/python/3.12.5/Python-3.12.5.tgz
+sudo tar xzf Python-3.12.5.tgz
+cd Python-3.12.5
+sudo ./configure --enable-optimizations
+sudo make altinstall
+
+echo "Python 3.12 installed from source."
 
 # Install Node.js
 echo "Installing Node.js..."
