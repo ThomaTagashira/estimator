@@ -1,9 +1,18 @@
 #install_dependencies.sh
 
-# Update package list and install dependencies
-echo "Updating package list and installing dependencies..."
+# Update package list and install prerequisites for adding a new repository over HTTPS
+echo "Updating package list and installing prerequisites..."
 sudo apt-get update
-sudo apt-get install -y python3.12 python3.12-venv python3.12-dev libpq-dev nginx curl
+sudo apt-get install -y software-properties-common
+
+# Add the deadsnakes PPA for Python 3.12
+echo "Adding deadsnakes PPA..."
+sudo add-apt-repository ppa:deadsnakes/ppa
+sudo apt-get update
+
+# Install Python 3.12 and related packages
+echo "Installing Python 3.12 and related packages..."
+sudo apt-get install -y python3.12 python3.12-venv python3.12-dev
 
 # Install Node.js
 echo "Installing Node.js..."

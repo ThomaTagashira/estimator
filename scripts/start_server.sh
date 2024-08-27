@@ -1,5 +1,8 @@
 #start_server.sh
 
+cd "$BASE_DIR"
+source venv/bin/activate
+
 # Apply database migrations
 if python manage.py migrate; then
     echo "Database migrations applied successfully."
@@ -17,10 +20,10 @@ else
 fi
 
 # Start Gunicorn service
-if sudo systemctl start gunicorn; then
-    echo "Gunicorn service started successfully."
+if sudo systemctl restart gunicorn; then
+    echo "Gunicorn service restarted successfully."
 else
-    echo "Failed to start Gunicorn service." >&2
+    echo "Failed to restart Gunicorn service." >&2
     exit 1
 fi
 
