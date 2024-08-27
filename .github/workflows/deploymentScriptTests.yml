@@ -18,6 +18,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      - name: Add deadsnakes PPA for Python 3.12
+        run: |
+          sudo add-apt-repository ppa:deadsnakes/ppa -y
+          sudo apt-get update
+          sudo apt-get install -y python3.12 python3.12-venv python3.12-dev
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
