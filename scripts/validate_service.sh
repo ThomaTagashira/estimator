@@ -1,4 +1,6 @@
-if curl -f https://thomatagashira.com; then
+#validate_service.sh
+
+if curl -f http://localhost:8000; then
     echo "Service is running successfully."
 else
     echo "Service validation failed." >&2
