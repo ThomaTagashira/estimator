@@ -3,19 +3,22 @@
 # Update package list and install dependencies
 echo "Updating package list and installing dependencies..."
 sudo apt-get update
-sudo apt-get install -y python3-pip python3-dev libpq-dev nginx curl
+sudo apt-get install -y python3.12 python3.12-venv python3.12-dev libpq-dev nginx curl
 
 # Install Node.js
 echo "Installing Node.js..."
-curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
+curl -sL https://deb.nodesource.com/setup_20.x | sudo -E bash -
 sudo apt-get install -y nodejs
 
-# Navigate to project directory
-cd /home/ubuntu/reactDjango
+# Define the base directory (default to /home/ubuntu/djangoReact if not set)
+BASE_DIR="${BASE_DIR:-/home/ubuntu/djangoReact}"
 
-# Set up Python virtual environment
-echo "Setting up Python virtual environment..."
-python3 -m venv venv
+# Navigate to project directory
+cd "$BASE_DIR"
+
+# Set up Python virtual environment using Python 3.12.5
+echo "Setting up Python virtual environment with Python 3.12.5..."
+python3.12 -m venv venv
 source venv/bin/activate
 
 # Install Python dependencies
@@ -28,21 +31,21 @@ pip install gunicorn
 
 # Create logs directory
 echo "Creating logs directory..."
-mkdir -p /home/ubuntu/djangoReact/logs
+mkdir -p "$BASE_DIR/logs"
 
 # Create Gunicorn configuration file
 echo "Creating Gunicorn configuration file..."
-cat > /home/ubuntu/djangoReact/gunicorn_config.py <<EOF
+cat > "$BASE_DIR/gunicorn_config.py" <<EOF
 # Gunicorn configuration file
 
-bind = "unix:/home/ubuntu/djangoReact/gunicorn.sock"
+bind = "unix:$BASE_DIR/gunicorn.sock"
 workers = 3
 worker_class = "sync"
-accesslog = "/home/ubuntu/djangoReact/logs/gunicorn-access.log"
-errorlog = "/home/ubuntu/djangoReact/logs/gunicorn-error.log"
+accesslog = "$BASE_DIR/logs/gunicorn-access.log"
+errorlog = "$BASE_DIR/logs/gunicorn-error.log"
 loglevel = "info"
 timeout = 120
-pidfile = "/home/ubuntu/djangoReact/gunicorn.pid"
+pidfile = "$BASE_DIR/gunicorn.pid"
 EOF
 
 # Create Gunicorn systemd service file
@@ -53,10 +56,10 @@ Description=gunicorn daemon
 After=network.target
 
 [Service]
-User=ubuntu
+User=${USER}
 Group=www-data
-WorkingDirectory=/home/ubuntu/djangoReact
-ExecStart=/home/ubuntu/djangoReact/venv/bin/gunicorn --config /home/ubuntu/djangoReact/gunicorn_config.py EndPoint.wsgi:application
+WorkingDirectory=$BASE_DIR
+ExecStart=$BASE_DIR/venv/bin/gunicorn --config $BASE_DIR/gunicorn_config.py EndPoint.wsgi:application
 
 [Install]
 WantedBy=multi-user.target
@@ -72,7 +75,8 @@ sudo systemctl enable gunicorn
 
 # Create Nginx configuration file
 echo "Creating Nginx configuration file..."
-cat > /home/ubuntu/djangoReact/config/nginx/myproject_nginx.conf <<EOF
+mkdir -p "$BASE_DIR/config/nginx"
+cat > "$BASE_DIR/config/nginx/myproject_nginx.conf" <<EOF
 server {
     listen 80;
     server_name thomatagashira.com;
@@ -90,7 +94,7 @@ server {
     ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
 
     location / {
-        proxy_pass http://unix:/home/ubuntu/djangoReact/gunicorn.sock;
+        proxy_pass http://unix:$BASE_DIR/gunicorn.sock;
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
@@ -98,11 +102,11 @@ server {
     }
 
     location /static/ {
-        alias /home/ubuntu/reactDjango/staticfiles/;
+        alias $BASE_DIR/staticfiles/;
     }
 
     location /media/ {
-        alias /home/ubuntu/reactDjango/media/;
+        alias $BASE_DIR/media/;
     }
 
     # Security headers
@@ -115,7 +119,7 @@ EOF
 
 # Check if the Nginx config copy was successful
 echo "Configuring Nginx..."
-if sudo cp /home/ubuntu/djangoReact/config/nginx/myproject_nginx.conf /etc/nginx/sites-available/; then
+if sudo cp "$BASE_DIR/config/nginx/myproject_nginx.conf" /etc/nginx/sites-available/; then
     echo "Nginx configuration copied successfully."
 else
     echo "Failed to copy Nginx configuration." >&2
