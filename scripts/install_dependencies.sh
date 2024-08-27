@@ -19,14 +19,6 @@ else
     exit 1
 fi
 
-echo "Checking availability of Python 3.12..."
-if apt-cache search python3.12; then
-    echo "Python 3.12 is available in the package list."
-else
-    echo "Python 3.12 is not available. Exiting." >&2
-    exit 1
-fi
-
 echo "Installing Python 3.12 and related packages..."
 if sudo apt-get install -y python3.12 python3.12-venv python3.12-dev; then
     echo "Python 3.12 installed successfully."
@@ -144,22 +136,27 @@ fi
 echo "Restarting Nginx..."
 sudo systemctl restart nginx
 
-# Stop Nginx to free up port 80 for Certbot
-echo "Stopping Nginx to obtain SSL certificate..."
-sudo systemctl stop nginx
-
-# Obtain SSL certificate using standalone method
-echo "Obtaining SSL certificate for thomatagashira.com..."
-if sudo certbot certonly --standalone -d thomatagashira.com -d www.thomatagashira.com --non-interactive --agree-tos --email thoma.tagashira@gmail.com; then
-    echo "SSL certificate obtained successfully."
+# Check if running on GitHub Actions or EC2
+if [ -n "$GITHUB_ACTIONS" ]; then
+    echo "Running in GitHub Actions environment; skipping SSL certificate generation."
 else
-    echo "Failed to obtain SSL certificate. Check Certbot logs for more information." >&2
-    exit 1
-fi
+    echo "Running on a live server; proceeding with SSL certificate generation."
+    # Stop Nginx to free up port 80 for Certbot
+    echo "Stopping Nginx to obtain SSL certificate..."
+    sudo systemctl stop nginx
 
-# Reconfigure Nginx with SSL
-echo "Enabling SSL in Nginx configuration..."
-cat > "$BASE_DIR/config/nginx/myproject_nginx.conf" <<EOF
+    # Obtain SSL certificate using standalone method
+    echo "Obtaining SSL certificate for thomatagashira.com..."
+    if sudo certbot certonly --standalone -d thomatagashira.com -d www.thomatagashira.com --non-interactive --agree-tos --email thoma.tagashira@gmail.com; then
+        echo "SSL certificate obtained successfully."
+    else
+        echo "Failed to obtain SSL certificate. Check Certbot logs for more information." >&2
+        exit 1
+    fi
+
+    # Reconfigure Nginx with SSL
+    echo "Enabling SSL in Nginx configuration..."
+    cat > "$BASE_DIR/config/nginx/myproject_nginx.conf" <<EOF
 server {
     listen 80;
     server_name thomatagashira.com www.thomatagashira.com;
@@ -202,27 +199,28 @@ server {
 }
 EOF
 
-echo "Configuring Nginx with SSL..."
-if sudo cp "$BASE_DIR/config/nginx/myproject_nginx.conf" /etc/nginx/sites-available/; then
-    echo "Nginx configuration copied successfully."
-else
-    echo "Failed to copy Nginx configuration." >&2
-    exit 1
+    echo "Configuring Nginx with SSL..."
+    if sudo cp "$BASE_DIR/config/nginx/myproject_nginx.conf" /etc/nginx/sites-available/; then
+        echo "Nginx configuration copied successfully."
+    else
+        echo "Failed to copy Nginx configuration." >&2
+        exit 1
+    fi
+
+    sudo ln -sf /etc/nginx/sites-available/myproject_nginx.conf /etc/nginx/sites-enabled/
+
+    # Start Nginx again after obtaining SSL certificate
+    echo "Starting Nginx..."
+    if sudo systemctl start nginx; then
+        echo "Nginx started successfully."
+    else
+        echo "Failed to start Nginx." >&2
+        exit 1
+    fi
+
+    # Set up automatic SSL certificate renewal
+    echo "Setting up automatic SSL certificate renewal..."
+    sudo crontab -l | { cat; echo "0 0,12 * * * /usr/bin/certbot renew --quiet"; } | sudo crontab -
 fi
-
-sudo ln -sf /etc/nginx/sites-available/myproject_nginx.conf /etc/nginx/sites-enabled/
-
-# Start Nginx again after obtaining SSL certificate
-echo "Starting Nginx..."
-if sudo systemctl start nginx; then
-    echo "Nginx started successfully."
-else
-    echo "Failed to start Nginx." >&2
-    exit 1
-fi
-
-# Set up automatic SSL certificate renewal
-echo "Setting up automatic SSL certificate renewal..."
-sudo crontab -l | { cat; echo "0 0,12 * * * /usr/bin/certbot renew --quiet"; } | sudo crontab -
 
 echo "Dependency installation and configuration complete."
