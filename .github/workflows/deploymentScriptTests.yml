@@ -3,11 +3,9 @@ name: Test AppSpec and Deployment Scripts
 on:
   pull_request:
     branches:
-      - Prod
       - Dev
   push:
     branches:
-      - Prod
       - Dev
 
 jobs:

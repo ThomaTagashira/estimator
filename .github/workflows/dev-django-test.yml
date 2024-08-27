@@ -2,9 +2,9 @@ name: Django API CI
 
 on:
   push:
-    branches: ["Dev", "Prod"]
+
   pull_request:
-    branches: ["Dev", "Prod"]
+
 
 jobs:
   build:
