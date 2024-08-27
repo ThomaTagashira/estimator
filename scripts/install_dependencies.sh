@@ -139,8 +139,62 @@ sudo systemctl restart nginx
 # Check if running on GitHub Actions or EC2
 if [ -n "$GITHUB_ACTIONS" ]; then
     echo "Running in GitHub Actions environment; skipping SSL certificate generation."
+
+    # Basic Nginx configuration for testing in GitHub Actions
+    cat > "$BASE_DIR/config/nginx/myproject_nginx.conf" <<EOF
+server {
+    listen 80;
+    server_name thomatagashira.com www.thomatagashira.com;
+
+    location / {
+        proxy_pass http://unix:$BASE_DIR/gunicorn.sock;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+    }
+
+    location /static/ {
+        alias $BASE_DIR/staticfiles/;
+    }
+
+    location /media/ {
+        alias $BASE_DIR/media/;
+    }
+
+    # Security headers
+    add_header X-Frame-Options DENY;
+    add_header X-Content-Type-Options nosniff;
+    add_header X-XSS-Protection "1; mode=block";
+    add_header Content-Security-Policy "default-src 'self';";
+}
+EOF
+
+    echo "Configuring Nginx for testing in GitHub Actions..."
+    if sudo cp "$BASE_DIR/config/nginx/myproject_nginx.conf" /etc/nginx/sites-available/; then
+        echo "Nginx configuration copied successfully."
+    else
+        echo "Failed to copy Nginx configuration." >&2
+        exit 1
+    fi
+
+    sudo ln -sf /etc/nginx/sites-available/myproject_nginx.conf /etc/nginx/sites-enabled/
+
+    # Test and reload Nginx configuration
+    echo "Testing Nginx configuration..."
+    if sudo nginx -t; then
+        echo "Nginx configuration is valid."
+    else
+        echo "Nginx configuration is invalid. Check the configuration and try again." >&2
+        exit 1
+    fi
+
+    echo "Restarting Nginx..."
+    sudo systemctl restart nginx
+
 else
     echo "Running on a live server; proceeding with SSL certificate generation."
+
     # Stop Nginx to free up port 80 for Certbot
     echo "Stopping Nginx to obtain SSL certificate..."
     sudo systemctl stop nginx
@@ -208,6 +262,15 @@ EOF
     fi
 
     sudo ln -sf /etc/nginx/sites-available/myproject_nginx.conf /etc/nginx/sites-enabled/
+
+    # Test and reload Nginx configuration
+    echo "Testing Nginx configuration..."
+    if sudo nginx -t; then
+        echo "Nginx configuration is valid."
+    else
+        echo "Nginx configuration is invalid. Check the configuration and try again." >&2
+        exit 1
+    fi
 
     # Start Nginx again after obtaining SSL certificate
     echo "Starting Nginx..."
