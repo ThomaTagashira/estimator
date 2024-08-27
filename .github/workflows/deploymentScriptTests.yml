@@ -18,10 +18,18 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Validate appspec.yml with yamllint
-        uses: w9jds/yaml-lint-action@v1
+      - name: Set up Python
+        uses: actions/setup-python@v2
         with:
-          files: appspec.yml
+          python-version: '3.x'  # Use an appropriate Python version
+
+      - name: Install yamllint
+        run: |
+          python -m pip install --upgrade pip
+          pip install yamllint
+
+      - name: Run yamllint on appspec.yml
+        run: yamllint appspec.yml
 
   test-deployment-scripts:
     name: Test Deployment Scripts
