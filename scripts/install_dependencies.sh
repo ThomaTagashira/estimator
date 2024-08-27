@@ -1,4 +1,4 @@
-#install_dependencies.sh
+#!/bin/bash
 
 # Update package list
 echo "Updating package list..."
@@ -35,6 +35,10 @@ source venv/bin/activate
 # Install Python dependencies
 echo "Installing Python dependencies..."
 pip install -r requirements.txt
+
+# Install Gunicorn
+echo "Installing Gunicorn..."
+pip install gunicorn
 
 # Create logs directory
 echo "Creating logs directory..."
@@ -80,9 +84,60 @@ sudo systemctl daemon-reload
 echo "Enabling Gunicorn service to start on boot..."
 sudo systemctl enable gunicorn
 
-# Create Nginx configuration file
-echo "Creating Nginx configuration file..."
+# Create Nginx configuration file (without SSL to start)
+echo "Creating initial Nginx configuration file (no SSL)..."
 mkdir -p "$BASE_DIR/config/nginx"
+cat > "$BASE_DIR/config/nginx/myproject_nginx.conf" <<EOF
+server {
+    listen 80;
+    server_name thomatagashira.com www.thomatagashira.com;
+
+    location / {
+        proxy_pass http://unix:$BASE_DIR/gunicorn.sock;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+    }
+
+    location /static/ {
+        alias $BASE_DIR/staticfiles/;
+    }
+
+    location /media/ {
+        alias $BASE_DIR/media/;
+    }
+
+    # Security headers
+    add_header X-Frame-Options DENY;
+    add_header X-Content-Type-Options nosniff;
+    add_header X-XSS-Protection "1; mode=block";
+    add_header Content-Security-Policy "default-src 'self';";
+}
+EOF
+
+# Configure Nginx to use the new configuration
+echo "Configuring Nginx..."
+if sudo cp "$BASE_DIR/config/nginx/myproject_nginx.conf" /etc/nginx/sites-available/; then
+    echo "Nginx configuration copied successfully."
+else
+    echo "Failed to copy Nginx configuration." >&2
+    exit 1
+fi
+
+# Create a symbolic link to sites-enabled
+sudo ln -sf /etc/nginx/sites-available/myproject_nginx.conf /etc/nginx/sites-enabled/
+
+# Restart Nginx to apply the configuration
+echo "Restarting Nginx without SSL..."
+sudo systemctl restart nginx
+
+# Obtain SSL certificates using Certbot in standalone mode
+echo "Obtaining SSL certificate for thomatagashira.com..."
+sudo certbot certonly --standalone -d thomatagashira.com -d www.thomatagashira.com --non-interactive --agree-tos --email your-email@example.com
+
+# Enable SSL in Nginx configuration after obtaining certificates
+echo "Enabling SSL in Nginx configuration..."
 cat > "$BASE_DIR/config/nginx/myproject_nginx.conf" <<EOF
 server {
     listen 80;
@@ -126,25 +181,13 @@ server {
 }
 EOF
 
-# Check if the Nginx config copy was successful
-echo "Configuring Nginx..."
-if sudo cp "$BASE_DIR/config/nginx/myproject_nginx.conf" /etc/nginx/sites-available/; then
-    echo "Nginx configuration copied successfully."
-else
-    echo "Failed to copy Nginx configuration." >&2
-    exit 1
-fi
-
-# Create a symbolic link to sites-enabled
+# Copy updated Nginx config
+sudo cp "$BASE_DIR/config/nginx/myproject_nginx.conf" /etc/nginx/sites-available/
 sudo ln -sf /etc/nginx/sites-available/myproject_nginx.conf /etc/nginx/sites-enabled/
 
-# Restart Nginx to apply configuration changes
-echo "Restarting Nginx..."
+# Restart Nginx to apply SSL changes
+echo "Restarting Nginx with SSL..."
 sudo systemctl restart nginx
-
-# Obtain SSL certificates using Certbot
-echo "Obtaining SSL certificate for thomatagashira.com..."
-sudo certbot --nginx -d thomatagashira.com -d www.thomatagashira.com --non-interactive --agree-tos --email thoma.tagashira@gmail.com
 
 # Set up automatic renewal of SSL certificates
 echo "Setting up automatic SSL certificate renewal..."
