@@ -27,9 +27,17 @@ else
     exit 1
 fi
 
-# Stop Nginx temporarily to free up port 80 for Certbot
-echo "Stopping Nginx to obtain SSL certificates..."
-sudo systemctl stop nginx
+# Check and Stop Nginx if running
+if sudo systemctl is-active --quiet nginx; then
+    echo "Stopping Nginx to free up port 80 for Certbot..."
+    sudo systemctl stop nginx
+fi
+
+# Ensure port 80 is free
+if sudo lsof -i :80 | grep LISTEN; then
+    echo "Port 80 is still in use. Exiting..." >&2
+    exit 1
+fi
 
 # Obtain SSL certificate
 echo "Obtaining SSL certificate..."
