@@ -1,8 +1,9 @@
-name: Deploy to AWS
+name: Deploy to AWS Production
 
 on:
   push:
-    branches: None
+    branches:
+      - Prod
 
 jobs:
   deploy:
