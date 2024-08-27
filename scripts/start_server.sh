@@ -41,7 +41,7 @@ fi
 
 # Obtain SSL certificate
 echo "Obtaining SSL certificate..."
-if sudo certbot certonly --standalone -d thomatagashira.com -d www.thomatagashira.com --non-interactive --agree-tos --email your-valid-email@example.com; then
+if sudo certbot certonly --standalone -d thomatagashira.com -d www.thomatagashira.com --non-interactive --agree-tos --email thoma.tagashira@gmail.com; then
     echo "SSL certificate obtained successfully."
 else
     echo "Failed to obtain SSL certificate. Check Certbot logs for more information." >&2
