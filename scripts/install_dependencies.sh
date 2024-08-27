@@ -1,4 +1,4 @@
-#!/bin/bash
+#install_dependencies.sh
 
 # Update package list
 echo "Updating package list..."
@@ -6,12 +6,39 @@ sudo apt-get update
 
 # Add the deadsnakes PPA for Python 3.12
 echo "Adding deadsnakes PPA for Python 3.12..."
-sudo add-apt-repository ppa:deadsnakes/ppa -y
-sudo apt-get update
+if sudo add-apt-repository ppa:deadsnakes/ppa -y; then
+    echo "PPA added successfully."
+else
+    echo "Failed to add deadsnakes PPA. Exiting." >&2
+    exit 1
+fi
+
+# Update package list again after adding PPA
+echo "Updating package list after adding deadsnakes PPA..."
+if sudo apt-get update; then
+    echo "Package list updated successfully."
+else
+    echo "Failed to update package list. Exiting." >&2
+    exit 1
+fi
+
+# Check if Python 3.12 is available
+echo "Checking availability of Python 3.12..."
+if apt-cache search python3.12; then
+    echo "Python 3.12 is available in the package list."
+else
+    echo "Python 3.12 is not available. Exiting." >&2
+    exit 1
+fi
 
 # Install Python 3.12 and related packages
 echo "Installing Python 3.12 and related packages..."
-sudo apt-get install -y python3.12 python3.12-venv python3.12-dev
+if sudo apt-get install -y python3.12 python3.12-venv python3.12-dev; then
+    echo "Python 3.12 installed successfully."
+else
+    echo "Failed to install Python 3.12. Exiting." >&2
+    exit 1
+fi
 
 # Install Node.js
 echo "Installing Node.js..."
