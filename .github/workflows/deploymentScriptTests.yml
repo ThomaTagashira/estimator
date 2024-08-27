@@ -1,0 +1,59 @@
+name: Test AppSpec and Deployment Scripts
+
+on:
+  pull_request:
+    branches:
+      - Dev
+      - Prod
+  push:
+    branches:
+      - Dev
+      - Prod
+
+jobs:
+  validate-appspec:
+    name: Validate appspec.yml
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Validate appspec.yml with yamllint
+        uses: w9jds/yaml-lint-action@v1
+        with:
+          files: appspec.yml
+
+  test-deployment-scripts:
+    name: Test Deployment Scripts
+    runs-on: ubuntu-latest
+    needs: validate-appspec
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set executable permissions for scripts
+        run: chmod +x scripts/*.sh
+
+      - name: Run BeforeInstall script
+        run: |
+          if [ -f scripts/before_install.sh ]; then
+            bash scripts/before_install.sh
+          fi
+
+      - name: Run AfterInstall script
+        run: |
+          if [ -f scripts/after_install.sh ]; then
+            bash scripts/after_install.sh
+          fi
+
+      - name: Run ApplicationStart script
+        run: |
+          if [ -f scripts/start_server.sh ]; then
+            bash scripts/start_server.sh
+          fi
+
+      - name: Run ApplicationStop script
+        run: |
+          if [ -f scripts/stop_server.sh ]; then
+            bash scripts/stop_server.sh
+          fi
