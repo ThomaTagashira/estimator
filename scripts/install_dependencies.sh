@@ -84,8 +84,8 @@ sudo systemctl daemon-reload
 echo "Enabling Gunicorn service to start on boot..."
 sudo systemctl enable gunicorn
 
-# Create Nginx configuration file (without SSL to start)
-echo "Creating initial Nginx configuration file (no SSL)..."
+# Create initial Nginx configuration file (without SSL)
+echo "Creating initial Nginx configuration file..."
 mkdir -p "$BASE_DIR/config/nginx"
 cat > "$BASE_DIR/config/nginx/myproject_nginx.conf" <<EOF
 server {
@@ -116,25 +116,32 @@ server {
 }
 EOF
 
-# Configure Nginx to use the new configuration
+# Copy Nginx config and enable site
 echo "Configuring Nginx..."
-if sudo cp "$BASE_DIR/config/nginx/myproject_nginx.conf" /etc/nginx/sites-available/; then
-    echo "Nginx configuration copied successfully."
+sudo cp "$BASE_DIR/config/nginx/myproject_nginx.conf" /etc/nginx/sites-available/
+sudo ln -sf /etc/nginx/sites-available/myproject_nginx.conf /etc/nginx/sites-enabled/
+
+# Test Nginx configuration
+echo "Testing Nginx configuration..."
+if sudo nginx -t; then
+    echo "Nginx configuration is valid."
 else
-    echo "Failed to copy Nginx configuration." >&2
+    echo "Nginx configuration is invalid. Check the configuration and try again." >&2
     exit 1
 fi
 
-# Create a symbolic link to sites-enabled
-sudo ln -sf /etc/nginx/sites-available/myproject_nginx.conf /etc/nginx/sites-enabled/
-
-# Restart Nginx to apply the configuration
-echo "Restarting Nginx without SSL..."
+# Restart Nginx
+echo "Restarting Nginx..."
 sudo systemctl restart nginx
 
 # Obtain SSL certificates using Certbot in standalone mode
 echo "Obtaining SSL certificate for thomatagashira.com..."
-sudo certbot certonly --standalone -d thomatagashira.com -d www.thomatagashira.com --non-interactive --agree-tos --email your-email@example.com
+if sudo certbot certonly --standalone -d thomatagashira.com -d www.thomatagashira.com --non-interactive --agree-tos --email your-email@example.com; then
+    echo "SSL certificate obtained successfully."
+else
+    echo "Failed to obtain SSL certificate. Check Certbot logs for more information." >&2
+    exit 1
+fi
 
 # Enable SSL in Nginx configuration after obtaining certificates
 echo "Enabling SSL in Nginx configuration..."
@@ -184,6 +191,15 @@ EOF
 # Copy updated Nginx config
 sudo cp "$BASE_DIR/config/nginx/myproject_nginx.conf" /etc/nginx/sites-available/
 sudo ln -sf /etc/nginx/sites-available/myproject_nginx.conf /etc/nginx/sites-enabled/
+
+# Test Nginx configuration again
+echo "Testing Nginx configuration after enabling SSL..."
+if sudo nginx -t; then
+    echo "Nginx configuration with SSL is valid."
+else
+    echo "Nginx configuration with SSL is invalid. Check the configuration and try again." >&2
+    exit 1
+fi
 
 # Restart Nginx to apply SSL changes
 echo "Restarting Nginx with SSL..."

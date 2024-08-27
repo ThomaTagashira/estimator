@@ -26,7 +26,8 @@ else
     echo "Failed to restart Gunicorn service." >&2
     exit 1
 fi
-
+echo "Testing Nginx configuration..."
+sudo nginx -t
 # Restart Nginx to apply any configuration changes
 if sudo systemctl restart nginx; then
     echo "Nginx restarted successfully."
@@ -34,3 +35,8 @@ else
     echo "Failed to restart Nginx." >&2
     exit 1
 fi
+# Check Nginx status
+sudo systemctl status nginx.service
+
+# View Nginx logs
+sudo journalctl -xeu nginx.service
