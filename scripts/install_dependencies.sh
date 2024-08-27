@@ -220,23 +220,43 @@ server {
 EOF
 
 
-sudo cp "$BASE_DIR/config/nginx/myproject_nginx.conf" /etc/nginx/sites-available/
-sudo ln -sf /etc/nginx/sites-available/myproject_nginx.conf /etc/nginx/sites-enabled/
-
-
-echo "Testing Nginx configuration after enabling SSL..."
-if sudo nginx -t; then
-    echo "Nginx configuration with SSL is valid."
+s# Check if the Nginx config copy was successful
+echo "Configuring Nginx..."
+if sudo cp "$BASE_DIR/config/nginx/myproject_nginx.conf" /etc/nginx/sites-available/; then
+    echo "Nginx configuration copied successfully."
 else
-    echo "Nginx configuration with SSL is invalid. Check the configuration and try again." >&2
+    echo "Failed to copy Nginx configuration." >&2
     exit 1
 fi
 
+# Create a symbolic link to sites-enabled
+sudo ln -sf /etc/nginx/sites-available/myproject_nginx.conf /etc/nginx/sites-enabled/
 
-echo "Restarting Nginx with SSL..."
-sudo systemctl restart nginx
+# Ensure Nginx is enabled
+sudo systemctl enable nginx
 
+echo "Stopping Nginx to free up port 80 for Certbot..."
+sudo systemctl stop nginx
 
+# Obtain SSL certificate
+echo "Obtaining SSL certificate..."
+if sudo certbot certonly --standalone -d thomatagashira.com -d www.thomatagashira.com --non-interactive --agree-tos --email thoma.tagashira@gmail.com; then
+    echo "SSL certificate obtained successfully."
+else
+    echo "Failed to obtain SSL certificate. Check Certbot logs for more information." >&2
+    exit 1
+fi
+
+# Start Nginx again after obtaining SSL certificate
+echo "Starting Nginx..."
+if sudo systemctl start nginx; then
+    echo "Nginx started successfully."
+else
+    echo "Failed to start Nginx." >&2
+    exit 1
+fi
+
+# Set up automatic SSL certificate renewal
 echo "Setting up automatic SSL certificate renewal..."
 sudo crontab -l | { cat; echo "0 0,12 * * * /usr/bin/certbot renew --quiet"; } | sudo crontab -
 
