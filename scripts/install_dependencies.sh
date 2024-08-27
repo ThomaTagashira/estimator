@@ -4,6 +4,11 @@
 echo "Updating package list..."
 sudo apt-get update
 
+# Add the deadsnakes PPA for Python 3.12
+echo "Adding deadsnakes PPA for Python 3.12..."
+sudo add-apt-repository ppa:deadsnakes/ppa -y
+sudo apt-get update
+
 # Install Python 3.12 and related packages
 echo "Installing Python 3.12 and related packages..."
 sudo apt-get install -y python3.12 python3.12-venv python3.12-dev
