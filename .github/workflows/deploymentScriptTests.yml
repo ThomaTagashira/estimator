@@ -56,6 +56,10 @@ jobs:
       DJANGO_SETTINGS_MODULE: djangoReact.settings
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       CORS_ALLOWED_ORIGINS: ${{ secrets.CORS_ALLOWED_ORIGINS }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+      TEST_S3_BUCKET_NAME: "${{ secrets.TEST_S3_BUCKET_NAME }}"
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -102,12 +106,6 @@ jobs:
             bash scripts/start_server.sh
           fi
 
-      - name: Obtain SSL Certificate
-        run: |
-          if [ -f scripts/obtain_ssl_certificate.sh ]; then
-            bash scripts/obtain_ssl_certificate.sh
-          fi
-
       - name: Check Nginx configuration
         run: |
           echo "Checking Nginx configuration"
@@ -123,13 +121,36 @@ jobs:
           echo "Getting Nginx logs"
           sudo journalctl -xeu nginx.service || true
 
-      - name: Test Certbot SSL renewal
-        run: |
-          echo "Testing Certbot SSL renewal"
-          sudo certbot renew --dry-run
-
       - name: Run validate_service script
         run: |
           if [ -f scripts/validate_service.sh ]; then
             bash scripts/validate_service.sh
           fi
+
+      - name: Zip the deployment package
+        run: zip -r deploy-package.zip . -x ".*" -x "*/.*"
+
+
+
+
+
+      - name: Test S3 upload (for Dev branch, testing only)
+        if: github.ref == 'refs/heads/Dev'
+        env:
+          TEST_S3_BUCKET_NAME: ${{ secrets.TEST_S3_BUCKET_NAME }}
+        run: |
+          echo "Uploading test deployment package to S3..."
+          aws s3 cp deploy-package.zip s3://$TEST_S3_BUCKET_NAME/deploy-package.zip
+          echo "Verifying upload..."
+          aws s3 ls s3://$TEST_S3_BUCKET_NAME/deploy-package.zip
+
+      - name: Run cleanup script (for Dev branch, testing only)
+        if: github.ref == 'refs/heads/Dev'
+        env:
+          AWS_BUCKET_NAME: ${{ secrets.TEST_S3_BUCKET_NAME }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+        run: |
+          chmod +x scripts/cleanup_s3.sh
+          ./scripts/cleanup_s3.sh
