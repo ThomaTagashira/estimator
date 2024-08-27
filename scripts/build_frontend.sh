@@ -1,10 +1,19 @@
-#!/bin/bash
-# Navigate to the frontend directory
-cd /home/ubuntu/reactDjango/frontend
+#build_frontend.sh
 
-# Install npm dependencies and build the frontend
-npm install
-npm run build
+BASE_DIR="${BASE_DIR:-/home/ubuntu/djangoReact}"
 
-# Move built files to Django static directory
-cp -R build/* /home/ubuntu/reactDjango/static/
+cd "$BASE_DIR/frontend"
+
+if npm install; then
+    echo "NPM dependencies installed successfully."
+else
+    echo "Failed to install NPM dependencies." >&2
+    exit 1
+fi
+
+if npm run build; then
+    echo "Frontend built successfully."
+else
+    echo "Failed to build the frontend." >&2
+    exit 1
+fi

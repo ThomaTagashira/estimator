@@ -1,10 +1,10 @@
-name: Django CI
+name: Django API CI
 
 on:
   push:
-    branches: ["Dev"]
+
   pull_request:
-    branches: ["Dev"]
+
 
 jobs:
   build:

@@ -1,3 +1,4 @@
+---
 version: 0.0
 os: linux
 files:
@@ -6,6 +7,10 @@ files:
 
 hooks:
   BeforeInstall:
+    - location: scripts/stop_services.sh
+      timeout: 300
+      runas: ubuntu
+
     - location: scripts/install_dependencies.sh
       timeout: 300
       runas: ubuntu

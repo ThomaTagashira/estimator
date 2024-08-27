@@ -1,0 +1,135 @@
+name: Test AppSpec and Deployment Scripts
+
+on:
+  pull_request:
+    branches:
+      - Dev
+  push:
+    branches:
+      - Dev
+
+jobs:
+  validate-appspec:
+    name: Validate appspec.yml
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12.5'
+
+      - name: Install yamllint
+        run: |
+          python -m pip install --upgrade pip
+          pip install yamllint
+
+      - name: Run yamllint on appspec.yml
+        run: yamllint appspec.yml
+
+  test-deployment-scripts:
+    name: Test Deployment Scripts
+    runs-on: ubuntu-22.04
+    needs: validate-appspec
+    services:
+      postgres:
+        image: ankane/pgvector:latest
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_DB: mock_test_db
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_password
+    env:
+      BASE_DIR: /home/runner/work/estimator/estimator
+      DB_ENGINE: django.db.backends.postgresql
+      TEST_DB_NAME: mock_test_db
+      TEST_DB_USER: test_user
+      TEST_DB_PASSWORD: test_password
+      DB_HOST: localhost
+      DB_PORT: 5432
+      SECRET_KEY: ${{ secrets.SECRET_KEY }}
+      CONNECTION_STRING: "postgresql+psycopg2://test_user:test_password@localhost:5432/mock_test_db"
+      COLLECTION_NAME: 'test_cost_vectors'
+      DJANGO_SETTINGS_MODULE: djangoReact.settings
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      CORS_ALLOWED_ORIGINS: ${{ secrets.CORS_ALLOWED_ORIGINS }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12.5'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20.x'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Set executable permissions for scripts
+        run: chmod +x scripts/*.sh
+
+      - name: Run stop_services script
+        run: |
+          if [ -f scripts/stop_services.sh ]; then
+            bash scripts/stop_services.sh
+          fi
+
+      - name: Run install_dependencies script
+        run: |
+          if [ -f scripts/install_dependencies.sh ]; then
+            bash scripts/install_dependencies.sh
+          fi
+
+      - name: Run build_frontend script
+        run: |
+          if [ -f scripts/build_frontend.sh ]; then
+            bash scripts/build_frontend.sh
+          fi
+
+      - name: Run start_server script
+        run: |
+          if [ -f scripts/start_server.sh ]; then
+            bash scripts/start_server.sh
+          fi
+
+      - name: Obtain SSL Certificate
+        run: |
+          if [ -f scripts/obtain_ssl_certificate.sh ]; then
+            bash scripts/obtain_ssl_certificate.sh
+          fi
+
+      - name: Check Nginx configuration
+        run: |
+          echo "Checking Nginx configuration"
+          sudo nginx -t
+
+      - name: Get Nginx status
+        run: |
+          echo "Getting Nginx status"
+          sudo systemctl status nginx.service || true
+
+      - name: Get Nginx logs
+        run: |
+          echo "Getting Nginx logs"
+          sudo journalctl -xeu nginx.service || true
+
+      - name: Test Certbot SSL renewal
+        run: |
+          echo "Testing Certbot SSL renewal"
+          sudo certbot renew --dry-run
+
+      - name: Run validate_service script
+        run: |
+          if [ -f scripts/validate_service.sh ]; then
+            bash scripts/validate_service.sh
+          fi
