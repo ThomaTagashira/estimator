@@ -1,3 +1,6 @@
-#!/bin/bash
-# Check if the Django server is running
-curl -f http://localhost/ || exit 1
+if curl -f http://localhost/; then
+    echo "Service is running successfully."
+else
+    echo "Service validation failed." >&2
+    exit 1
+fi
