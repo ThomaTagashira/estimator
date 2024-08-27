@@ -104,6 +104,12 @@ jobs:
             bash scripts/start_server.sh
           fi
 
+      - name: Obtain SSL Certificate
+        run: |
+          if [ -f scripts/obtain_ssl_certificate.sh ]; then
+            bash scripts/obtain_ssl_certificate.sh
+          fi
+
       - name: Check Nginx configuration
         run: |
           echo "Checking Nginx configuration"
@@ -118,6 +124,11 @@ jobs:
         run: |
           echo "Getting Nginx logs"
           sudo journalctl -xeu nginx.service || true
+
+      - name: Test Certbot SSL renewal
+        run: |
+          echo "Testing Certbot SSL renewal"
+          sudo certbot renew --dry-run
 
       - name: Run validate_service script
         run: |

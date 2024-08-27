@@ -13,6 +13,14 @@ echo "Installing Node.js..."
 curl -sL https://deb.nodesource.com/setup_20.x | sudo -E bash -
 sudo apt-get install -y nodejs
 
+# Install Nginx
+echo "Installing Nginx..."
+sudo apt-get install -y nginx
+
+# Install Certbot and Certbot Nginx plugin
+echo "Installing Certbot and Certbot Nginx plugin..."
+sudo apt-get install -y certbot python3-certbot-nginx
+
 # Define the base directory (default to /home/ubuntu/djangoReact if not set)
 BASE_DIR="${BASE_DIR:-/home/ubuntu/djangoReact}"
 
@@ -27,10 +35,6 @@ source venv/bin/activate
 # Install Python dependencies
 echo "Installing Python dependencies..."
 pip install -r requirements.txt
-
-# Install Gunicorn
-echo "Installing Gunicorn..."
-pip install gunicorn
 
 # Create logs directory
 echo "Creating logs directory..."
@@ -82,17 +86,19 @@ mkdir -p "$BASE_DIR/config/nginx"
 cat > "$BASE_DIR/config/nginx/myproject_nginx.conf" <<EOF
 server {
     listen 80;
-    server_name thomatagashira.com;
+    server_name thomatagashira.com www.thomatagashira.com;
 
-    return 301 https://\$host\$request_uri;
+    location / {
+        return 301 https://\$host\$request_uri;
+    }
 }
 
 server {
     listen 443 ssl;
-    server_name thomatagashira.com;
+    server_name thomatagashira.com www.thomatagashira.com;
 
-    ssl_certificate /etc/letsencrypt/live/api.thomatagashira.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/api.thomatagashira.com/privkey.pem;
+    ssl_certificate /etc/letsencrypt/live/thomatagashira.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/thomatagashira.com/privkey.pem;
     include /etc/letsencrypt/options-ssl-nginx.conf;
     ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
 
@@ -132,7 +138,16 @@ fi
 # Create a symbolic link to sites-enabled
 sudo ln -sf /etc/nginx/sites-available/myproject_nginx.conf /etc/nginx/sites-enabled/
 
-# Ensure Nginx is enabled
-sudo systemctl enable nginx
+# Restart Nginx to apply configuration changes
+echo "Restarting Nginx..."
+sudo systemctl restart nginx
+
+# Obtain SSL certificates using Certbot
+echo "Obtaining SSL certificate for thomatagashira.com..."
+sudo certbot --nginx -d thomatagashira.com -d www.thomatagashira.com --non-interactive --agree-tos --email thoma.tagashira@gmail.com
+
+# Set up automatic renewal of SSL certificates
+echo "Setting up automatic SSL certificate renewal..."
+sudo crontab -l | { cat; echo "0 0,12 * * * /usr/bin/certbot renew --quiet"; } | sudo crontab -
 
 echo "Dependency installation and configuration complete."
