@@ -42,26 +42,33 @@ jobs:
       - name: Set executable permissions for scripts
         run: chmod +x scripts/*.sh
 
-      - name: Run BeforeInstall script
+      - name: Run stop_server script
         run: |
-          if [ -f scripts/before_install.sh ]; then
-            bash scripts/before_install.sh
+          if [ -f scripts/stop_server.sh ]; then
+            bash scripts/stop_server.sh
           fi
 
-      - name: Run AfterInstall script
+      - name: Run install_dependencies script
         run: |
-          if [ -f scripts/after_install.sh ]; then
-            bash scripts/after_install.sh
+          if [ -f scripts/install_dependencies.sh ]; then
+            bash scripts/install_dependencies.sh
           fi
 
-      - name: Run ApplicationStart script
+      - name: Run build_frontend script
+        run: |
+          if [ -f scripts/build_frontend.sh ]; then
+            bash scripts/build_frontend.sh
+          fi
+
+      - name: Run start_server script
         run: |
           if [ -f scripts/start_server.sh ]; then
             bash scripts/start_server.sh
           fi
 
-      - name: Run ApplicationStop script
+      - name: Run validate_service script
         run: |
-          if [ -f scripts/stop_server.sh ]; then
-            bash scripts/stop_server.sh
+          if [ -f scripts/validate_service.sh ]; then
+            bash scripts/validate_service.sh
           fi
+
