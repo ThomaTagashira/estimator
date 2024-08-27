@@ -1,6 +1,8 @@
 #build_frontend.sh
 
-cd /home/ubuntu/reactDjango/frontend
+BASE_DIR="${BASE_DIR:-/home/ubuntu/djangoReact}"
+
+cd "$BASE_DIR/frontend"
 
 if npm install; then
     echo "NPM dependencies installed successfully."
