@@ -51,6 +51,10 @@ pip install -r requirements.txt
 echo "Installing Gunicorn..."
 pip install gunicorn
 
+echo "Setting up Django crontab..."
+python manage.py crontab remove
+python manage.py crontab add
+
 echo "Creating logs directory..."
 mkdir -p "$BASE_DIR/logs"
 

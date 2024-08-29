@@ -4,6 +4,7 @@ from api.models import *
 import json
 import logging
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -88,3 +89,12 @@ class UserSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         user = User.objects.create_user(**validated_data)
         return user
+
+
+from dj_rest_auth.registration.serializers import SocialLoginSerializer
+
+class CustomGoogleLoginSerializer(SocialLoginSerializer):
+    def validate(self, attrs):
+        if 'password' in attrs:
+            attrs.pop('password')
+        return super().validate(attrs)

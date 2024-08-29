@@ -14,10 +14,14 @@ import { loadStripe } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
 import PaymentForm from './components/PaymentForm';
 import Header from './components/Header';
+import SubscriptionPage from './components/SubscriptionPage';
+import TokenPurchasePage from './components/TokenPurchasePage';
+import SuccessPage from './components/SuccessPage';
+import CancelPage from './components/CancelPage';
 
 setupInterceptors();
 const apiUrl = process.env.REACT_APP_API_URL;
-const stripePromise = loadStripe('pk_test_51Pm0HlAzRgND7jpkAw3Mm9D0PP5EWana6MoFYC0LxkTBmMjS1MmdsAOljJzNfnXaNwbtXlosp5CMPMY5pvHZou7500fvNKpW0O');
+const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLIC_KEY);
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -31,17 +35,12 @@ function App() {
   const [showPaymentForm, setShowPaymentForm] = useState(false);
 
   const handleLogout = () => {
-
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('refresh_token');
-
-      delete axios.defaults.headers.common['Authorization'];
-
-      setIsAuthenticated(false);
-
-      redirect('/login');  // Correct usage
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    delete axios.defaults.headers.common['Authorization'];
+    setIsAuthenticated(false);
+    redirect('/login');
   };
-
 
   useEffect(() => {
     const token = localStorage.getItem('access_token');
@@ -117,15 +116,18 @@ function App() {
 
   const combinedResults = `${scopeResults?.response || ''}\n\n${searchResult?.response || ''}`.trim();
 
-
   return (
     <Router>
       {isAuthenticated && <Header handleLogout={handleLogout} />}
       <Routes>
         <Route path="/login" element={<Login setIsAuthenticated={setIsAuthenticated} />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/google-callback" element={<GoogleCallback setIsAuthenticated={setIsAuthenticated} />} /> {/*Google Callback*/}
-        <Route path="/github-callback" element={<GitHubCallback setIsAuthenticated={setIsAuthenticated} />} /> {/*GitHub Callback*/}
+        <Route path="/google-callback" element={<GoogleCallback setIsAuthenticated={setIsAuthenticated} />} />
+        <Route path="/github-callback" element={<GitHubCallback setIsAuthenticated={setIsAuthenticated} />} />
+        <Route path="/subscribe" element={<SubscriptionPage />} />
+        <Route path="/buy-tokens" element={<TokenPurchasePage />} />
+        <Route path="/success" element={<SuccessPage />} />
+        <Route path="/cancel" element={<CancelPage />} />
         <Route path="/" element={
           <AuthenticatedRoute isAuthenticated={isAuthenticated}>
             <div className="App">

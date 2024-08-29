@@ -11,26 +11,38 @@ const GoogleCallback = ({ setIsAuthenticated }) => {
     useEffect(() => {
         const urlParams = new URLSearchParams(window.location.search);
         const code = urlParams.get('code');
+        console.log('Google authorization code:', code);
 
         if (code) {
             const csrftoken = getCookie('csrftoken');
+            const code = urlParams.get('code');
+            console.log('Google authorization code:', code);
             axios.post(`${apiUrl}/api/auth/google/`, {
                 code: code,
             }, {
                 headers: {
-                    'X-CSRFToken': csrftoken
+                    'X-CSRFToken': csrftoken,
+                    'Content-Type': 'application/json',
                 }
-            }).then(response => {
-                localStorage.setItem('access_token', response.data.access_token);
-                localStorage.setItem('id_token', response.data.id_token);
-                axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.access_token}`;
+            })
+            .then(response => {
+                const { access_token } = response.data;
+
+                // Store tokens securely
+                localStorage.setItem('access_token', access_token);
+                axios.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
+
                 setIsAuthenticated(true);
-                navigate('/');
-            }).catch(error => {
+                navigate('/');  // Redirect to the home page on success
+            })
+            .catch(error => {
                 console.error('Error exchanging Google code:', error);
+                navigate('/subscribe');
             });
         } else {
             console.error('Google authorization code not found in the URL');
+            // Optionally, redirect to login or show an error message
+            navigate('/login'); // Redirect back to login if no code is found
         }
     }, [navigate, setIsAuthenticated]);
 

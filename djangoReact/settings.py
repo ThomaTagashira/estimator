@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'util',
     'rest_framework_simplejwt',
+    'django_crontab',
 ]
 
 AUTHENTICATION_BACKENDS = (
@@ -67,6 +68,10 @@ REST_FRAMEWORK = {
         #'rest_framework.permissions.IsAuthenticated',
     ]
 }
+
+CRONJOBS = [
+    ('0 0 1 * *', 'api.tasks.allocate_monthly_tokens')
+]
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',

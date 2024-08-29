@@ -133,10 +133,6 @@ jobs:
       - name: Zip the deployment package
         run: zip -r deploy-package.zip . -x ".*" -x "*/.*"
 
-
-
-
-
       - name: Test S3 upload (for Dev branch, testing only)
         if: github.ref == 'refs/heads/Dev'
         env:
@@ -157,3 +153,8 @@ jobs:
         run: |
           chmod +x scripts/cleanup_s3.sh
           ./scripts/cleanup_s3.sh
+
+      - name: Run allocate tokens command
+        run: |
+          echo "Running allocate tokens command"
+          python manage.py allocate_tokens

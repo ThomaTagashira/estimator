@@ -1,3 +1,5 @@
+// Header.js
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 
@@ -12,6 +14,7 @@ const Header = ({ handleLogout }) => {
                     <li style={liStyle}><Link to="/">Home</Link></li>
                     <li style={liStyle}><Link to="/about">About</Link></li>
                     <li style={liStyle}><Link to="/profile">Profile</Link></li>
+                    <li style={liStyle}><Link to="/buy-tokens">Buy Tokens</Link></li> {/* New link for Token Purchase */}
                 </ul>
             </nav>
             <button style={logoutButtonStyle} onClick={handleLogout}>Logout</button>
