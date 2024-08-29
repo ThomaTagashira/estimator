@@ -26,6 +26,7 @@ from datetime import timedelta
 from django.utils import timezone
 from rest_framework_simplejwt.views import TokenObtainPairView
 from django.contrib.auth.models import User
+from django.contrib.auth import authenticate
 
 load_dotenv()
 logger = logging.getLogger(__name__)
@@ -153,12 +154,22 @@ def register_user(request):
 class UsernameTokenObtainPairView(TokenObtainPairView):
     def post(self, request, *args, **kwargs):
         response = super().post(request, *args, **kwargs)
-        user = self.get_user(request.data['username'])
+        username = request.data.get('username')
 
-        # Custom logic to check if the user has an active subscription
-        active_subscription = Subscription.objects.filter(user=user, is_active=True).exists()
+        try:
+            user = User.objects.get(username=username)
+            # Check for active subscription
+            active_subscription = Subscription.objects.filter(user=user, is_active=True).exists()
 
-        response.data['has_active_subscription'] = active_subscription
+            response.data['has_active_subscription'] = active_subscription
+
+            if not active_subscription:
+                response.data['detail'] = "Subscription required."
+                response.status_code = status.HTTP_403_FORBIDDEN  # Use 403 to indicate forbidden access
+        except User.DoesNotExist:
+            response.data['detail'] = "Invalid credentials."
+            response.status_code = status.HTTP_401_UNAUTHORIZED  # Use 401 for unauthorized access
+
         return response
 
 
@@ -253,6 +264,7 @@ class GitHubLoginView(APIView):
         return Response({
             'access_token': access_token,
         }, status=status.HTTP_200_OK)
+
 
 
 stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
