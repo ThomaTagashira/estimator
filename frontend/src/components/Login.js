@@ -11,7 +11,7 @@ const redirUrl = process.env.REACT_APP_REDIR_URL;
 const googleID = process.env.REACT_APP_GOOGLE_CLIENT_ID;
 const githubID = process.env.REACT_APP_GITHUB_CLIENT_ID;
 
-const Login = ({ setIsAuthenticated }) => {
+const Login = ({ setIsAuthenticated, setHasActiveSubscription }) => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
@@ -22,14 +22,21 @@ const Login = ({ setIsAuthenticated }) => {
         if (accessToken) {
             axios.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
             setIsAuthenticated(true);
-            navigate('/');  // Redirect to home if already authenticated
+            axios.get(`${apiUrl}/api/subscription/status/`)
+                .then(response => {
+                    setHasActiveSubscription(response.data.has_active_subscription);
+                    navigate('/');
+                })
+                .catch(error => {
+                    console.error('Error fetching subscription status:', error);
+                    setHasActiveSubscription(false);
+                });
         }
-    }, [setIsAuthenticated, navigate]);
+    }, [setIsAuthenticated, setHasActiveSubscription, navigate]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         const csrftoken = getCookie('csrftoken');
-
         try {
             const response = await axios.post(`${apiUrl}/api/userToken/`, {
                 username,
@@ -42,25 +49,20 @@ const Login = ({ setIsAuthenticated }) => {
 
             const { access, refresh, has_active_subscription } = response.data;
 
-            // Save tokens and set authentication state
             localStorage.setItem('access_token', access);
             localStorage.setItem('refresh_token', refresh);
             axios.defaults.headers.common['Authorization'] = `Bearer ${access}`;
 
             setIsAuthenticated(true);
+            setHasActiveSubscription(has_active_subscription);
 
-            // Check subscription status
             if (has_active_subscription) {
-                navigate('/');  // Redirect to home page if subscription is active
+                navigate('/');
             } else {
-                navigate('/subscribe');  // Redirect to subscription page if not subscribed
+                navigate('/subscribe');
             }
         } catch (err) {
-            if (err.response && err.response.status === 403) {
-                navigate('/subscribe');  // Redirect to subscription page on 403
-            } else {
-                setError('Invalid credentials or subscription required.');
-            }
+            setError('Invalid credentials');
         }
     };
 

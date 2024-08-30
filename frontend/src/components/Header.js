@@ -1,9 +1,8 @@
-// Header.js
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 
-const Header = ({ handleLogout }) => {
+const Header = ({ handleLogout, hasActiveSubscription }) => {
+
     return (
         <header style={headerStyle}>
             <div style={logoStyle}>
@@ -13,14 +12,19 @@ const Header = ({ handleLogout }) => {
                 <ul style={ulStyle}>
                     <li style={liStyle}><Link to="/">Home</Link></li>
                     <li style={liStyle}><Link to="/about">About</Link></li>
-                    <li style={liStyle}><Link to="/profile">Profile</Link></li>
-                    <li style={liStyle}><Link to="/buy-tokens">Buy Tokens</Link></li> {/* New link for Token Purchase */}
+                    {hasActiveSubscription && (
+                        <>
+                            <li style={liStyle}><Link to="/profile">Profile</Link></li>
+                            <li style={liStyle}><Link to="/buy-tokens">Buy Tokens</Link></li>
+                        </>
+                    )}
                 </ul>
             </nav>
             <button style={logoutButtonStyle} onClick={handleLogout}>Logout</button>
         </header>
     );
 };
+
 
 const headerStyle = {
     display: 'flex',

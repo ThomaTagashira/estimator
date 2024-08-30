@@ -1,3 +1,5 @@
+// App.js
+
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { BrowserRouter as Router, Route, Routes, redirect } from 'react-router-dom';
@@ -25,6 +27,7 @@ const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLIC_KEY);
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [hasActiveSubscription, setHasActiveSubscription] = useState(false);
   const [textResults, setTextResults] = useState({});
   const [scopeResults, setScopeResults] = useState(null);
   const [handymanScopeResults, setHandymanScopeResults] = useState(null);
@@ -39,16 +42,32 @@ function App() {
     localStorage.removeItem('refresh_token');
     delete axios.defaults.headers.common['Authorization'];
     setIsAuthenticated(false);
+    setHasActiveSubscription(false);
     redirect('/login');
   };
 
   useEffect(() => {
     const token = localStorage.getItem('access_token');
     if (token) {
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      setIsAuthenticated(true);
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        setIsAuthenticated(true);
+        axios.get(`${apiUrl}/api/subscription/status/`)
+            .then(response => {
+                console.log('API response for subscription:', response.data);
+                setHasActiveSubscription(response.data.has_active_subscription);
+                console.log('Setting hasActiveSubscription:', response.data.has_active_subscription);
+            })
+            .catch(error => {
+                if (error.response && error.response.status === 401) {
+                    setIsAuthenticated(false);
+                    setHasActiveSubscription(false);
+                    redirect('/login');
+                } else {
+                    console.error('Error fetching subscription status:', error);
+                }
+            });
     }
-  }, []);
+}, [setIsAuthenticated, setHasActiveSubscription]);
 
   const fetchTextData = (inputText) => {
     setLoading(true);
@@ -118,11 +137,11 @@ function App() {
 
   return (
     <Router>
-      {isAuthenticated && <Header handleLogout={handleLogout} />}
+      <Header handleLogout={handleLogout} hasActiveSubscription={hasActiveSubscription} />
       <Routes>
-        <Route path="/login" element={<Login setIsAuthenticated={setIsAuthenticated} />} />
+        <Route path="/login" element={<Login setIsAuthenticated={setIsAuthenticated} setHasActiveSubscription={setHasActiveSubscription} />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/google-callback" element={<GoogleCallback setIsAuthenticated={setIsAuthenticated} />} />
+        <Route path="/google-callback" element={<GoogleCallback setIsAuthenticated={setIsAuthenticated} setHasActiveSubscription={setHasActiveSubscription} />} />
         <Route path="/github-callback" element={<GitHubCallback setIsAuthenticated={setIsAuthenticated} />} />
         <Route path="/subscribe" element={<SubscriptionPage />} />
         <Route path="/buy-tokens" element={<TokenPurchasePage />} />

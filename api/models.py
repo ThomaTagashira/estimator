@@ -51,7 +51,7 @@ class Subscription(models.Model):
     auto_renew = models.BooleanField(default=True)
     trial_end_date = models.DateTimeField(null=True, blank=True)
     token_allocation = models.PositiveIntegerField(default=0)
-    last_token_allocation_date = models.DateTimeField(null=True, blank=True)  # New field
+    last_token_allocation_date = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return f"{self.user.username}'s subscription: {self.subscription_type} - {'Active' if self.is_active else 'Inactive'}"

@@ -15,7 +15,7 @@ from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.decorators import api_view
 from util.text_converter import image_to_text
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from dotenv import load_dotenv
 import posixpath
 from pathlib import Path
@@ -27,6 +27,7 @@ from django.utils import timezone
 from rest_framework_simplejwt.views import TokenObtainPairView
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
+from rest_framework_simplejwt.tokens import RefreshToken
 
 load_dotenv()
 logger = logging.getLogger(__name__)
@@ -142,6 +143,7 @@ def upload_photo(request):
     else:
         return Response({'error': 'Invalid request method'}, status=status.HTTP_400_BAD_REQUEST)\
 
+
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def register_user(request):
@@ -151,6 +153,25 @@ def register_user(request):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
+logger = logging.getLogger(__name__)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def subscription_status(request):
+    user = request.user
+    try:
+        subscription = Subscription.objects.get(user=user)
+        response_data = {'has_active_subscription': subscription.is_active}
+        logger.debug('Subscription True: %s', response_data)
+        return Response(response_data)
+    except Subscription.DoesNotExist:
+        response_data = {'has_active_subscription': False}
+        logger.debug('Subscription False: %s', response_data)
+        return Response(response_data)
+
+
+
 class UsernameTokenObtainPairView(TokenObtainPairView):
     def post(self, request, *args, **kwargs):
         response = super().post(request, *args, **kwargs)
@@ -158,17 +179,16 @@ class UsernameTokenObtainPairView(TokenObtainPairView):
 
         try:
             user = User.objects.get(username=username)
-            # Check for active subscription
             active_subscription = Subscription.objects.filter(user=user, is_active=True).exists()
 
             response.data['has_active_subscription'] = active_subscription
 
             if not active_subscription:
                 response.data['detail'] = "Subscription required."
-                response.status_code = status.HTTP_403_FORBIDDEN  # Use 403 to indicate forbidden access
+                response.status_code = status.HTTP_403_FORBIDDEN
         except User.DoesNotExist:
             response.data['detail'] = "Invalid credentials."
-            response.status_code = status.HTTP_401_UNAUTHORIZED  # Use 401 for unauthorized access
+            response.status_code = status.HTTP_401_UNAUTHORIZED
 
         return response
 
@@ -177,10 +197,7 @@ class GoogleTokenObtainPairView(TokenObtainPairView):
     def post(self, request, *args, **kwargs):
         response = super().post(request, *args, **kwargs)
         user = self.get_user(request.data['username'])
-
-        # Custom logic to check if the user has an active subscription
         active_subscription = Subscription.objects.filter(user=user, is_active=True).exists()
-
         response.data['has_active_subscription'] = active_subscription
         return response
 
@@ -190,6 +207,8 @@ class GoogleLoginView(APIView):
         code = request.data.get('code')
         if not code:
             return Response({'error': 'Authorization code is missing'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Exchange authorization code for access and ID tokens
         token_response = requests.post(
             'https://oauth2.googleapis.com/token',
             data={
@@ -200,7 +219,6 @@ class GoogleLoginView(APIView):
                 'grant_type': 'authorization_code'
             }
         )
-
         token_data = token_response.json()
 
         if 'error' in token_data:
@@ -212,7 +230,7 @@ class GoogleLoginView(APIView):
         if not access_token or not id_token:
             return Response({'error': 'Invalid token response'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Fetch user info using the access token
+        # Get user info using the access token
         user_info_response = requests.get(
             'https://www.googleapis.com/oauth2/v1/userinfo',
             params={'access_token': access_token}
@@ -223,19 +241,20 @@ class GoogleLoginView(APIView):
 
         user_info = user_info_response.json()
         email = user_info.get('email')
-
-        # Fetch or create user
         user, created = User.objects.get_or_create(username=email, defaults={'email': email})
 
-        # Check subscription status
+        # Generate JWT tokens for the user
+        refresh = RefreshToken.for_user(user)
+        jwt_access_token = str(refresh.access_token)
+        jwt_refresh_token = str(refresh)
+
+        # Check for active subscription
         has_active_subscription = Subscription.objects.filter(user=user, is_active=True).exists()
 
-        if not has_active_subscription:
-            return Response({'error': 'User does not have an active subscription'}, status=status.HTTP_403_FORBIDDEN)
-
         return Response({
-            'access_token': access_token,
-            'id_token': id_token,
+            'access': jwt_access_token,
+            'refresh': jwt_refresh_token,
+            'has_active_subscription': has_active_subscription
         }, status=status.HTTP_200_OK)
 
 class GitHubLoginView(APIView):
@@ -289,9 +308,8 @@ class CreateSubscriptionCheckoutSessionView(APIView):
 
 class CreateTokenCheckoutSessionView(APIView):
     def post(self, request):
-        # Use request.data.get() to handle JSON data
         token_amount = request.data.get('token_amount')
-        price_id = None  # Use None instead of "None"
+        price_id = None
 
         if token_amount == '50':
             price_id = 'price_1PsuAiAzRgND7jpk2YO1xr9d'
@@ -347,11 +365,9 @@ def stripe_webhook(request):
 
 
 def handle_payment_failed(event):
-    # Access customer and subscription info from the event
     subscription_id = event['data']['object']['subscription']
     stripe_customer_id = event['data']['object']['customer']
 
-    # Find the subscription in your database
     try:
         subscription = Subscription.objects.get(stripe_subscription_id=subscription_id)
         subscription.is_active = False
@@ -362,11 +378,9 @@ def handle_payment_failed(event):
 
 
 def handle_subscription_deleted(event):
-    # Access customer and subscription info from the event
     subscription_id = event['data']['object']['id']
     stripe_customer_id = event['data']['object']['customer']
 
-    # Find the subscription in your database
     try:
         subscription = Subscription.objects.get(stripe_subscription_id=subscription_id)
         subscription.is_active = False
@@ -386,16 +400,13 @@ def handle_checkout_session_completed(event):
         subscription, created = Subscription.objects.get_or_create(user=user)
         subscription.is_active = True
 
-        # Set or update subscription type and token allocation
         subscription_type = session.get('subscription_type', 'Basic')
         subscription.subscription_type = subscription_type
 
-        # Set token allocation based on subscription type
         tokens_to_add = TOKEN_ALLOCATION_MAP.get(subscription_type, 0)
         subscription.token_allocation = tokens_to_add
         subscription.save()
 
-        # Add tokens to the user's balance
         user_token, created = UserToken.objects.get_or_create(user=user)
         user_token.token_balance += tokens_to_add
         user_token.save()
