@@ -4,8 +4,16 @@ import { resizeImage } from './logoResize';
 import './DynamicTable.css';
 
 function DynamicTable({ selectedString }) {
-  const [inputFields, setInputFields] = useState([]); // State to hold dynamic input fields
-  const [tableData, setTableData] = useState([]);
+  const [inputFields, setInputFields] = useState(() => {
+    const savedInputFields = localStorage.getItem('dynamicTableInputFields');
+    return savedInputFields ? JSON.parse(savedInputFields) : [];
+  });
+
+  const [tableData, setTableData] = useState(() => {
+    const savedTableData = localStorage.getItem('dynamicTableData');
+    return savedTableData ? JSON.parse(savedTableData) : [];
+  });
+
   const [editIndex, setEditIndex] = useState(null);
   const [editValues, setEditValues] = useState({ job: '', laborCost: '', materialCost: '' });
   const [salesTaxPercent, setSalesTaxPercent] = useState(0);
@@ -28,8 +36,26 @@ function DynamicTable({ selectedString }) {
   const [endDate, setEndDate] = useState('');
   const tableRef = useRef();
 
+  // Load table data on initial render
   useEffect(() => {
-    // Whenever a new selectedString is provided, add it as a new input field
+    const savedTableData = localStorage.getItem('dynamicTableData');
+    if (savedTableData) {
+      setTableData(JSON.parse(savedTableData));
+    }
+  }, []); // Empty dependency array to run this only on mount
+
+  // Save input fields to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('dynamicTableInputFields', JSON.stringify(inputFields));
+  }, [inputFields]);
+
+  // Save table data to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('dynamicTableData', JSON.stringify(tableData));
+  }, [tableData]);
+
+  // Whenever a new selectedString is provided, add it as a new input field
+  useEffect(() => {
     if (selectedString) {
       setInputFields((prevFields) => [...prevFields, selectedString]);
     }
@@ -43,17 +69,16 @@ function DynamicTable({ selectedString }) {
 
   const handleAddAllRows = () => {
     const newTasks = inputFields.filter((value) => value.trim() !== ''); // Get non-empty values
-    setTableData([...tableData, ...newTasks]); // Add all tasks to table data
+    setTableData((prevTableData) => [...prevTableData, ...newTasks]); // Add all tasks to table data
     setInputFields([]); // Clear all input fields
   };
 
   const handleAddCustomRow = () => {
     const customRow = 'Custom Job Labor Cost: $0.00 Material Cost: $0.00';
-    setTableData([...tableData, customRow]);
+    setTableData((prevTableData) => [...prevTableData, customRow]);
   };
 
   const handleRemoveField = (index) => {
-    // Remove the field at the specified index
     const updatedFields = inputFields.filter((_, i) => i !== index);
     setInputFields(updatedFields);
   };
@@ -445,6 +470,60 @@ function DynamicTable({ selectedString }) {
       </tr>
     );
   })}
+              <tr>
+              <td colSpan="2"><strong></strong></td>
+              <td><strong>${totalLaborCost}</strong></td>
+              <td><strong>${totalMaterialCost}</strong></td>
+              <td></td>
+            </tr>
+            <tr>
+              <td colSpan="3"><strong>Subtotal</strong></td>
+              <td><strong>${combinedTotal}</strong></td>
+              <td></td>
+            </tr>
+            {applyDiscount && (
+            <tr>
+            <td colSpan="2"><strong>Discount</strong></td>
+            <td>
+              <div className="discount-container">
+                <input
+                  type="number"
+                  value={discountPercent}
+                  onChange={handleDiscountChange}
+                  style={{ width: '50px' }}
+                  className="sales-tax"
+                  placeholder="0"
+                />
+                <span>%</span>
+              </div>
+            </td>
+            <td><strong>${totalDiscount}</strong></td>
+            <td></td>
+          </tr>
+            )}
+            <tr>
+              <td colSpan="2"><strong>Tax</strong></td>
+              <td>
+                <div className="sales-tax-container">
+                  <input
+                    type="number"
+                    value={salesTaxPercent}
+                    onChange={handleSalesTaxChange}
+                    style={{ width: '50px' }}
+                    className="sales-tax"
+                    placeholder="0"
+                  />
+                  <span>%</span>
+                </div>
+              </td>
+              <td><strong>${totalSalesTax}</strong></td>
+              <td></td>
+            </tr>
+            <tr>
+              <td colSpan="3"><strong>Total</strong></td>
+              <td><strong>${grandTotal}</strong></td>
+              <td></td>
+            </tr>
 </tbody>
         </table>
       </div>

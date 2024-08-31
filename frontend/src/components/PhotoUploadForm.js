@@ -5,11 +5,16 @@ const apiUrl = process.env.REACT_APP_API_URL;
 
 const PhotoUploadForm = ({ onSearch }) => {
     const [selectedFile, setSelectedFile] = useState(null);
-    const [data, setData] = useState({});
+    const [data, setData] = useState(() => {
+        // Load data from localStorage on initial render
+        const savedData = localStorage.getItem('photoUploadData');
+        return savedData ? JSON.parse(savedData) : {};
+    });
     const [error, setError] = useState(null);
 
     useEffect(() => {
-        console.log("Data state updated:", data);
+        // Save data to localStorage whenever it changes
+        localStorage.setItem('photoUploadData', JSON.stringify(data));
     }, [data]);
 
     const handleFileChange = (event) => {
@@ -66,10 +71,6 @@ const PhotoUploadForm = ({ onSearch }) => {
             const strings = jsonResponse.strings || {};
 
             console.log('API response strings:', strings);
-
-            Object.entries(strings).forEach(([key, value]) => {
-                console.log(`${key}: ${value}`);
-            });
 
             setData(strings);
         } catch (e) {
