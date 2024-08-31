@@ -12,11 +12,33 @@ python manage.py migrate
 # Load environment variables (if using .env)
 export $(cat .env | xargs)
 
-# Run the allocate_monthly_tokens function
+# Set up test data for token distribution
 python manage.py shell << END
-from api.tasks import allocate_monthly_tokens
-allocate_monthly_tokens()
+from django.utils import timezone
+from datetime import timedelta
+from api.models import Subscription, UserToken
+from django.contrib.auth.models import User
+
+# Create a test user
+user, created = User.objects.get_or_create(username='testuser')
+user.set_password('password123')
+user.save()
+
+# Create a test subscription for the user
+subscription, created = Subscription.objects.get_or_create(user=user)
+subscription.is_active = True
+subscription.subscription_type = 'Basic'
+subscription.last_token_allocation_date = timezone.now() - timedelta(days=31)
+subscription.save()
+
+# Ensure there is a corresponding UserToken entry
+user_token, created = UserToken.objects.get_or_create(user=user)
+user_token.token_balance = 0
+user_token.save()
+
+print("Test data setup completed.")
 END
+
 
 # Perform validation: Check if token distribution succeeded
 # You can use a Django management command or a database query to verify.
