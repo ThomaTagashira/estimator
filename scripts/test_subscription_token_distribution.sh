@@ -6,9 +6,6 @@ set -e
 # Print commands and their arguments as they are executed.
 set -x
 
-# Activate the virtual environment
-source .venv/bin/activate
-
 # Run Django migrations (if needed)
 python manage.py migrate
 
