@@ -6,7 +6,7 @@ from .models import Subscription, UserToken
 import os
 import json
 
-# Parse TOKEN_ALLOCATION_MAP from the environment variable
+# Parse TOKEN_ALLOCATION_MAP from .env
 try:
     token_allocation_map_str = os.getenv('TOKEN_ALLOCATION_MAP', '{}')
     TOKEN_ALLOCATION_MAP = json.loads(token_allocation_map_str)
@@ -25,7 +25,7 @@ def allocate_monthly_tokens():
         print(f"Subscription type: {subscription.subscription_type}")
         print(f"Last token allocation date: {subscription.last_token_allocation_date}")
 
-        # Check if 30 days have passed since the last token allocation
+        # Checking if 30 days have passed since last token allocation
         if subscription.last_token_allocation_date is None or (
             timezone.now() - subscription.last_token_allocation_date >= timedelta(days=30)
         ):
