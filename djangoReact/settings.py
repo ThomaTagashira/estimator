@@ -84,7 +84,7 @@ REST_FRAMEWORK = {
 }
 
 CRONJOBS = [
-    ('0 0 1 * *', 'api.tasks.allocate_monthly_tokens')
+    ('0 0 * * *', 'api.tasks.allocate_monthly_tokens')  # Run daily at midnight
 ]
 
 MIDDLEWARE = [

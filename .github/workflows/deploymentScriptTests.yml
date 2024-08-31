@@ -160,3 +160,9 @@ jobs:
         run: |
           echo "Running allocate tokens command"
           python manage.py allocate_tokens
+
+      - name: Run Token Distribution Test
+        run: |
+          echo "Running token distribution test"
+          chmod +x scripts/test_subscription_token_distribution.sh
+          scripts/test_subscription_token_distribution.sh

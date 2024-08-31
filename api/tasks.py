@@ -2,9 +2,15 @@ from datetime import timedelta
 from django.utils import timezone
 from .models import Subscription, UserToken
 import os
+import json
 
-TOKEN_ALLOCATION_MAP = os.getenv('TOKEN_ALLOCATION_MAP')
-
+# Parse TOKEN_ALLOCATION_MAP from the environment variable
+try:
+    token_allocation_map_str = os.getenv('TOKEN_ALLOCATION_MAP', '{}')
+    TOKEN_ALLOCATION_MAP = json.loads(token_allocation_map_str)
+except json.JSONDecodeError as e:
+    TOKEN_ALLOCATION_MAP = {}
+    print(f"Error parsing TOKEN_ALLOCATION_MAP from environment variable: {e}")
 
 def allocate_monthly_tokens():
     subscriptions = Subscription.objects.filter(is_active=True)

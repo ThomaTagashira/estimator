@@ -101,3 +101,6 @@ class HandymanPgEmbeddings(models.Model):
     class Meta:
         managed = False
         db_table = 'handyman_pg_embedding'
+
+
+#class UserSavedEstimates(models.Model):
