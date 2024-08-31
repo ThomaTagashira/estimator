@@ -16,8 +16,11 @@ except json.JSONDecodeError as e:
 def allocate_monthly_tokens():
     print("Starting token allocation process...")
     subscriptions = Subscription.objects.filter(is_active=True)
+    print(f"Found {subscriptions.count()} active subscriptions")
+
     for subscription in subscriptions:
         print(f"Processing subscription for user: {subscription.user.username}")
+        print(f"Subscription type: {subscription.subscription_type}")
         print(f"Last token allocation date: {subscription.last_token_allocation_date}")
 
         # Check if 30 days have passed since the last token allocation
@@ -30,6 +33,7 @@ def allocate_monthly_tokens():
             if tokens_to_add > 0:
                 user_token, created = UserToken.objects.get_or_create(user=subscription.user)
                 print(f"Previous token balance: {user_token.token_balance}")
+
                 user_token.token_balance += tokens_to_add
                 user_token.save()
                 print(f"New token balance: {user_token.token_balance}")
@@ -41,4 +45,5 @@ def allocate_monthly_tokens():
             else:
                 print(f"No tokens to allocate for subscription type: {subscription.subscription_type}")
         else:
-            print(f"No allocation needed; less than 30 days since last allocation.")
+            days_since_last_allocation = (timezone.now() - subscription.last_token_allocation_date).days
+            print(f"No allocation needed; only {days_since_last_allocation} days since last allocation.")
