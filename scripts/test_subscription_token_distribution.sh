@@ -9,9 +9,6 @@ set -x
 # Run Django migrations (if needed)
 python manage.py migrate
 
-# Load environment variables (if using .env)
-export $(cat .env | xargs)
-
 # Set up test data for token distribution
 python manage.py shell << END
 from django.utils import timezone
@@ -28,8 +25,15 @@ user.save()
 subscription, created = Subscription.objects.get_or_create(user=user)
 subscription.is_active = True
 subscription.subscription_type = 'Basic'
-subscription.last_token_allocation_date = timezone.now() - timedelta(days=31)
+
+# Set the last_token_allocation_date to 31 days ago
+allocation_date = timezone.now() - timedelta(days=31)
+subscription.last_token_allocation_date = allocation_date
 subscription.save()
+
+print(f"Set last_token_allocation_date to: {allocation_date}")
+print(f"Current date: {timezone.now()}")
+print(f"Days since last token allocation: {(timezone.now() - allocation_date).days}")
 
 # Ensure there is a corresponding UserToken entry
 user_token, created = UserToken.objects.get_or_create(user=user)
