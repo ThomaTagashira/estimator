@@ -1,7 +1,8 @@
 # validate_service.sh
 
-# Check the environment variable to determine which URL to validate
-if [ "$ENVIRONMENT" == "Dev" ]; then
+CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+
+if [ "$ENVIRONMENT" == "Dev" ] || [ "$CURRENT_BRANCH" == "Tokens" ]; then
     URL="http://localhost"
 else
     URL="https://thomatagashira.com"
