@@ -4,13 +4,15 @@ import { resizeImage } from './logoResize';
 import './DynamicTable.css';
 
 function DynamicTable({ selectedString }) {
-  const [inputValue, setInputValue] = useState(selectedString || '');
+  const [inputFields, setInputFields] = useState([]); // State to hold dynamic input fields
   const [tableData, setTableData] = useState([]);
   const [editIndex, setEditIndex] = useState(null);
   const [editValues, setEditValues] = useState({ job: '', laborCost: '', materialCost: '' });
   const [salesTaxPercent, setSalesTaxPercent] = useState(0);
-  const [discountPercent, setDiscountPercent] = useState(0); // State for discount percentage
-  const [applyDiscount, setApplyDiscount] = useState(false); // State to control discount application
+  const [discountPercent, setDiscountPercent] = useState(0);
+  const [applyDiscount, setApplyDiscount] = useState(false);
+  const [marginPercent, setMarginPercent] = useState(0);
+  const [applyMargin, setApplyMargin] = useState(false);
   const [companyName, setCompanyName] = useState('');
   const [address, setAddress] = useState('');
   const [phone, setPhone] = useState('');
@@ -27,25 +29,33 @@ function DynamicTable({ selectedString }) {
   const tableRef = useRef();
 
   useEffect(() => {
+    // Whenever a new selectedString is provided, add it as a new input field
     if (selectedString) {
-      setInputValue(selectedString);
+      setInputFields((prevFields) => [...prevFields, selectedString]);
     }
   }, [selectedString]);
 
-  const handleInputChange = (event) => {
-    setInputValue(event.target.value);
+  const handleInputChange = (index, value) => {
+    const updatedFields = [...inputFields];
+    updatedFields[index] = value;
+    setInputFields(updatedFields);
   };
 
-  const handleAddRow = () => {
-    if (inputValue.trim() !== '') {
-      setTableData([...tableData, inputValue]);
-      setInputValue(''); // Clear field
-    }
+  const handleAddAllRows = () => {
+    const newTasks = inputFields.filter((value) => value.trim() !== ''); // Get non-empty values
+    setTableData([...tableData, ...newTasks]); // Add all tasks to table data
+    setInputFields([]); // Clear all input fields
   };
 
   const handleAddCustomRow = () => {
     const customRow = 'Custom Job Labor Cost: $0.00 Material Cost: $0.00';
     setTableData([...tableData, customRow]);
+  };
+
+  const handleRemoveField = (index) => {
+    // Remove the field at the specified index
+    const updatedFields = inputFields.filter((_, i) => i !== index);
+    setInputFields(updatedFields);
   };
 
   const handleDeleteRow = (index) => {
@@ -88,7 +98,16 @@ function DynamicTable({ selectedString }) {
   };
 
   const toggleDiscount = () => {
-    setApplyDiscount(!applyDiscount); // Toggle discount application
+    setApplyDiscount(!applyDiscount);
+  };
+
+  const handleMarginChange = (event) => {
+    const value = event.target.value;
+    setMarginPercent(value ? parseFloat(value) : 0);
+  };
+
+  const toggleMargin = () => {
+    setApplyMargin(!applyMargin);
   };
 
   const splitTaskIntoColumns = (task) => {
@@ -96,31 +115,37 @@ function DynamicTable({ selectedString }) {
     const materialCostIndex = task.indexOf('Material Cost:');
 
     const job = task.substring(0, Math.min(
-      laborCostIndex !== -1 ? laborCostIndex : task.length,
-      materialCostIndex !== -1 ? materialCostIndex : task.length
+        laborCostIndex !== -1 ? laborCostIndex : task.length,
+        materialCostIndex !== -1 ? materialCostIndex : task.length
     )).trim();
 
     let laborCost = '';
     if (laborCostIndex !== -1) {
-      const laborCostMatch = task.substring(laborCostIndex).match(/Labor Cost: \$([\d.]+)/);
-      if (laborCostMatch) {
-        laborCost = `$${parseFloat(laborCostMatch[1]).toFixed(2)}`;
-      }
+        const laborCostMatch = task.substring(laborCostIndex).match(/Labor Cost: \$([\d.]+)/);
+        if (laborCostMatch) {
+            laborCost = parseFloat(laborCostMatch[1]).toFixed(2); // Removed the $ sign
+        }
     }
 
     let materialCost = '';
     if (materialCostIndex !== -1) {
-      const materialCostMatch = task.substring(materialCostIndex).match(/Material Cost: \$([\d.]+)/);
-      if (materialCostMatch) {
-        materialCost = `$${parseFloat(materialCostMatch[1]).toFixed(2)}`;
-      }
+        const materialCostMatch = task.substring(materialCostIndex).match(/Material Cost: \$([\d.]+)/);
+        if (materialCostMatch) {
+            materialCost = parseFloat(materialCostMatch[1]).toFixed(2); // Removed the $ sign
+        }
     }
 
     return {
-      job,
-      laborCost: laborCost || '$0.00',
-      materialCost: materialCost || '$0.00'
+        job,
+        laborCost: laborCost || '0.00',
+        materialCost: materialCost || '0.00'
     };
+};
+
+  const applyMarginToLaborCost = (laborCost) => {
+    const cost = parseFloat(laborCost.replace('$', '')) || 0;
+    const marginAmount = cost * (marginPercent / 100);
+    return (cost + marginAmount).toFixed(2);
   };
 
   const calculateTotals = () => {
@@ -129,7 +154,8 @@ function DynamicTable({ selectedString }) {
 
     tableData.forEach(item => {
       const { laborCost, materialCost } = splitTaskIntoColumns(item);
-      totalLaborCost += parseFloat(laborCost.replace('$', '') || 0);
+      const adjustedLaborCost = applyMargin ? applyMarginToLaborCost(laborCost) : laborCost.replace('$', '');
+      totalLaborCost += parseFloat(adjustedLaborCost || 0);
       totalMaterialCost += parseFloat(materialCost.replace('$', '') || 0);
     });
 
@@ -189,7 +215,8 @@ function DynamicTable({ selectedString }) {
       grandTotal,
       tableData.map((item, index) => {
         const { job, laborCost, materialCost } = splitTaskIntoColumns(item);
-        return { job, laborCost, materialCost };
+        const adjustedLaborCost = applyMargin ? applyMarginToLaborCost(laborCost) : laborCost.replace('$', '');
+        return { job, laborCost: `$${adjustedLaborCost}`, materialCost };
       }),
       applyDiscount // Pass the applyDiscount state
     );
@@ -199,16 +226,19 @@ function DynamicTable({ selectedString }) {
 
   return (
     <div>
-      <div>
-        <input
-          type="text"
-          value={inputValue}
-          onChange={handleInputChange}
-          placeholder="Enter a task"
-        />
-        <button onClick={handleAddRow}>Add Task</button>
-        <button onClick={handleAddCustomRow}>Add Custom</button>
-      </div>
+      {inputFields.map((value, index) => (
+        <div key={index}>
+          <input
+            type="text"
+            value={value}
+            onChange={(e) => handleInputChange(index, e.target.value)}
+            placeholder="Enter a task"
+          />
+          <button onClick={() => handleRemoveField(index)}>Remove Line</button>
+        </div>
+      ))}
+      <button onClick={handleAddAllRows}>Add All Tasks</button>
+      <button onClick={handleAddCustomRow}>Add Custom</button>
       <div className="info-container">
         <div className="info-section">
           <h3>Company Information</h3>
@@ -328,6 +358,23 @@ function DynamicTable({ selectedString }) {
           {applyDiscount ? 'Remove Discount' : 'Apply Discount'}
         </button>
       </div>
+      <div>
+        <button onClick={toggleMargin}>
+          {applyMargin ? 'Remove Margin' : 'Add Margin %'}
+        </button>
+        {applyMargin && (
+          <div>
+            <span>Enter Margin in Percents</span>
+            <input
+              type="number"
+              value={marginPercent}
+              onChange={handleMarginChange}
+              style={{ width: '50px' }}
+              placeholder="0"
+            />
+          </div>
+        )}
+      </div>
       <div ref={tableRef}>
         <table>
           <thead>
@@ -340,118 +387,65 @@ function DynamicTable({ selectedString }) {
             </tr>
           </thead>
           <tbody>
-            {tableData.map((item, index) => {
-              const { job, laborCost, materialCost } = splitTaskIntoColumns(item);
-              return (
-                <tr key={index}>
-                  <td>{index + 1}</td>
-                  <td>
-                    {editIndex === index ? (
-                      <textarea
-                        name="job"
-                        value={editValues.job}
-                        onChange={handleEditChange}
-                        rows="3"
-                        style={{ width: '100%' }}
-                      />
-                    ) : (
-                      job
-                    )}
-                  </td>
-                  <td>
-                    {editIndex === index ? (
-                      <input
-                        type="text"
-                        name="laborCost"
-                        value={editValues.laborCost}
-                        onChange={handleEditChange}
-                        placeholder="$0.00"
-                      />
-                    ) : (
-                      laborCost
-                    )}
-                  </td>
-                  <td>
-                    {editIndex === index ? (
-                      <input
-                        type="text"
-                        name="materialCost"
-                        value={editValues.materialCost}
-                        onChange={handleEditChange}
-                        placeholder="$0.00"
-                      />
-                    ) : (
-                      materialCost
-                    )}
-                  </td>
-                  <td>
-                    {editIndex === index ? (
-                      <button onClick={() => handleUpdateClick(index)}>Update</button>
-                    ) : (
-                      <>
-                        <button className="no-print" onClick={() => handleEditClick(index)}>Edit</button>
-                        <button className="no-print" onClick={() => handleDeleteRow(index)}>Delete</button>
-                      </>
-                    )}
-                  </td>
-                </tr>
-              );
-            })}
-            <tr>
-              <td colSpan="2"><strong></strong></td>
-              <td><strong>${totalLaborCost}</strong></td>
-              <td><strong>${totalMaterialCost}</strong></td>
-              <td></td>
-            </tr>
-            <tr>
-              <td colSpan="3"><strong>Subtotal</strong></td>
-              <td><strong>${combinedTotal}</strong></td>
-              <td></td>
-            </tr>
-            {applyDiscount && (
-            <tr>
-            <td colSpan="2"><strong>Discount</strong></td>
-            <td>
-              <div className="discount-container">
-                <input
-                  type="number"
-                  value={discountPercent}
-                  onChange={handleDiscountChange}
-                  style={{ width: '50px' }}
-                  className="sales-tax"
-                  placeholder="0"
-                />
-                <span>%</span>
-              </div>
-            </td>
-            <td><strong>${totalDiscount}</strong></td>
-            <td></td>
-          </tr>
-            )}
-            <tr>
-              <td colSpan="2"><strong>Tax</strong></td>
-              <td>
-                <div className="sales-tax-container">
-                  <input
-                    type="number"
-                    value={salesTaxPercent}
-                    onChange={handleSalesTaxChange}
-                    style={{ width: '50px' }}
-                    className="sales-tax"
-                    placeholder="0"
-                  />
-                  <span>%</span>
-                </div>
-              </td>
-              <td><strong>${totalSalesTax}</strong></td>
-              <td></td>
-            </tr>
-            <tr>
-              <td colSpan="3"><strong>Total</strong></td>
-              <td><strong>${grandTotal}</strong></td>
-              <td></td>
-            </tr>
-          </tbody>
+  {tableData.map((item, index) => {
+    const { job, laborCost, materialCost } = splitTaskIntoColumns(item);
+    const adjustedLaborCost = applyMargin ? applyMarginToLaborCost(laborCost) : laborCost;
+    return (
+      <tr key={index}>
+        <td>{index + 1}</td>
+        <td>
+          {editIndex === index ? (
+            <textarea
+              name="job"
+              value={editValues.job}
+              onChange={handleEditChange}
+              rows="3"
+              style={{ width: '100%' }}
+            />
+          ) : (
+            job
+          )}
+        </td>
+        <td>
+          {editIndex === index ? (
+            <input
+              type="text"
+              name="laborCost"
+              value={editValues.laborCost}
+              onChange={handleEditChange}
+              placeholder="0.00"
+            />
+          ) : (
+            `$${adjustedLaborCost}` // Add $ sign here for display
+          )}
+        </td>
+        <td>
+          {editIndex === index ? (
+            <input
+              type="text"
+              name="materialCost"
+              value={editValues.materialCost}
+              onChange={handleEditChange}
+              placeholder="0.00"
+            />
+          ) : (
+            `$${materialCost}` // Add $ sign here for display
+          )}
+        </td>
+        <td>
+          {editIndex === index ? (
+            <button onClick={() => handleUpdateClick(index)}>Update</button>
+          ) : (
+            <>
+              <button className="no-print" onClick={() => handleEditClick(index)}>Edit</button>
+              <button className="no-print" onClick={() => handleDeleteRow(index)}>Delete</button>
+            </>
+          )}
+        </td>
+      </tr>
+    );
+  })}
+</tbody>
         </table>
       </div>
       <button onClick={exportTablePDF}>Generate Estimate</button>

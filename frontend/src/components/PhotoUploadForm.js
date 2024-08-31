@@ -86,8 +86,35 @@ const PhotoUploadForm = ({ onSearch }) => {
         setData(updatedData);
     };
 
-    const handleLineSearch = (line) => {
-        onSearch(line);
+    const handleLineSearch = async (line) => {
+        try {
+            await onSearch(line); // Assumes onSearch is a function that returns a promise
+        } catch (err) {
+            console.error('Error during search:', err);
+            setError('Error during search');
+        }
+    };
+
+    const handleAllSearches = async () => {
+        setError(null); // Clear any previous errors
+
+        // Sequentially execute searches
+        for (const key of Object.keys(data)) {
+            try {
+                await handleLineSearch(data[key]);
+                console.log(`Search for line ${key} completed`);
+            } catch (err) {
+                setError(`Search failed for line ${key}`);
+                console.error(err);
+                break; // Stop further searches on error
+            }
+        }
+    };
+
+    const handleRemoveLine = (key) => {
+        const updatedData = { ...data };
+        delete updatedData[key]; // Remove the line from the data object
+        setData(updatedData);
     };
 
     return (
@@ -107,10 +134,11 @@ const PhotoUploadForm = ({ onSearch }) => {
                             value={data[key]}
                             onChange={(e) => handleLineChange(key, e.target.value)}
                         />
-                        <button onClick={() => handleLineSearch(data[key])}>Search</button>
+                        <button onClick={() => handleRemoveLine(key)}>Remove Line</button>
                     </li>
                 ))}
             </ul>
+            <button onClick={handleAllSearches}>Search All</button>
         </div>
     );
 };
