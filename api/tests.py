@@ -7,6 +7,7 @@ import json
 # Parse TOKEN_ALLOCATION_MAP from the environment variable
 try:
     token_allocation_map_str = os.getenv('TOKEN_ALLOCATION_MAP', '{}')
+    print(f"Raw TOKEN_ALLOCATION_MAP string from env: {token_allocation_map_str}")
     TOKEN_ALLOCATION_MAP = json.loads(token_allocation_map_str)
     print(f"Parsed TOKEN_ALLOCATION_MAP: {TOKEN_ALLOCATION_MAP}")
 except json.JSONDecodeError as e:
