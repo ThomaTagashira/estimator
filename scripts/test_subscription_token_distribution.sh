@@ -43,9 +43,14 @@ user_token.save()
 print("Test data setup completed.")
 END
 
+# Call the token allocation function to distribute tokens
+python manage.py shell << END
+from api.tasks import allocate_monthly_tokens
+allocate_monthly_tokens()
+print("Token allocation function called.")
+END
 
 # Perform validation: Check if token distribution succeeded
-# You can use a Django management command or a database query to verify.
 # Example validation command to count non-zero token balances:
 TOKEN_COUNT=$(python manage.py shell << END
 from django.db.models import Sum

@@ -157,11 +157,6 @@ jobs:
           chmod +x scripts/cleanup_s3.sh
           ./scripts/cleanup_s3.sh
 
-      - name: Run allocate tokens command
-        run: |
-          echo "Running allocate tokens command"
-          python manage.py allocate_tokens
-
       - name: Run Token Distribution Test
         run: |
           echo "Running token distribution test"
