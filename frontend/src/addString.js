@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { exportPDF } from './exportPDF';
 import { resizeImage } from './logoResize';
@@ -10,6 +9,8 @@ function DynamicTable({ selectedString }) {
   const [editIndex, setEditIndex] = useState(null);
   const [editValues, setEditValues] = useState({ job: '', laborCost: '', materialCost: '' });
   const [salesTaxPercent, setSalesTaxPercent] = useState(0);
+  const [discountPercent, setDiscountPercent] = useState(0); // State for discount percentage
+  const [applyDiscount, setApplyDiscount] = useState(false); // State to control discount application
   const [companyName, setCompanyName] = useState('');
   const [address, setAddress] = useState('');
   const [phone, setPhone] = useState('');
@@ -81,6 +82,15 @@ function DynamicTable({ selectedString }) {
     setSalesTaxPercent(value ? parseFloat(value) : 0);
   };
 
+  const handleDiscountChange = (event) => {
+    const value = event.target.value;
+    setDiscountPercent(value ? parseFloat(value) : 0);
+  };
+
+  const toggleDiscount = () => {
+    setApplyDiscount(!applyDiscount); // Toggle discount application
+  };
+
   const splitTaskIntoColumns = (task) => {
     const laborCostIndex = task.indexOf('Labor Cost:');
     const materialCostIndex = task.indexOf('Material Cost:');
@@ -123,12 +133,18 @@ function DynamicTable({ selectedString }) {
       totalMaterialCost += parseFloat(materialCost.replace('$', '') || 0);
     });
 
+    const combinedTotal = totalLaborCost + totalMaterialCost;
+    const totalDiscount = applyDiscount ? combinedTotal * (discountPercent / 100) : 0;
+    const totalSalesTax = (combinedTotal - totalDiscount) * (salesTaxPercent / 100);
+    const grandTotal = combinedTotal - totalDiscount + totalSalesTax;
+
     return {
       totalLaborCost: totalLaborCost.toFixed(2),
       totalMaterialCost: totalMaterialCost.toFixed(2),
-      combinedTotal: (totalLaborCost + totalMaterialCost).toFixed(2),
-      totalSalesTax: ((totalLaborCost + totalMaterialCost) * (salesTaxPercent / 100)).toFixed(2),
-      grandTotal: (totalLaborCost + totalMaterialCost + (totalLaborCost + totalMaterialCost) * (salesTaxPercent / 100)).toFixed(2)
+      combinedTotal: combinedTotal.toFixed(2),
+      totalDiscount: totalDiscount.toFixed(2),
+      totalSalesTax: totalSalesTax.toFixed(2),
+      grandTotal: grandTotal.toFixed(2)
     };
   };
 
@@ -140,6 +156,15 @@ function DynamicTable({ selectedString }) {
   };
 
   const exportTablePDF = () => {
+    const {
+      totalLaborCost,
+      totalMaterialCost,
+      combinedTotal,
+      totalDiscount,
+      totalSalesTax,
+      grandTotal
+    } = calculateTotals();
+
     exportPDF(
       logo,
       companyName,
@@ -157,17 +182,20 @@ function DynamicTable({ selectedString }) {
       totalLaborCost,
       totalMaterialCost,
       combinedTotal,
+      discountPercent,
+      totalDiscount,
       salesTaxPercent,
       totalSalesTax,
       grandTotal,
       tableData.map((item, index) => {
         const { job, laborCost, materialCost } = splitTaskIntoColumns(item);
         return { job, laborCost, materialCost };
-      })
+      }),
+      applyDiscount // Pass the applyDiscount state
     );
   };
 
-  const { totalLaborCost, totalMaterialCost, combinedTotal, totalSalesTax, grandTotal } = calculateTotals();
+  const { totalLaborCost, totalMaterialCost, combinedTotal, totalDiscount, totalSalesTax, grandTotal } = calculateTotals();
 
   return (
     <div>
@@ -295,6 +323,11 @@ function DynamicTable({ selectedString }) {
           </div>
         </div>
       </div>
+      <div>
+        <button onClick={toggleDiscount}>
+          {applyDiscount ? 'Remove Discount' : 'Apply Discount'}
+        </button>
+      </div>
       <div ref={tableRef}>
         <table>
           <thead>
@@ -375,6 +408,26 @@ function DynamicTable({ selectedString }) {
               <td><strong>${combinedTotal}</strong></td>
               <td></td>
             </tr>
+            {applyDiscount && (
+            <tr>
+            <td colSpan="2"><strong>Discount</strong></td>
+            <td>
+              <div className="discount-container">
+                <input
+                  type="number"
+                  value={discountPercent}
+                  onChange={handleDiscountChange}
+                  style={{ width: '50px' }}
+                  className="sales-tax"
+                  placeholder="0"
+                />
+                <span>%</span>
+              </div>
+            </td>
+            <td><strong>${totalDiscount}</strong></td>
+            <td></td>
+          </tr>
+            )}
             <tr>
               <td colSpan="2"><strong>Tax</strong></td>
               <td>

@@ -1,6 +1,4 @@
-// Login.js
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
 import { GoogleOAuthProvider } from '@react-oauth/google';
@@ -17,26 +15,60 @@ const Login = ({ setIsAuthenticated, setHasActiveSubscription }) => {
     const [error, setError] = useState('');
     const navigate = useNavigate();
 
-    useEffect(() => {
+    // Memoize the validateAndFetchSubscriptionStatus function using useCallback
+    const validateAndFetchSubscriptionStatus = useCallback(async () => {
         const accessToken = localStorage.getItem('access_token');
-        if (accessToken) {
-            axios.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
-            setIsAuthenticated(true);
-            axios.get(`${apiUrl}/api/subscription/status/`)
-                .then(response => {
-                    setHasActiveSubscription(response.data.has_active_subscription);
-                    navigate('/');
-                })
-                .catch(error => {
-                    console.error('Error fetching subscription status:', error);
-                    setHasActiveSubscription(false);
-                });
+        const refreshToken = localStorage.getItem('refresh_token');
+
+        if (!accessToken) {
+            console.error('No access token available');
+            setIsAuthenticated(false);
+            navigate('/login');
+            return;
+        }
+
+        try {
+            const response = await axios.get(`${apiUrl}/api/subscription/status/`);
+            setHasActiveSubscription(response.data.has_active_subscription);
+            navigate('/');
+        } catch (error) {
+            console.error('Error fetching subscription status:', error);
+            setHasActiveSubscription(false);
+
+            if (error.response && error.response.status === 401) {
+                if (refreshToken) {
+                    try {
+                        const refreshResponse = await axios.post(`${apiUrl}/api/token/refresh/`, { refresh: refreshToken });
+                        const newAccessToken = refreshResponse.data.access;
+
+                        // Update the access token in local storage and Axios headers
+                        localStorage.setItem('access_token', newAccessToken);
+                        axios.defaults.headers.common['Authorization'] = `Bearer ${newAccessToken}`;
+
+                        await validateAndFetchSubscriptionStatus(); // Retry fetching subscription status
+                    } catch (refreshError) {
+                        console.error('Error refreshing token:', refreshError);
+                        setIsAuthenticated(false);
+                        localStorage.removeItem('access_token');
+                        localStorage.removeItem('refresh_token');
+                        navigate('/login');
+                    }
+                } else {
+                    setIsAuthenticated(false);
+                    navigate('/login');
+                }
+            }
         }
     }, [setIsAuthenticated, setHasActiveSubscription, navigate]);
+
+    useEffect(() => {
+        validateAndFetchSubscriptionStatus();
+    }, [validateAndFetchSubscriptionStatus]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         const csrftoken = getCookie('csrftoken');
+
         try {
             const response = await axios.post(`${apiUrl}/api/userToken/`, {
                 username,
@@ -48,6 +80,10 @@ const Login = ({ setIsAuthenticated, setHasActiveSubscription }) => {
             });
 
             const { access, refresh, has_active_subscription } = response.data;
+
+            // Debugging: Log the tokens being set
+            console.log('Access token after login:', access);
+            console.log('Refresh token after login:', refresh);
 
             localStorage.setItem('access_token', access);
             localStorage.setItem('refresh_token', refresh);
@@ -67,23 +103,23 @@ const Login = ({ setIsAuthenticated, setHasActiveSubscription }) => {
     };
 
     const handleGoogleLogin = () => {
-        const clientId = `${googleID}`;
+        const clientId = googleID;
         const redirectUri = `${redirUrl}/google-callback`;
         const scope = 'profile email';
         const responseType = 'code';
 
         const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=${responseType}&scope=${scope}`;
 
-        window.location.href = authUrl;  // **Google OAuth
+        window.location.href = authUrl;
     };
 
     const handleGitHubLogin = () => {
-        const clientId = `${githubID}`;
+        const clientId = githubID;
         const redirectUri = `${redirUrl}/github-callback`;
 
         const authUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&scope=read:user`;
 
-        window.location.href = authUrl;  // **Github OAuth
+        window.location.href = authUrl;
     };
 
     return (

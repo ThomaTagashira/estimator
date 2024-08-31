@@ -43,6 +43,7 @@ TOKEN_ALLOCATION_MAP = os.getenv('TOKEN_ALLOCATION_MAP')
 
 stripe.api_key=os.getenv('STRIPE_SECRET_KEY')
 
+
 def serve_react(request, path, document_root=None):
     path = posixpath.normpath(path).lstrip("/")
     fullpath = Path(safe_join(document_root, path))
@@ -156,13 +157,14 @@ def register_user(request):
 
 logger = logging.getLogger(__name__)
 
-@api_view(['GET'])
+@api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
 def subscription_status(request):
     user = request.user
     try:
         subscription = Subscription.objects.get(user=user)
         response_data = {'has_active_subscription': subscription.is_active}
+        print(response_data)
         logger.debug('Subscription True: %s', response_data)
         return Response(response_data)
     except Subscription.DoesNotExist:
@@ -257,6 +259,7 @@ class GoogleLoginView(APIView):
             'has_active_subscription': has_active_subscription
         }, status=status.HTTP_200_OK)
 
+
 class GitHubLoginView(APIView):
     def post(self, request, *args, **kwargs):
         code = request.data.get('code')
@@ -335,6 +338,7 @@ class CreateTokenCheckoutSessionView(APIView):
             return Response({'sessionId': session.id})
         except Exception as e:
             return Response({'error': str(e)}, status=400)
+
 
 @csrf_exempt
 def stripe_webhook(request):

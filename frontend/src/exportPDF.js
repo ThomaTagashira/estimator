@@ -1,4 +1,3 @@
-
 function getTodayDate() {
     const today = new Date();
     const options = { month: '2-digit', day: '2-digit', year: 'numeric' };
@@ -6,9 +5,29 @@ function getTodayDate() {
   }
   
   function generateHTMLContent({
-    logo, companyName, address, phone, estimateNumber, clientName, clientAddress, clientPhone, clientEmail,
-    projectName, projectLocation, startDate, endDate, totalLaborCost, totalMaterialCost, combinedTotal,
-    salesTaxPercent, totalSalesTax, grandTotal, tableData
+    logo,
+    companyName,
+    address,
+    phone,
+    estimateNumber,
+    clientName,
+    clientAddress,
+    clientPhone,
+    clientEmail,
+    projectName,
+    projectLocation,
+    startDate,
+    endDate,
+    totalLaborCost,
+    totalMaterialCost,
+    combinedTotal,
+    discountPercent,
+    totalDiscount,
+    salesTaxPercent,
+    totalSalesTax,
+    grandTotal,
+    tableData,
+    applyDiscount // New parameter to determine if the discount row should be included
   }) {
     const todayDate = getTodayDate();
   
@@ -240,6 +259,13 @@ function getTodayDate() {
                   <td class="no-border align-left"><strong>Subtotal</strong></td>
                   <td class="no-border" colspan="2" class="align-right"><strong>$${combinedTotal}</strong></td>
                 </tr>
+                ${applyDiscount ? `
+                <tr class="no-border total-row">
+                  <td class="no-border align-left"><strong>Discount</strong></td>
+                  <td class="no-border align-center"><span>${discountPercent}%</span></td>
+                  <td class="no-border align-right"><strong>$${totalDiscount}</strong></td>
+                </tr>
+                ` : ''}
                 <tr class="no-border total-row">
                   <td class="no-border align-left"><strong>Tax</strong></td>
                   <td class="no-border align-center"><span>${salesTaxPercent}%</span></td>
@@ -260,14 +286,54 @@ function getTodayDate() {
   }
   
   export const exportPDF = (
-    logo, companyName, address, phone, estimateNumber, clientName, clientAddress, clientPhone, clientEmail,
-    projectName, projectLocation, startDate, endDate, totalLaborCost, totalMaterialCost, combinedTotal,
-    salesTaxPercent, totalSalesTax, grandTotal, tableData
+    logo,
+    companyName,
+    address,
+    phone,
+    estimateNumber,
+    clientName,
+    clientAddress,
+    clientPhone,
+    clientEmail,
+    projectName,
+    projectLocation,
+    startDate,
+    endDate,
+    totalLaborCost,
+    totalMaterialCost,
+    combinedTotal,
+    discountPercent,
+    totalDiscount,
+    salesTaxPercent,
+    totalSalesTax,
+    grandTotal,
+    tableData,
+    applyDiscount // New parameter to determine if the discount row should be included
   ) => {
     const htmlContent = generateHTMLContent({
-      logo, companyName, address, phone, estimateNumber, clientName, clientAddress, clientPhone, clientEmail,
-      projectName, projectLocation, startDate, endDate, totalLaborCost, totalMaterialCost, combinedTotal,
-      salesTaxPercent, totalSalesTax, grandTotal, tableData
+      logo,
+      companyName,
+      address,
+      phone,
+      estimateNumber,
+      clientName,
+      clientAddress,
+      clientPhone,
+      clientEmail,
+      projectName,
+      projectLocation,
+      startDate,
+      endDate,
+      totalLaborCost,
+      totalMaterialCost,
+      combinedTotal,
+      discountPercent,
+      totalDiscount,
+      salesTaxPercent,
+      totalSalesTax,
+      grandTotal,
+      tableData,
+      applyDiscount // Pass the parameter down to generateHTMLContent
     });
   
     const newWindow = window.open('', '_blank');
