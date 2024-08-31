@@ -1,14 +1,13 @@
-# tasks.py
-
 from datetime import timedelta
 from django.utils import timezone
 from .models import Subscription, UserToken
 import os
 import json
 
-# Parse TOKEN_ALLOCATION_MAP from .env
+# Parse TOKEN_ALLOCATION_MAP from the environment variable
 try:
     token_allocation_map_str = os.getenv('TOKEN_ALLOCATION_MAP', '{}')
+    print(f"Raw TOKEN_ALLOCATION_MAP string from env: {token_allocation_map_str}")
     TOKEN_ALLOCATION_MAP = json.loads(token_allocation_map_str)
     print(f"Parsed TOKEN_ALLOCATION_MAP: {TOKEN_ALLOCATION_MAP}")
 except json.JSONDecodeError as e:
@@ -16,7 +15,7 @@ except json.JSONDecodeError as e:
     print(f"Error parsing TOKEN_ALLOCATION_MAP from environment variable: {e}")
 
 def allocate_monthly_tokens():
-    print("allocate_monthly_tokens function has been called")
+    print("Starting token allocation process...")
     subscriptions = Subscription.objects.filter(is_active=True)
     print(f"Found {subscriptions.count()} active subscriptions")
 
@@ -25,11 +24,10 @@ def allocate_monthly_tokens():
         print(f"Subscription type: {subscription.subscription_type}")
         print(f"Last token allocation date: {subscription.last_token_allocation_date}")
 
-        # Checking if 30 days have passed since last token allocation
+        # Check if 30 days have passed since the last token allocation
         if subscription.last_token_allocation_date is None or (
             timezone.now() - subscription.last_token_allocation_date >= timedelta(days=30)
         ):
-            print(f"Condition met to allocate tokens for user: {subscription.user.username}")
             tokens_to_add = TOKEN_ALLOCATION_MAP.get(subscription.subscription_type, 0)
             print(f"Tokens to add for subscription type {subscription.subscription_type}: {tokens_to_add}")
 
@@ -50,5 +48,3 @@ def allocate_monthly_tokens():
         else:
             days_since_last_allocation = (timezone.now() - subscription.last_token_allocation_date).days
             print(f"No allocation needed; only {days_since_last_allocation} days since last allocation.")
-
-    print("Token allocation process completed")
