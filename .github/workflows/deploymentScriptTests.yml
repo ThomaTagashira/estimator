@@ -164,7 +164,6 @@ jobs:
         run: |
             echo 'TOKEN_ALLOCATION_MAP={"Basic": 50, "Premium": 100, "Enterprise": 200}' >> $GITHUB_ENV
 
-
       - name: Run Token Distribution Test
         run: |
           echo "Running token distribution test"
