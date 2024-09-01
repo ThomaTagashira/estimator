@@ -15,6 +15,9 @@ jobs:
     name: Validate appspec.yml
     runs-on: ubuntu-22.04
     steps:
+      - name: Enable debug logging
+        run: echo "RUNNER_DEBUG=true" >> $GITHUB_ENV
+
       - name: Checkout code
         uses: actions/checkout@v3
 
@@ -156,6 +159,7 @@ jobs:
         run: |
           chmod +x scripts/cleanup_s3.sh
           ./scripts/cleanup_s3.sh
+
 
       - name: Run Token Distribution Test
         run: |

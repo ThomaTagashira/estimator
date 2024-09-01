@@ -5,12 +5,15 @@ import os
 import json
 
 # Parse TOKEN_ALLOCATION_MAP from the environment variable
+token_allocation_map_str = os.getenv('TOKEN_ALLOCATION_MAP', '{}')
+print(f"Raw TOKEN_ALLOCATION_MAP string from env: {bool(token_allocation_map_str)} (non-empty string check)")
+
 try:
-    token_allocation_map_str = os.getenv('TOKEN_ALLOCATION_MAP', '{}')
-    print(f"Raw TOKEN_ALLOCATION_MAP string from env: {token_allocation_map_str}")
+    if not token_allocation_map_str or token_allocation_map_str == '{}':
+        raise ValueError("TOKEN_ALLOCATION_MAP environment variable is not set, is empty, or is default '{}'.")
     TOKEN_ALLOCATION_MAP = json.loads(token_allocation_map_str)
     print(f"Parsed TOKEN_ALLOCATION_MAP: {TOKEN_ALLOCATION_MAP}")
-except json.JSONDecodeError as e:
+except (json.JSONDecodeError, ValueError) as e:
     TOKEN_ALLOCATION_MAP = {}
     print(f"Error parsing TOKEN_ALLOCATION_MAP from environment variable: {e}")
 
