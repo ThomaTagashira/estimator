@@ -65,7 +65,7 @@ jobs:
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       AWS_REGION: ${{ secrets.AWS_REGION }}
       TEST_S3_BUCKET_NAME: "${{ secrets.TEST_S3_BUCKET_NAME }}"
-      TOKEN_ALLOCATION_MAP: ${{ secrets.TOKEN_ALLOCATION_MAP }}
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -159,6 +159,10 @@ jobs:
         run: |
           chmod +x scripts/cleanup_s3.sh
           ./scripts/cleanup_s3.sh
+
+      - name: Set TOKEN_ALLOCATION_MAP
+        run: |
+            echo 'TOKEN_ALLOCATION_MAP={"Basic": 50, "Premium": 100, "Enterprise": 200}' >> $GITHUB_ENV
 
 
       - name: Run Token Distribution Test

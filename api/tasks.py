@@ -4,19 +4,18 @@ from .models import Subscription, UserToken
 import os
 import json
 
-# Get the TOKEN_ALLOCATION_MAP from environment
-token_allocation_map_str = os.getenv('TOKEN_ALLOCATION_MAP')
-
-# If the environment variable is not set, raise an error or handle it
-if token_allocation_map_str is None:
-    raise EnvironmentError("TOKEN_ALLOCATION_MAP environment variable is not set")
+# Parse TOKEN_ALLOCATION_MAP from the environment variable
+token_allocation_map_str = os.getenv('TOKEN_ALLOCATION_MAP', '{}')
+print(f"Raw TOKEN_ALLOCATION_MAP string from env: {bool(token_allocation_map_str)} (non-empty string check)")
 
 try:
+    if not token_allocation_map_str or token_allocation_map_str == '{}':
+        raise ValueError("TOKEN_ALLOCATION_MAP environment variable is not set, is empty, or is default '{}'.")
     TOKEN_ALLOCATION_MAP = json.loads(token_allocation_map_str)
     print(f"Parsed TOKEN_ALLOCATION_MAP: {TOKEN_ALLOCATION_MAP}")
-except json.JSONDecodeError as e:
-    print(f"Error parsing TOKEN_ALLOCATION_MAP from environment variable: {e}")
+except (json.JSONDecodeError, ValueError) as e:
     TOKEN_ALLOCATION_MAP = {}
+    print(f"Error parsing TOKEN_ALLOCATION_MAP from environment variable: {e}")
 
 def allocate_monthly_tokens():
     print("Starting token allocation process...")
