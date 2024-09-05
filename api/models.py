@@ -3,7 +3,7 @@ from pgvector.django import VectorField
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from django.contrib.auth.models import User
+
 
 @receiver(post_save, sender=User)
 def manage_user_profile(sender, instance, created, **kwargs):
@@ -13,14 +13,17 @@ def manage_user_profile(sender, instance, created, **kwargs):
         except Exception as e:
             print(f"Error creating StripeProfile for {instance.username}: {e}")
     else:
-        instance.profile.save()
+        pass
 
 class StripeProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
-    stripe_customer_id = models.CharField(max_length=255, unique=True)
+    stripe_customer_id = models.CharField(max_length=255, unique=True, null=True, blank=True)
+    is_exempt = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.user.username}'s Profile"
+
+
 
 class UserToken(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='token')

@@ -1,25 +1,46 @@
 // TokenPurchasePage.js
 
-import React from 'react';
-import StripeCheckoutButton from './StripeCheckoutButton';
+import React, { useState } from 'react';
+import { TokenCheckoutButton } from './StripeCheckoutButton';
 
 
 const TokenPurchasePage = () => {
+    const [selectedToken, setSelectedToken] = useState(''); // State to hold the selected token #
+
+    const handleSelectToken = (tokenQty) => {
+        setSelectedToken(tokenQty);
+    };
+
     return (
         <div>
-            <h1>Purchase Tokens</h1>
-            <div>
-                <h2>Buy 50 Tokens</h2>
-                <StripeCheckoutButton apiEndpoint="/api/token-payments/" tokenAmount="50" />
-            </div>
-            <div>
-                <h2>Buy 75 Tokens</h2>
-                <StripeCheckoutButton apiEndpoint="/api/token-payments/" tokenAmount="75" />
-            </div>
-            <div>
-                <h2>Buy 100 Tokens</h2>
-                <StripeCheckoutButton apiEndpoint="/api/token-payments/" tokenAmount="100" />
-            </div>
+            <h2>Select Tokens to Purchase</h2>
+            <ul>
+                <li>
+                    <button onClick={() => handleSelectToken('50')}>
+                        50 Tokens - $19.99
+                    </button>
+                </li>
+                <li>
+                    <button onClick={() => handleSelectToken('75')}>
+                        75 Tokens - $29.99
+                    </button>
+                </li>
+                <li>
+                    <button onClick={() => handleSelectToken('100')}>
+                        100 Tokens - $39.99
+                    </button>
+                </li>
+            </ul>
+
+            {selectedToken && (
+                <div>
+                    <h3>You have selected {selectedToken} Tokens.</h3>
+                    <TokenCheckoutButton
+                        apiEndpoint="/api/token-payments/"
+                        tokenQty={selectedToken}
+                    />
+                </div>
+            )}
         </div>
     );
 };

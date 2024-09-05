@@ -59,8 +59,11 @@ class StringListSerializer(serializers.Serializer):
     )
 
     def validate_strings(self, value):
+        logger.debug("Validating 'strings' field in StringListSerializer")
         if value is None or len(value) == 0:
-            raise serializers.ValidationError("The 'strings' field cannot be null or empty.")
+            raise serializers.ValidationError(
+                f"The 'strings' field cannot be null or empty. Raised in {self.__class__.__name__}."
+            )
         return value
 
 
@@ -75,8 +78,11 @@ class NoteDictSerializer(serializers.Serializer):
     )
 
     def validate_strings(self, value):
+        logger.debug("Validating 'strings' field in NoteDictSerializer")
         if not value:
-            raise serializers.ValidationError("The 'strings' field cannot be null or empty.")
+            raise serializers.ValidationError(
+                f"The 'strings' field cannot be null or empty. Raised in {self.__class__.__name__}."
+            )
         return value
 
 

@@ -1,8 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
-const Header = ({ handleLogout, hasActiveSubscription }) => {
-
+const Header = ({ handleLogout, hasActiveSubscription, }) => {
     return (
         <header style={headerStyle}>
             <div style={logoStyle}>
@@ -10,21 +9,24 @@ const Header = ({ handleLogout, hasActiveSubscription }) => {
             </div>
             <nav style={navStyle}>
                 <ul style={ulStyle}>
-                    <li style={liStyle}><Link to="/">Home</Link></li>
-                    <li style={liStyle}><Link to="/about">About</Link></li>
-                    {hasActiveSubscription && (
+                    {hasActiveSubscription ? (
                         <>
+                            <li style={liStyle}><Link to="/">Home</Link></li>
                             <li style={liStyle}><Link to="/profile">Profile</Link></li>
                             <li style={liStyle}><Link to="/buy-tokens">Buy Tokens</Link></li>
                         </>
+                    ) : (
+                        <>
+                            <li style={liStyle}><Link to="/login">Sign Up</Link></li>
+                        </>
                     )}
+                    <li style={liStyle}><Link to="/about">About</Link></li> {/* About link at the end */}
                 </ul>
             </nav>
             <button style={logoutButtonStyle} onClick={handleLogout}>Logout</button>
         </header>
     );
 };
-
 
 const headerStyle = {
     display: 'flex',

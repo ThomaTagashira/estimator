@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { BrowserRouter as Router, Route, Routes, redirect } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, redirect, useNavigate } from 'react-router-dom';
 import setupInterceptors from './components/setupInterceptor';
 import Login from './components/Login';
 import Register from './components/Register';
@@ -37,6 +37,7 @@ function App() {
   const [searchResult, setSearchResult] = useState(null);
   const [showPaymentForm, setShowPaymentForm] = useState(false);
 
+
   const handleLogout = () => {
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
@@ -49,25 +50,24 @@ function App() {
   useEffect(() => {
     const token = localStorage.getItem('access_token');
     if (token) {
-        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-        setIsAuthenticated(true);
-        axios.get(`${apiUrl}/api/subscription/status/`)
-            .then(response => {
-                console.log('API response for subscription:', response.data);
-                setHasActiveSubscription(response.data.has_active_subscription);
-                console.log('Setting hasActiveSubscription:', response.data.has_active_subscription);
-            })
-            .catch(error => {
-                if (error.response && error.response.status === 401) {
-                    setIsAuthenticated(false);
-                    setHasActiveSubscription(false);
-                    redirect('/login');
-                } else {
-                    console.error('Error fetching subscription status:', error);
-                }
-            });
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      setIsAuthenticated(true);
+      axios.get(`${apiUrl}/api/subscription/status/`)
+        .then(response => {
+          setHasActiveSubscription(response.data.has_active_subscription);
+        })
+        .catch(error => {
+          if (error.response && error.response.status === 401) {
+            setIsAuthenticated(false);
+            setHasActiveSubscription(false);
+            redirect('/login');
+          } else {
+            console.error('Error fetching subscription status:', error);
+          }
+        });
     }
 }, [setIsAuthenticated, setHasActiveSubscription]);
+
 
   const fetchTextData = (inputText) => {
     setLoading(true);
@@ -148,7 +148,7 @@ function App() {
         <Route path="/success" element={<SuccessPage />} />
         <Route path="/cancel" element={<CancelPage />} />
         <Route path="/" element={
-          <AuthenticatedRoute isAuthenticated={isAuthenticated}>
+            <AuthenticatedRoute isAuthenticated={isAuthenticated} hasActiveSubscription={hasActiveSubscription}>
             <div className="App">
               <SearchForm onTextSubmit={fetchTextData} onScopeSubmit={fetchScopeData} />
 

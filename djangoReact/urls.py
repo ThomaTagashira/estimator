@@ -26,6 +26,7 @@ urlpatterns = [
     path('api/subscription/status/', subscription_status, name='subscription_status'),
     path('api/payments/', CreateSubscriptionCheckoutSessionView.as_view(), name='create_subscription_checkout_session'),
     path('api/token-payments/', CreateTokenCheckoutSessionView.as_view(), name='create_token_checkout_session'),
+    path('stripe_webhook/', stripe_webhook, name='stripe_webhook'),
     #re_path(r"^(?P<path>.*)$", serve_react, {"document_root": settings.REACT_APP_BUILD_PATH}),
 ]
 
