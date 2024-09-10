@@ -19,7 +19,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from dotenv import load_dotenv
 import posixpath
 from pathlib import Path
-from .models import Subscription, UserToken, StripeProfile
+from .models import *
 from django.utils._os import safe_join
 from django.views.static import serve as static_serve
 from datetime import timedelta
@@ -539,3 +539,13 @@ def handle_checkout_session_completed(event):
         logger.error(f"Error handling subscription: {e}")
 
 
+
+def user_estimate_view(request):
+    user = request.user  # Get the logged-in user
+    estimates = UserEstimates.objects.filter(user=user).select_related('project_data', 'estimate_items', 'client_data')
+
+    context = {
+        'estimates': estimates
+    }
+
+    return context
