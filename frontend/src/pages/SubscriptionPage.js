@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import {SubscriptionCheckoutButton} from './StripeCheckoutButton'; // Assume you already have this component
+import {SubscriptionCheckoutButton} from '../components/StripeCheckoutButton'; // Assume you already have this component
 
 const SubscriptionPage = () => {
     const [selectedTier, setSelectedTier] = useState(''); // State to hold the selected subscription tier

@@ -1,10 +1,12 @@
+// exportPDF.js
+
 function getTodayDate() {
     const today = new Date();
     const options = { month: '2-digit', day: '2-digit', year: 'numeric' };
     return today.toLocaleDateString('en-US', options);
-  }
-  
-  function generateHTMLContent({
+}
+
+function generateHTMLContent({
     logo,
     companyName,
     address,
@@ -26,19 +28,23 @@ function getTodayDate() {
     salesTaxPercent,
     totalSalesTax,
     grandTotal,
-    tableData,
-    applyDiscount // New parameter to determine if the discount row should be included
-  }) {
+    tableData = [], // Ensure tableData defaults to an empty array
+    applyDiscount
+}) {
     const todayDate = getTodayDate();
   
     return `
-      <!DOCTYPE html>
+       <!DOCTYPE html>
       <html>
       <head>
         <style>
           @page {
-            margin: 0;
-            size: letter;
+            margin: 1in;
+            margin-top: 50px;
+          }
+
+          @page :first {
+            margin-top: 0;
           }
           body {
             font-family: Arial, sans-serif;
@@ -96,11 +102,6 @@ function getTodayDate() {
             margin: 5px 0;
             font-size: 12px;
           }
-          .information p {
-            margin-left: 5%;
-            line-height: 1;
-            font-size: 10px;
-          }
           .estimate-info {
             display: flex;
             flex-direction: column;
@@ -115,10 +116,6 @@ function getTodayDate() {
             margin-top: 0;
             box-sizing: border-box;
           }
-          .estimate-info p {
-            margin: 5px 0;
-            font-size: 12px;
-          }
           .scope-of-work {
             background-color: #1d2a5d;
             color: white;
@@ -126,10 +123,6 @@ function getTodayDate() {
             margin-top: 20px;
             text-align: center;
             box-sizing: border-box;
-          }
-          .scope-of-work p {
-            margin: 0;
-            font-size: 12px;
           }
           table {
             width: 100%;
@@ -145,6 +138,9 @@ function getTodayDate() {
             padding: 10px;
             text-align: left;
             font-size: 12px;
+          }
+          tr {
+            page-break-inside: avoid;
           }
           .no-border {
             border: none;
@@ -166,11 +162,12 @@ function getTodayDate() {
           .align-left {
             text-align: left;
           }
-          .align-center {
-            text-align: center;
-          }
           .total-row td {
             padding-top: 10px;
+          }
+          .totals-container {
+            page-break-inside: avoid;
+            margin-bottom: 40px;
           }
           .export-btn {
             margin: 20px 0;
@@ -253,39 +250,41 @@ function getTodayDate() {
                 `).join('')}
               </tbody>
             </table>
-            <table class="no-border">
-              <tbody>
-                <tr class="no-border total-row">
-                  <td class="no-border align-left"><strong>Subtotal</strong></td>
-                  <td class="no-border" colspan="2" class="align-right"><strong>$${combinedTotal}</strong></td>
-                </tr>
-                ${applyDiscount ? `
-                <tr class="no-border total-row">
-                  <td class="no-border align-left"><strong>Discount</strong></td>
-                  <td class="no-border align-center"><span>${discountPercent}%</span></td>
-                  <td class="no-border align-right"><strong>$${totalDiscount}</strong></td>
-                </tr>
-                ` : ''}
-                <tr class="no-border total-row">
-                  <td class="no-border align-left"><strong>Tax</strong></td>
-                  <td class="no-border align-center"><span>${salesTaxPercent}%</span></td>
-                  <td class="no-border align-right"><strong>$${totalSalesTax}</strong></td>
-                </tr>
-                <tr class="no-border total-row">
-                  <td class="no-border align-left"><strong>Total</strong></td>
-                  <td class="no-border" colspan="2" class="align-right"><strong>$${grandTotal}</strong></td>
-                </tr>
-              </tbody>
-            </table>
+            <div class="totals-container">
+                <table class="no-border">
+                    <tbody>
+                        <tr class="no-border total-row">
+                            <td class="no-border align-left"><strong>Subtotal</strong></td>
+                            <td class="no-border" colspan="2" class="align-right"><strong>$${combinedTotal}</strong></td>
+                        </tr>
+                        ${applyDiscount ? `
+                        <tr class="no-border total-row">
+                            <td class="no-border align-left"><strong>Discount</strong></td>
+                            <td class="no-border align-center"><span>${discountPercent}%</span></td>
+                            <td class="no-border align-right"><strong>$${totalDiscount}</strong></td>
+                        </tr>
+                        ` : ''}
+                        <tr class="no-border total-row">
+                            <td class="no-border align-left"><strong>Tax</strong></td>
+                            <td class="no-border align-center"><span>${salesTaxPercent}%</span></td>
+                            <td class="no-border align-right"><strong>$${totalSalesTax}</strong></td>
+                        </tr>
+                        <tr class="no-border total-row">
+                            <td class="no-border align-left"><strong>Total</strong></td>
+                            <td class="no-border" colspan="2" class="align-right"><strong>$${grandTotal}</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
             <button class="export-btn" onclick="exportToPDF()">Export to PDF</button>
           </div>
         </div>
       </body>
-      </html>
+    </html>
     `;
   }
   
-  export const exportPDF = (
+  export const exportPDF = ({
     logo,
     companyName,
     address,
@@ -307,36 +306,36 @@ function getTodayDate() {
     salesTaxPercent,
     totalSalesTax,
     grandTotal,
-    tableData,
-    applyDiscount // New parameter to determine if the discount row should be included
-  ) => {
+    tableData = [],
+    applyDiscount
+}) => {
     const htmlContent = generateHTMLContent({
-      logo,
-      companyName,
-      address,
-      phone,
-      estimateNumber,
-      clientName,
-      clientAddress,
-      clientPhone,
-      clientEmail,
-      projectName,
-      projectLocation,
-      startDate,
-      endDate,
-      totalLaborCost,
-      totalMaterialCost,
-      combinedTotal,
-      discountPercent,
-      totalDiscount,
-      salesTaxPercent,
-      totalSalesTax,
-      grandTotal,
-      tableData,
-      applyDiscount // Pass the parameter down to generateHTMLContent
+        logo,
+        companyName,
+        address,
+        phone,
+        estimateNumber,
+        clientName,
+        clientAddress,
+        clientPhone,
+        clientEmail,
+        projectName,
+        projectLocation,
+        startDate,
+        endDate,
+        totalLaborCost,
+        totalMaterialCost,
+        combinedTotal,
+        discountPercent,
+        totalDiscount,
+        salesTaxPercent,
+        totalSalesTax,
+        grandTotal,
+        tableData,
+        applyDiscount
     });
-  
+
     const newWindow = window.open('', '_blank');
     newWindow.document.write(htmlContent);
     newWindow.document.close();
-  };
+};

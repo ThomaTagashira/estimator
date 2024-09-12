@@ -1,3 +1,5 @@
+// SearchForm.js
+
 import React, { useState } from 'react';
 
 function SearchForm({ onTextSubmit, onScopeSubmit, onHandymanScopeSubmit }) {

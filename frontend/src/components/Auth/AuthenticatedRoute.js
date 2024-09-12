@@ -2,7 +2,7 @@ import { Navigate } from 'react-router-dom';
 
 const AuthenticatedRoute = ({ children, isAuthenticated, hasActiveSubscription }) => {
   if (!isAuthenticated) {
-    return <Navigate to="/login" />;
+    return <Navigate to="/" />;
   }
 
   if (!hasActiveSubscription) {

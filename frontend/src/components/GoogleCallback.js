@@ -33,10 +33,10 @@ const GoogleCallback = ({ setIsAuthenticated, setHasActiveSubscription }) => {
                 })
                 .catch(error => {
                     console.error('Error exchanging Google code:', error);
-                    navigate('/login');
+                    navigate('/');
                 });
         } else {
-            navigate('/login');
+            navigate('/');
         }
     }, [setIsAuthenticated, setHasActiveSubscription, navigate]);
 

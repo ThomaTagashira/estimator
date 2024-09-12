@@ -1,0 +1,47 @@
+import React from 'react';
+
+const DashboardPage = () => {
+    return (
+        <div style={styles.container}>
+            <h1>Welcome to Your Dashboard</h1>
+            <p>You have an active subscription and are authenticated.</p>
+
+            <div style={styles.cards}>
+                <div style={styles.card}>
+                    <h2>Account Information</h2>
+                    <p>View and update your account details.</p>
+                </div>
+                <div style={styles.card}>
+                    <h2>Subscription</h2>
+                    <p>Manage your subscription and payment methods.</p>
+                </div>
+                <div style={styles.card}>
+                    <h2>Settings</h2>
+                    <p>Adjust your preferences and settings.</p>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// Some simple inline styles for layout
+const styles = {
+    container: {
+        padding: '20px',
+        textAlign: 'center',
+    },
+    cards: {
+        display: 'flex',
+        justifyContent: 'space-around',
+        marginTop: '20px',
+    },
+    card: {
+        backgroundColor: '#f4f4f4',
+        padding: '20px',
+        borderRadius: '10px',
+        width: '30%',
+        boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
+    },
+};
+
+export default DashboardPage;

@@ -1,8 +1,21 @@
 import axios from 'axios';
 
 const apiUrl = process.env.REACT_APP_API_URL;
+let isRefreshing = false;
+let failedQueue = [];
 let refreshAttempts = 0;
 const MAX_REFRESH_ATTEMPTS = 1;
+
+const processQueue = (error, token = null) => {
+    failedQueue.forEach(prom => {
+        if (error) {
+            prom.reject(error);
+        } else {
+            prom.resolve(token);
+        }
+    });
+    failedQueue = [];
+};
 
 const setupInterceptors = () => {
     axios.interceptors.request.use(
@@ -11,13 +24,9 @@ const setupInterceptors = () => {
             if (authToken) {
                 config.headers['Authorization'] = `Bearer ${authToken}`;
             }
-            console.log('Request Config:', config);
             return config;
         },
-        (error) => {
-            console.error('Error in request interceptor:', error);
-            return Promise.reject(error);
-        }
+        (error) => Promise.reject(error)
     );
 
     axios.interceptors.response.use(
@@ -25,59 +34,60 @@ const setupInterceptors = () => {
         async (error) => {
             const originalRequest = error.config;
 
-            console.log('Error Response:', error.response);
-
-            if (error.response && error.response.status === 401 && !originalRequest._retry && refreshAttempts < MAX_REFRESH_ATTEMPTS) {
-                console.log('401 error detected, attempting token refresh...');
-                originalRequest._retry = true;
-                refreshAttempts += 1;
-                const refreshToken = localStorage.getItem('refresh_token');
-
-                if (refreshToken) {
-                    console.log('Refresh token found, attempting to refresh access token...');
-                    try {
-                        const response = await axios.post(`${apiUrl}/api/token/refresh/`, {
-                            refresh: refreshToken
-                        });
-
-                        console.log('Token refresh response:', response);
-
-                        const newAccessToken = response.data.access;
-
-                        if (newAccessToken) {
-                            console.log('Received new access token:', newAccessToken);
-
-                            localStorage.setItem('access_token', newAccessToken);
-                            axios.defaults.headers.common['Authorization'] = `Bearer ${newAccessToken}`;
-                            originalRequest.headers['Authorization'] = `Bearer ${newAccessToken}`;
-
-                            console.log('Token refresh successful, retrying original request...');
-                            refreshAttempts = 0;
-                            return axios(originalRequest);
-                        } else {
-                            console.warn('No access token received, redirecting to login');
-                            throw new Error('No access token received');
-                        }
-                    } catch (refreshError) {
-                        console.error('Error refreshing token:', refreshError);
-                        console.log('Removing tokens and redirecting to login due to refresh failure');
-                        refreshAttempts = 0;
-                        localStorage.removeItem('access_token');
-                        localStorage.removeItem('refresh_token');
-                        window.location.href = '/login';
-                    }
-                } else {
-                    console.warn('Refresh token not available, removing tokens and redirecting to login');
+            if (error.response && error.response.status === 401 && !originalRequest._retry) {
+                if (refreshAttempts >= MAX_REFRESH_ATTEMPTS) {
+                    console.warn('Max refresh attempts reached. Logging out.');
                     localStorage.removeItem('access_token');
                     localStorage.removeItem('refresh_token');
-                    window.location.href = '/login';
+                    window.location.href = '/';
+                    return Promise.reject(error);
                 }
-            } else {
-                console.warn('Max refresh attempts reached or other 401 error, removing tokens and redirecting to login');
-                refreshAttempts = 0;
-                localStorage.removeItem('access_token');
-                localStorage.removeItem('refresh_token');
-                window.location.href = '/login';
+
+                if (!isRefreshing) {
+                    originalRequest._retry = true;
+                    isRefreshing = true;
+                    refreshAttempts += 1;
+
+                    const refreshToken = localStorage.getItem('refresh_token');
+
+                    if (refreshToken) {
+                        try {
+                            const response = await axios.post(`${apiUrl}/api/token/refresh/`, {
+                                refresh: refreshToken,
+                            });
+                            const newAccessToken = response.data.access;
+
+                            if (newAccessToken) {
+                                localStorage.setItem('access_token', newAccessToken);
+                                axios.defaults.headers.common['Authorization'] = `Bearer ${newAccessToken}`;
+                                processQueue(null, newAccessToken);
+                                originalRequest.headers['Authorization'] = `Bearer ${newAccessToken}`;
+                                refreshAttempts = 0;
+                                return axios(originalRequest);
+                            } else {
+                                throw new Error('No access token received');
+                            }
+                        } catch (refreshError) {
+                            processQueue(refreshError, null);
+                            localStorage.removeItem('access_token');
+                            localStorage.removeItem('refresh_token');
+                            window.location.href = '/';
+                            return Promise.reject(refreshError);
+                        } finally {
+                            isRefreshing = false;
+                        }
+                    } else {
+                        localStorage.removeItem('access_token');
+                        localStorage.removeItem('refresh_token');
+                        isRefreshing = false;  // Move isRefreshing reset here
+                        window.location.href = '/';
+                        return Promise.reject(error);
+                    }
+                }
+
+                return new Promise(function (resolve, reject) {
+                    failedQueue.push({ resolve, reject });
+                });
             }
 
             return Promise.reject(error);

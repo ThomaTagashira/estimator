@@ -1,7 +1,7 @@
 // TokenPurchasePage.js
 
 import React, { useState } from 'react';
-import { TokenCheckoutButton } from './StripeCheckoutButton';
+import { TokenCheckoutButton } from '../components/StripeCheckoutButton';
 
 
 const TokenPurchasePage = () => {

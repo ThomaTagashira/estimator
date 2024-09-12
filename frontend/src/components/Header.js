@@ -12,12 +12,13 @@ const Header = ({ handleLogout, hasActiveSubscription, }) => {
                     {hasActiveSubscription ? (
                         <>
                             <li style={liStyle}><Link to="/">Home</Link></li>
+                            <li style={liStyle}><Link to="/search">Search</Link></li>
                             <li style={liStyle}><Link to="/profile">Profile</Link></li>
                             <li style={liStyle}><Link to="/buy-tokens">Buy Tokens</Link></li>
                         </>
                     ) : (
                         <>
-                            <li style={liStyle}><Link to="/login">Sign Up</Link></li>
+                            <li style={liStyle}><Link to="/">Sign Up</Link></li>
                         </>
                     )}
                     <li style={liStyle}><Link to="/about">About</Link></li> {/* About link at the end */}
