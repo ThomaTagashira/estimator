@@ -2,4 +2,4 @@
 
 ![System Design Diagram](SystemDesign.jpg)
 
-![User Workflow Diagram](User workflow diagram.jpg)
+![Diagram 2](User workflow diagram.jpg)
