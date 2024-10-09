@@ -26,7 +26,7 @@
 ###### &emsp;Response: Dictionary list of hand written notes  
   
 ##### 5. Edit and/or execute search queries:  
-###### &emsp;Input: Dictionary list returned from API response from #3  
+###### &emsp;Input: Dictionary list returned from API response from #4  
 ###### &emsp;Response: String of most closely related datapoint saved in vector database based on similarity-distance (task_description, labor_cost, and material_cost)  
   
 ##### 6. Manually enter search query:  
