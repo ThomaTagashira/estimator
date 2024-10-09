@@ -4,7 +4,7 @@
 ![System Design Diagram](SystemDesign.jpg)
 
 ## User Workflow Diagram
-![User Workflow Diagram 2](User%20workflow%20diagram.jpg)
+![User Workflow Diagram 2](User%20workflow%20diagram%20(1).jpg)
 
 ### Endpoint APIs  
   
