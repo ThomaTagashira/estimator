@@ -12,6 +12,7 @@ const Header = ({ handleLogout, hasActiveSubscription, }) => {
                     {hasActiveSubscription ? (
                         <>
                             <li style={liStyle}><Link to="/">Home</Link></li>
+                            <li style={liStyle}><Link to="/saved-estimates">Estimates</Link></li>
                             <li style={liStyle}><Link to="/search">Search</Link></li>
                             <li style={liStyle}><Link to="/profile">Profile</Link></li>
                             <li style={liStyle}><Link to="/buy-tokens">Buy Tokens</Link></li>
@@ -21,7 +22,7 @@ const Header = ({ handleLogout, hasActiveSubscription, }) => {
                             <li style={liStyle}><Link to="/">Sign Up</Link></li>
                         </>
                     )}
-                    <li style={liStyle}><Link to="/about">About</Link></li> {/* About link at the end */}
+                    <li style={liStyle}><Link to="/about">About</Link></li>
                 </ul>
             </nav>
             <button style={logoutButtonStyle} onClick={handleLogout}>Logout</button>

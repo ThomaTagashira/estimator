@@ -18,7 +18,7 @@ const useRegister = () => {
                 username,
                 password,
             });
-            navigate('/');  // Navigate to home page after successful registration
+            navigate('/');
         } catch (err) {
             setError('Error creating account: ' + err.message);
         }

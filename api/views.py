@@ -1,19 +1,16 @@
 import json, requests, logging, os, stripe
-from stripe import CardError, RateLimitError, InvalidRequestError, AuthenticationError, APIConnectionError, StripeError
 from rest_framework.views import APIView
-from .models import LangchainPgEmbedding
 from util.embedding import get_embedding
 from pgvector.django import L2Distance, CosineDistance
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework import status
-from util.serializers import LangchainPgEmbeddingSerializer, MyResponseSerializer, UserSerializer, NoteDictSerializer
+from util.serializers import *
 from util.multi_query_retriever import generate_response
 from util.ai_response import get_response
 from util.image_encoder import encode_image
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
-from rest_framework.decorators import api_view
 from util.text_converter import image_to_text
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from dotenv import load_dotenv
@@ -28,6 +25,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
+from django.db import transaction
 
 load_dotenv()
 logger = logging.getLogger('django')
@@ -153,7 +151,7 @@ def register_user(request):
 
 
 @api_view(['GET', 'POST'])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
 def subscription_status(request):
     user = request.user
     try:
@@ -206,18 +204,22 @@ class GoogleLoginView(APIView):
         if not code:
             return Response({'error': 'Authorization code is missing'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Exchange authorization code for access and ID tokens
-        token_response = requests.post(
-            'https://oauth2.googleapis.com/token',
-            data={
-                'code': code,
-                'client_id': GOOGLE_CLIENT_ID,
-                'client_secret': GOOGLE_SECRET_KEY,
-                'redirect_uri': f'{REDIR_URI}/google-callback',
-                'grant_type': 'authorization_code'
-            }
-        )
-        token_data = token_response.json()
+        try:
+            token_response = requests.post(
+                'https://oauth2.googleapis.com/token',
+                data={
+                    'code': code,
+                    'client_id': GOOGLE_CLIENT_ID,
+                    'client_secret': GOOGLE_SECRET_KEY,
+                    'redirect_uri': f'{REDIR_URI}/google-callback',
+                    'grant_type': 'authorization_code'
+                },
+                timeout=10  # Add a timeout for network stability
+            )
+            token_response.raise_for_status()  # Will raise an HTTPError for bad responses
+            token_data = token_response.json()
+        except requests.exceptions.RequestException as e:
+            return Response({'error': f'Failed to exchange token: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         if 'error' in token_data:
             return Response({'error': token_data['error']}, status=status.HTTP_400_BAD_REQUEST)
@@ -228,39 +230,43 @@ class GoogleLoginView(APIView):
         if not access_token or not id_token:
             return Response({'error': 'Invalid token response'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Get user info using the access token
-        user_info_response = requests.get(
-            'https://www.googleapis.com/oauth2/v1/userinfo',
-            params={'access_token': access_token}
-        )
-
-        if user_info_response.status_code != 200:
-            return Response({'error': 'Failed to fetch user info'}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            # Get user info using the access token
+            user_info_response = requests.get(
+                'https://www.googleapis.com/oauth2/v1/userinfo',
+                params={'access_token': access_token},
+                timeout=10  # Add a timeout
+            )
+            user_info_response.raise_for_status()
+        except requests.exceptions.RequestException as e:
+            return Response({'error': f'Failed to fetch user info: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         user_info = user_info_response.json()
         email = user_info.get('email')
+
+        if not email:
+            return Response({'error': 'Email not provided by Google'}, status=status.HTTP_400_BAD_REQUEST)
 
         with transaction.atomic():
             user, created = User.objects.get_or_create(username=email, defaults={'email': email})
 
             if created:
-                # New user - check if a StripeProfile already exists
                 existing_profile = StripeProfile.objects.filter(user=user).exists()
                 if not existing_profile:
                     try:
-                        # Create a Stripe customer
                         customer = stripe.Customer.create(email=user.email)
                         StripeProfile.objects.create(user=user, stripe_customer_id=customer['id'])
                     except Exception as e:
-                        user.delete()  # If there's an issue with Stripe, delete the user to avoid orphaned records
-                        return Response({'error': f'Failed to create Stripe customer: {str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
+                        user.delete()
+                        return Response({'error': f'Failed to create Stripe customer: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        # Generate JWT tokens for the user
-        refresh = RefreshToken.for_user(user)
-        jwt_access_token = str(refresh.access_token)
-        jwt_refresh_token = str(refresh)
+        try:
+            refresh = RefreshToken.for_user(user)
+            jwt_access_token = str(refresh.access_token)
+            jwt_refresh_token = str(refresh)
+        except Exception as e:
+            return Response({'error': f'Failed to generate JWT: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        # Check for active subscription
         has_active_subscription = Subscription.objects.filter(user=user, is_active=True).exists()
 
         return Response({
@@ -268,6 +274,7 @@ class GoogleLoginView(APIView):
             'refresh': jwt_refresh_token,
             'has_active_subscription': has_active_subscription
         }, status=status.HTTP_200_OK)
+
 
 
 
@@ -306,13 +313,11 @@ stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
 class CreateSubscriptionCheckoutSessionView(APIView):
 
     def post(self, request):
-        user = request.user  # Ensure the user is authenticated
+        user = request.user
 
-        # Retrieve or create StripeProfile
         stripe_profile, created = StripeProfile.objects.get_or_create(user=user)
 
         if not stripe_profile.stripe_customer_id:
-            # Create a Stripe customer if it doesn't exist yet
             try:
                 customer = stripe.Customer.create(email=user.email)
                 stripe_profile.stripe_customer_id = customer['id']
@@ -321,7 +326,6 @@ class CreateSubscriptionCheckoutSessionView(APIView):
                 logger.error(f"Failed to create Stripe customer: {str(e)}")
                 return Response({'error': f'Failed to create Stripe customer: {str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Get the subscription tier from the request data
         subscription_tier = request.data.get('tier')
         if not subscription_tier:
             return Response({'error': 'Subscription tier is required'}, status=status.HTTP_400_BAD_REQUEST)
@@ -488,7 +492,6 @@ def handle_checkout_session_completed(event):
         subscription.is_active = True
         logger.info(f"Setting subscription.is_active to True for user: {user.username}")
 
-        # Extract the Product ID from the session data
         line_items = session['lines']['data']
 
         logger.info(f"Line items: {line_items}")
@@ -541,7 +544,7 @@ def handle_checkout_session_completed(event):
 
 
 def user_estimate_view(request):
-    user = request.user  # Get the logged-in user
+    user = request.user
     estimates = UserEstimates.objects.filter(user=user).select_related('project_data', 'estimate_items', 'client_data')
 
     context = {
@@ -549,3 +552,156 @@ def user_estimate_view(request):
     }
 
     return context
+
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def create_estimate(request):
+    data = request.data
+    user = request.user
+
+    try:
+        estimate = UserEstimates.objects.create(user=user)
+
+        client_data = data.get('client', {})
+        ClientData.objects.create(
+            user=user,
+            estimate=estimate,
+            client_name=client_data.get('clientName'),
+            client_address=client_data.get('clientAddress'),
+            client_phone=client_data.get('clientPhone'),
+            client_email=client_data.get('clientEmail'),
+        )
+
+        project_data = data.get('project', {})
+        ProjectData.objects.create(
+            user=user,
+            estimate=estimate,
+            project_name=project_data.get('projectName'),
+            project_location=project_data.get('projectLocation'),
+            start_date=project_data.get('startDate'),
+            end_date=project_data.get('endDate'),
+        )
+
+        return JsonResponse({
+            'estimate_id': estimate.estimate_id,
+            'client_name': client_data.get('clientName'),
+            'project_name': project_data.get('projectName'),
+        }, status=status.HTTP_201_CREATED)
+
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_user_estimates(request):
+    user = request.user
+    estimates = UserEstimates.objects.filter(user=user)
+    serializer = UserEstimatesSerializer(estimates, many=True)
+    return Response(serializer.data)
+
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_saved_estimate(request, estimate_id):
+    try:
+        estimate = UserEstimates.objects.prefetch_related('client_data', 'project_data').get(estimate_id=estimate_id, user=request.user)
+        serializer = UserEstimatesSerializer(estimate)
+        return Response(serializer.data)
+    except UserEstimates.DoesNotExist:
+        return Response({'error': 'Estimate not found'}, status=404)
+
+
+
+from django.db.models import Max
+
+class SaveEstimateItems(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        estimate_id = request.data.get('estimate_id')
+        tasks = request.data.get('tasks')
+        user = request.user
+
+        try:
+            estimate = UserEstimates.objects.get(id=estimate_id, user=user)
+        except UserEstimates.DoesNotExist:
+            return Response({'error': 'Estimate not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        current_max_task_number = EstimateItems.objects.filter(estimate=estimate).aggregate(
+            max_task_number=Max('task_number')
+        )['max_task_number'] or 0
+
+        for task in tasks:
+            current_max_task_number += 1
+            task_description = f"{task['job']} Labor Cost: ${task['laborCost']} Material Cost: ${task['materialCost']}"
+
+            EstimateItems.objects.create(
+                user=user,
+                estimate=estimate,
+                task_number=current_max_task_number,
+                task_description=task_description
+            )
+
+        return Response({'message': 'Tasks saved successfully'}, status=status.HTTP_201_CREATED)
+
+
+
+
+class FetchEstimateItems(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, estimate_id):
+        try:
+            estimate = UserEstimates.objects.get(id=estimate_id, user=request.user)
+        except UserEstimates.DoesNotExist:
+            return Response({'error': 'Estimate not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        tasks = EstimateItems.objects.filter(estimate=estimate).order_by('task_number')
+
+        task_data = [
+            {
+                'task_number': task.task_number,
+                'task_description': task.task_description
+            } for task in tasks
+        ]
+
+        return Response(task_data, status=status.HTTP_200_OK)
+
+
+
+import logging
+
+class UpdateTaskView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request, estimate_id, task_number):
+        task_description = request.data.get('task_description')
+
+        try:
+            task = EstimateItems.objects.get(estimate__id=estimate_id, task_number=task_number)
+        except EstimateItems.DoesNotExist:
+            return Response({'error': 'Task not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        task.task_description = task_description
+        task.save()
+
+        return Response({'message': 'Task updated successfully'}, status=status.HTTP_200_OK)
+
+
+
+
+class DeleteTaskView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, estimate_id, task_number):
+        try:
+            task = EstimateItems.objects.get(estimate__id=estimate_id, task_number=task_number)
+            task.delete()  # Delete the task
+            return Response(status=status.HTTP_204_NO_CONTENT)  # Explicitly return 204 for deletion success
+        except EstimateItems.DoesNotExist:
+            return Response({'error': 'Task not found'}, status=status.HTTP_404_NOT_FOUND)

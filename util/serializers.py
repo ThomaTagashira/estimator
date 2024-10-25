@@ -104,3 +104,30 @@ class CustomGoogleLoginSerializer(SocialLoginSerializer):
         if 'password' in attrs:
             attrs.pop('password')
         return super().validate(attrs)
+
+
+class ClientDataSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ClientData
+        fields = ['client_name', 'client_address', 'client_phone', 'client_email']
+
+class ProjectDataSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProjectData
+        fields = ['project_name', 'project_location', 'start_date', 'end_date']
+
+class EstimateItemsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EstimateItems
+        fields = ['task_description', 'task_number']
+
+# Main serializer for UserEstimates
+class UserEstimatesSerializer(serializers.ModelSerializer):
+    # Add related fields using the nested serializers
+    client_data = ClientDataSerializer(many=True, read_only=True)  # 'many=True' because it's related_name='client_data'
+    project_data = ProjectDataSerializer(many=True, read_only=True)  # 'many=True' because it's related_name='project_data'
+    estimate_items = EstimateItemsSerializer(many=True, read_only=True)  # 'many=True' because it's related_name='estimate_items'
+
+    class Meta:
+        model = UserEstimates
+        fields = ['estimate_id', 'date_created', 'last_modified', 'project_name', 'client_data', 'project_data', 'estimate_items']

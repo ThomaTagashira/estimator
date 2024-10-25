@@ -3,8 +3,8 @@ import axios from 'axios';
 import { BrowserRouter as Router, Route, Routes, redirect, useNavigate } from 'react-router-dom';
 import setupInterceptors from './components/setupInterceptor';
 import GoogleCallback from './components/GoogleCallback';
-import GitHubCallback from './components/GitHubCallback';
-import { SuccessPage, SearchResults, CancelPage, SubscriptionPage, TokenPurchasePage, DashboardPage, LoginPage, RegisterPage }  from './pages';
+// import GitHubCallback from './components/GitHubCallback';
+import { SuccessPage, SearchResults, CancelPage, SubscriptionPage, TokenPurchasePage, DashboardPage, LoginPage, RegisterPage, CreateEstimatePage, EstimatesPage, EstimateDetailPage }  from './pages';
 import Header from './components/Header';
 import AuthenticatedRoute from './components/Auth/AuthenticatedRoute';
 
@@ -58,6 +58,26 @@ function App() {
         <Route path="/search" element={
             <AuthenticatedRoute isAuthenticated={isAuthenticated} hasActiveSubscription={hasActiveSubscription}>
               <SearchResults apiUrl={apiUrl} />
+            </AuthenticatedRoute>
+        }/>
+        <Route path="/estimates" element={
+            <AuthenticatedRoute isAuthenticated={isAuthenticated} hasActiveSubscription={hasActiveSubscription}>
+              <SearchResults apiUrl={apiUrl} />
+            </AuthenticatedRoute>
+        }/>
+        <Route path="/create-estimate" element={
+            <AuthenticatedRoute isAuthenticated={isAuthenticated} hasActiveSubscription={hasActiveSubscription}>
+              <CreateEstimatePage apiUrl={apiUrl} />
+            </AuthenticatedRoute>
+        }/>
+                <Route path="/saved-estimates" element={
+            <AuthenticatedRoute isAuthenticated={isAuthenticated} hasActiveSubscription={hasActiveSubscription}>
+              <EstimatesPage apiUrl={apiUrl} />
+            </AuthenticatedRoute>
+        }/>
+                <Route path="/saved-estimate/:estimateId" element={
+            <AuthenticatedRoute isAuthenticated={isAuthenticated} hasActiveSubscription={hasActiveSubscription}>
+              <EstimateDetailPage apiUrl={apiUrl} />
             </AuthenticatedRoute>
         }/>
 

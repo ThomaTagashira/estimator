@@ -15,8 +15,7 @@ export const SubscriptionCheckoutButton = ({ apiEndpoint, tier }) => {
         const stripe = await stripePromise;
 
         try {
-            const token = localStorage.getItem('access_token'); // Assuming token is stored in localStorage
-
+            const token = localStorage.getItem('access_token');
             if (!tier) {
                 console.error('Subscription tier is required');
                 setLoading(false);
@@ -29,7 +28,7 @@ export const SubscriptionCheckoutButton = ({ apiEndpoint, tier }) => {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`,
                 },
-                body: JSON.stringify({ tier: tier }), // Send the selected tier to the backend
+                body: JSON.stringify({ tier: tier }),
             });
 
             const session = await response.json();
@@ -40,7 +39,6 @@ export const SubscriptionCheckoutButton = ({ apiEndpoint, tier }) => {
                 return;
             }
 
-            // Redirect to Stripe Checkout
             const result = await stripe.redirectToCheckout({
                 sessionId: session.sessionId,
             });
@@ -72,7 +70,7 @@ export const TokenCheckoutButton = ({ apiEndpoint, tokenQty }) => {
         const stripe = await stripePromise;
 
         try {
-            const token = localStorage.getItem('access_token'); // Assuming token is stored in localStorage
+            const token = localStorage.getItem('access_token');
                 console.log('Access Token:', token);
             if (!tokenQty) {
                 console.error('Token quantity is required');
@@ -86,7 +84,7 @@ export const TokenCheckoutButton = ({ apiEndpoint, tokenQty }) => {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`,
                 },
-                body: JSON.stringify({ tokenQty: tokenQty }), // Send the selected token quantity to backend
+                body: JSON.stringify({ tokenQty: tokenQty }),
             });
 
             const session = await response.json();
@@ -97,7 +95,6 @@ export const TokenCheckoutButton = ({ apiEndpoint, tokenQty }) => {
                 return;
             }
 
-            // Redirect to Stripe Checkout
             const result = await stripe.redirectToCheckout({
                 sessionId: session.sessionId,
             });

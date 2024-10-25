@@ -11,7 +11,7 @@ function generateHTMLContent({
     companyName,
     address,
     phone,
-    estimateNumber,
+    estimateId,
     clientName,
     clientAddress,
     clientPhone,
@@ -32,7 +32,7 @@ function generateHTMLContent({
     applyDiscount
 }) {
     const todayDate = getTodayDate();
-  
+
     return `
        <!DOCTYPE html>
       <html>
@@ -215,7 +215,7 @@ function generateHTMLContent({
                 </div>
               </div>
               <div class="estimate-info">
-                <p>Estimate Number: ${estimateNumber}</p>
+                <p>Estimate Number: ${estimateId}</p>
                 <p>Date: ${todayDate}</p>
               </div>
             </div>
@@ -283,13 +283,13 @@ function generateHTMLContent({
     </html>
     `;
   }
-  
+
   export const exportPDF = ({
     logo,
     companyName,
     address,
     phone,
-    estimateNumber,
+    estimateId,
     clientName,
     clientAddress,
     clientPhone,
@@ -314,7 +314,7 @@ function generateHTMLContent({
         companyName,
         address,
         phone,
-        estimateNumber,
+        estimateId,
         clientName,
         clientAddress,
         clientPhone,

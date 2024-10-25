@@ -6,6 +6,7 @@ from rest_framework_simplejwt.views import (
     TokenRefreshView,
 )
 
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/index/', index, name='index'),
@@ -27,6 +28,19 @@ urlpatterns = [
     path('api/payments/', CreateSubscriptionCheckoutSessionView.as_view(), name='create_subscription_checkout_session'),
     path('api/token-payments/', CreateTokenCheckoutSessionView.as_view(), name='create_token_checkout_session'),
     path('stripe_webhook/', stripe_webhook, name='stripe_webhook'),
+    path('api/estimates/', create_estimate, name='create_estimate'),
+    path('api/saved-estimates/', get_user_estimates, name='user_estimates'),
+    path('api/saved-estimates/<str:estimate_id>/', get_saved_estimate, name='get_saved_estimate'),
+    path('api/save-estimate-items/', SaveEstimateItems.as_view(), name='save_estimate_items'),
+    path('api/fetch-estimate-items/<str:estimate_id>/', FetchEstimateItems.as_view(), name='get_saved_estimate_items'),
+    path('api/update-task/<str:estimate_id>/<int:task_number>/', UpdateTaskView.as_view(), name='update_task'),
+    path('api/delete-task/<str:estimate_id>/<int:task_number>/', DeleteTaskView.as_view(), name='delete_task'),
+
+
+
+
+
+
     #re_path(r"^(?P<path>.*)$", serve_react, {"document_root": settings.REACT_APP_BUILD_PATH}),
 ]
 

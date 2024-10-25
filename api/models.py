@@ -107,26 +107,23 @@ class Subscription(models.Model):
 
 
 class UserEstimates(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='userEstimates')
-    estimate_id = models.CharField(max_length=255, unique=True, editable=False)  # Auto-populated and uneditable
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='userEstimates')
+    estimate_id = models.CharField(max_length=255, unique=True, editable=False)
     date_created = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
-    project_name = models.CharField(max_length=255, blank=True, null=True)  # Add project name here
+    project_name = models.CharField(max_length=255, blank=True, null=True)
 
     def save(self, *args, **kwargs):
-        # Only generate estimate_id if it's not already set (i.e., on creation)
         if not self.estimate_id:
             last_estimate = UserEstimates.objects.filter(user=self.user).order_by('id').last()
-            if last_estimate:
-                new_id = int(last_estimate.estimate_id.split('-')[-1]) + 1  # Increment the number part
-            else:
-                new_id = 1  # Start at 1 if no previous estimates exist for the user
-            self.estimate_id = f"EST-{str(new_id).zfill(5)}"  # Format as EST-00001, EST-00002, etc.
+            new_id = 1 if not last_estimate else int(last_estimate.estimate_id.split('-')[-1]) + 1
+            self.estimate_id = f"{str(new_id).zfill(5)}"
         super().save(*args, **kwargs)
 
 
+
 class ProjectData(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='projects')  # User who owns the project
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='projects')
     estimate = models.ForeignKey(UserEstimates, on_delete=models.CASCADE, related_name='project_data')
     project_name = models.TextField(blank=True, null=True)
     project_location = models.TextField(blank=True, null=True)
@@ -134,20 +131,13 @@ class ProjectData(models.Model):
     end_date = models.DateTimeField(null=True, blank=True)
 
     def save(self, *args, **kwargs):
-        # Check if project_name is empty or None
         if not self.project_name:
-            # Get all existing project names for this user that start with 'Estimate'
             existing_projects = ProjectData.objects.filter(user=self.user, project_name__startswith='Estimate').values_list('project_name', flat=True)
-
-            # Find the next available project name for this user (Estimate1, Estimate2, etc.)
             project_number = 1
             while f"Estimate{project_number}" in existing_projects:
                 project_number += 1
-
-            # Set the new project name
             self.project_name = f"Estimate{project_number}"
 
-        # Save the project and update UserEstimates with the project name
         super().save(*args, **kwargs)
         if self.project_name:
             self.estimate.project_name = self.project_name
@@ -156,15 +146,14 @@ class ProjectData(models.Model):
 
 
 class EstimateItems(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='estimateItems')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='estimateItems')
     estimate = models.ForeignKey(UserEstimates, on_delete=models.CASCADE, related_name='estimate_items')
     task_description = models.TextField(blank=True, null=True)
-    labor_cost = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    material_cost = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    task_number = models.PositiveIntegerField(null=True, blank=True)
 
 
 class ClientData(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='clientData')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='clientData')
     estimate = models.ForeignKey(UserEstimates, on_delete=models.CASCADE, related_name='client_data')
     client_name = models.CharField(max_length=255, unique=False, null=True, blank=True)
     client_address = models.CharField(max_length=255, unique=False, null=True, blank=True)

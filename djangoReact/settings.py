@@ -70,6 +70,8 @@ INSTALLED_APPS = [
     'util',
     'rest_framework_simplejwt',
     'django_crontab',
+    'rest_framework_simplejwt.token_blacklist',
+
 ]
 
 AUTHENTICATION_BACKENDS = (
@@ -83,8 +85,8 @@ SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('Bearer',),
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
-    'ROTATE_REFRESH_TOKENS': False,  # Disable rotation if you don't want to rotate tokens
-    'BLACKLIST_AFTER_ROTATION': False,  # Disable blacklisting since it's no longer relevant
+    'ROTATE_REFRESH_TOKENS': True,  # Disable rotation if you don't want to rotate tokens
+    'BLACKLIST_AFTER_ROTATION': True,  # Disable blacklisting since it's no longer relevant
     'ALGORITHM': 'HS256',
     'SIGNING_KEY': SECRET_KEY,  # Use your actual secret key
     'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),

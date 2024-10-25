@@ -67,7 +67,7 @@ const usePhotoUpload = () => {
 
     const handleLineSearch = async (line, onSearch) => {
         try {
-            await onSearch(line); // Assumes onSearch is a function that returns a promise
+            await onSearch(line);
         } catch (err) {
             setError('Error during search');
         }
