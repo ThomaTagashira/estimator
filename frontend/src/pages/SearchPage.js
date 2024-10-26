@@ -11,7 +11,7 @@ const SearchPage = ({ apiUrl }) => {
   const [activeTab, setActiveTab] = useState('search');
   const [tableData, setTableData] = useState([]);  // For dynamic table content
   const [searchParams] = useSearchParams();
-  const [inputFields, setInputFields] = useState([]);
+  const [setInputFields] = useState([]);
 
   const estimateId = searchParams.get('estimateId');
 
@@ -47,12 +47,12 @@ const SearchPage = ({ apiUrl }) => {
   }, [estimateId, apiUrl]);
 
   const {
-    textResults,
-    scopeResults,
-    handymanScopeResults,
+    // textResults,
+    // scopeResults,
+    // handymanScopeResults,
     selectedString,
     setSelectedString,
-    searchResult,
+    // searchResult,
     fetchTextData,
     fetchScopeData,
     handleSearch,

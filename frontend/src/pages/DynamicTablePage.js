@@ -7,11 +7,11 @@ import { exportPDF } from '../components/utils/exportPDF';
 
 const DynamicTablePage = ({ apiUrl, estimateId, selectedString, setSelectedString }) => {
     const {
-        textResults,
-        scopeResults,
-        searchResult,
-        handleSearch,
-        fetchScopeData,
+        // textResults,
+        // scopeResults,
+        // searchResult,
+        // handleSearch,
+        // fetchScopeData,
         inputFields,
         editIndex,
         editValues,
@@ -20,7 +20,7 @@ const DynamicTablePage = ({ apiUrl, estimateId, selectedString, setSelectedStrin
         applyDiscount,
         applyMargin,
         marginPercent,
-        logo,
+        // logo,
         companyName,
         address,
         phone,
@@ -45,14 +45,14 @@ const DynamicTablePage = ({ apiUrl, estimateId, selectedString, setSelectedStrin
         handleEditClick,
         handleEditChange,
         handleUpdateClick,
-        calculateTotals,
+        // calculateTotals,
         splitTaskIntoColumns,
         applyMarginToLaborCost,
         setCompanyName,
         setAddress,
         setPhone,
         exportTablePDF,
-        saveEstimateData,
+        // saveEstimateData,
         setTableData,
         tableRef,
         tableData,
@@ -138,7 +138,7 @@ const DynamicTablePage = ({ apiUrl, estimateId, selectedString, setSelectedStrin
     };
 
     fetchSavedEstimateItems();
-}, [apiUrl, estimateId]);
+}, [apiUrl, estimateId. setTableData]);
 
 
 //   console.log("DynamicTablePage - selectedString:", selectedString);

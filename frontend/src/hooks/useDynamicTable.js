@@ -141,11 +141,11 @@ const useDynamicTable = (apiUrl, estimateId, selectedString, setSelectedString )
         }
       }, [selectedString, setSelectedString, inputFields]);
 
-    const handleInputChange = (index, value) => {
-        const updatedFields = [...inputFields];
-        updatedFields[index] = value;
-        setInputFields(updatedFields);
-    };
+    // const handleInputChange = (index, value) => {
+    //     const updatedFields = [...inputFields];
+    //     updatedFields[index] = value;
+    //     setInputFields(updatedFields);
+    // };
 
     const handleAddAllRows = async () => {
         const newTasks = inputFields.filter((value) => value.trim() !== '');
@@ -288,10 +288,10 @@ const useDynamicTable = (apiUrl, estimateId, selectedString, setSelectedString )
     const toggleDiscount = () => setApplyDiscount(!applyDiscount);
     const toggleMargin = () => setApplyMargin(!applyMargin);
 
-    const handleLogoUpload = (event) => {
-        const file = event.target.files[0];
-        resizeImage(file, 50, 50, (resizedImage) => setLogo(resizedImage));
-    };
+    // const handleLogoUpload = (event) => {
+    //     const file = event.target.files[0];
+    //     resizeImage(file, 50, 50, (resizedImage) => setLogo(resizedImage));
+    // };
 
     const splitTaskIntoColumns = (task) => {
         const taskDescription = typeof task === 'string' ? task : task.task_description;
