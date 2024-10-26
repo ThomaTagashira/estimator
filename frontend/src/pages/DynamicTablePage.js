@@ -3,7 +3,7 @@ import '../components/DynamicTable/DynamicTable.css';
 import useDynamicTable from '../hooks/useDynamicTable';
 import axios from 'axios';
 
-import { exportPDF } from '../components/utils/exportPDF';
+// import { exportPDF } from '../components/utils/exportPDF';
 
 const DynamicTablePage = ({ apiUrl, estimateId, selectedString, setSelectedString }) => {
     const {
@@ -138,7 +138,7 @@ const DynamicTablePage = ({ apiUrl, estimateId, selectedString, setSelectedStrin
     };
 
     fetchSavedEstimateItems();
-}, [apiUrl, estimateId. setTableData]);
+}, [apiUrl, estimateId, setTableData]);
 
 
 //   console.log("DynamicTablePage - selectedString:", selectedString);

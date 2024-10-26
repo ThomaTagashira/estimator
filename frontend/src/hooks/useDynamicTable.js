@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { exportPDF } from '../components/utils/exportPDF';
-import { resizeImage } from '../components/utils/logoResize';
+// import { resizeImage } from '../components/utils/logoResize';
 import axios from 'axios';
 
 const useDynamicTable = (apiUrl, estimateId, selectedString, setSelectedString ) => {
@@ -27,7 +27,7 @@ const useDynamicTable = (apiUrl, estimateId, selectedString, setSelectedString )
     const [endDate, setEndDate] = useState('');
     const [originalClientData, setOriginalClientData] = useState(null);
     const [originalProjectData, setOriginalProjectData] = useState(null);
-    const [logo, setLogo] = useState(null);
+    // const [logo, setLogo] = useState(null);
     const tableRef = useRef();
 
     useEffect(() => {
