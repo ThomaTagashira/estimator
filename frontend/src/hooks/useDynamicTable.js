@@ -139,7 +139,7 @@ const useDynamicTable = (apiUrl, estimateId, selectedString, setSelectedString )
           setInputFields((prevFields) => [...prevFields, selectedString]);
           setSelectedString('');
         }
-      }, [selectedString, inputFields]);
+      }, [selectedString, setSelectedString, inputFields]);
 
     const handleInputChange = (index, value) => {
         const updatedFields = [...inputFields];
@@ -434,7 +434,6 @@ const useDynamicTable = (apiUrl, estimateId, selectedString, setSelectedString )
         endDate,
         saveEstimateData,
         exportTablePDF,
-        tableData,
         inputFields,
         editIndex,
         editValues,
