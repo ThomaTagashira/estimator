@@ -10,7 +10,6 @@ const CreateEstimatePage = () => {
     step,
     clientInfo,
     projectInfo,
-    estimateId,
     handleClientInfoChange,
     handleProjectInfoChange,
     handleNext,

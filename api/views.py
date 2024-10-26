@@ -705,3 +705,42 @@ class DeleteTaskView(APIView):
             return Response(status=status.HTTP_204_NO_CONTENT)  # Explicitly return 204 for deletion success
         except EstimateItems.DoesNotExist:
             return Response({'error': 'Task not found'}, status=status.HTTP_404_NOT_FOUND)
+
+
+
+
+class UpdateEstimateInfoView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request, estimate_id):
+        # Get updated data from the request
+        updated_client_info = request.data.get('client_data')
+        updated_project_info = request.data.get('project_data')
+
+        # Update ClientData if provided
+        try:
+            client_info = ClientData.objects.get(estimate_id=estimate_id)
+            if updated_client_info:
+                client_info.client_name = updated_client_info.get('client_name', client_info.client_name)
+                client_info.client_address = updated_client_info.get('client_address', client_info.client_address)
+                client_info.client_phone = updated_client_info.get('client_phone', client_info.client_phone)
+                client_info.client_email = updated_client_info.get('client_email', client_info.client_email)
+                client_info.save()
+        except ClientData.DoesNotExist:
+            return Response({'error': 'Client data not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        # Update ProjectData if provided
+        try:
+            project_info = ProjectData.objects.get(estimate_id=estimate_id)
+            if updated_project_info:
+                project_info.project_name = updated_project_info.get('project_name', project_info.project_name)
+                project_info.project_location = updated_project_info.get('project_location', project_info.project_location)
+                project_info.start_date = updated_project_info.get('start_date', project_info.start_date)
+                project_info.end_date = updated_project_info.get('end_date', project_info.end_date)
+                project_info.save()
+        except ProjectData.DoesNotExist:
+            return Response({'error': 'Project data not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        return Response({'message': 'Estimate information updated successfully'}, status=status.HTTP_200_OK)
+
+

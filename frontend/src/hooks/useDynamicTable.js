@@ -132,42 +132,7 @@ const useDynamicTable = (apiUrl, estimateId, selectedString, setSelectedString )
         }
     };
 
-
-
     const toggleEdit = () => setIsEditing(!isEditing);
-
-    const handleUpdate = async () => {
-        try {
-            const response = await fetch('/api/update-client-data/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    clientName,
-                    clientAddress,
-                    clientPhone,
-                    clientEmail,
-                    projectName,
-                    projectLocation,
-                    startDate,
-                    endDate,
-                    companyName,
-                    address,
-                    phone,
-                }),
-            });
-            if (response.ok) {
-                console.log('Data updated successfully');
-            } else {
-                console.error('Failed to update data');
-            }
-        } catch (error) {
-            console.error('Error updating data:', error);
-        }
-        setIsEditing(false);
-    };
-
 
     useEffect(() => {
         if (selectedString) {

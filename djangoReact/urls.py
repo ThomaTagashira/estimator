@@ -35,6 +35,7 @@ urlpatterns = [
     path('api/fetch-estimate-items/<str:estimate_id>/', FetchEstimateItems.as_view(), name='get_saved_estimate_items'),
     path('api/update-task/<str:estimate_id>/<int:task_number>/', UpdateTaskView.as_view(), name='update_task'),
     path('api/delete-task/<str:estimate_id>/<int:task_number>/', DeleteTaskView.as_view(), name='delete_task'),
+    path('api/update-estimate/<str:estimate_id>/', UpdateEstimateInfoView.as_view(), name='update_estimate'),
 
 
 
