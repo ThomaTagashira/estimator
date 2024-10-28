@@ -382,7 +382,7 @@ const useDynamicTable = (apiUrl, estimateId, selectedString, setSelectedString )
         const totals = calculateTotals();
 
         exportPDF({
-            logo,
+            // logo,
             companyName,
             address,
             phone,
