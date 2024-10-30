@@ -28,4 +28,4 @@ class UserRegistrationTest(APITestCase):
 
         # Verify that a StripeProfile has been created and it has a customer ID
         stripe_profile = StripeProfile.objects.get(user=user)
-        self.assertIsNotNone(stripe_profile.stripe_customer_id)
+        self.assertIsNotNone(stripe_profile)

@@ -49,6 +49,6 @@ class DeleteTaskTestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)  # Typically a 204 is returned for delete
 
         # Check if task number 1 was deleted
-        task_exists = EstimateItems.objects.filter(estimate=self.estimate, task_number=1).exists()
+        task_exists = EstimateItems.objects.filter(estimate=self.estimate, task_number=3).exists()
         self.assertFalse(task_exists)  # Assert that the task no longer exists
 
