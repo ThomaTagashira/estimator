@@ -11,7 +11,7 @@ const SearchPage = ({ apiUrl }) => {
   const [activeTab, setActiveTab] = useState('search');
   const [tableData, setTableData] = useState([]);  // For dynamic table content
   const [searchParams] = useSearchParams();
-  const [setInputFields] = useState([]);
+  const [inputFields, setInputFields] = useState([]);
 
   const estimateId = searchParams.get('estimateId');
 
@@ -32,11 +32,18 @@ const SearchPage = ({ apiUrl }) => {
             'Content-Type': 'application/json',
           },
         });
-        const data = await response.json();
-        if (response.ok) {
-          setTableData(data.tasks || []);  // Assuming the estimate has tasks
+
+        // Check if the response is JSON
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          const data = await response.json();
+          if (response.ok) {
+            setTableData(data.tasks || []);  // Assuming the estimate has tasks
+          } else {
+            console.error('Failed to fetch estimate data:', data);
+          }
         } else {
-          console.error('Failed to fetch estimate data:', data);
+          console.error("Expected JSON, but received HTML:", await response.text());
         }
       } catch (error) {
         console.error('Error fetching estimate data:', error);
@@ -45,6 +52,7 @@ const SearchPage = ({ apiUrl }) => {
 
     fetchEstimateData();
   }, [estimateId, apiUrl]);
+
 
   const {
     // textResults,

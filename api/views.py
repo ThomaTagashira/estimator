@@ -609,11 +609,27 @@ def get_user_estimates(request):
 @permission_classes([IsAuthenticated])
 def get_saved_estimate(request, estimate_id):
     try:
-        estimate = UserEstimates.objects.prefetch_related('client_data', 'project_data').get(estimate_id=estimate_id, user=request.user)
-        serializer = UserEstimatesSerializer(estimate)
-        return Response(serializer.data)
+        estimate = UserEstimates.objects.get(estimate_id=estimate_id, user=request.user)
+
+        client_data = estimate.client_data.all()
+        project_data = estimate.project_data.all()
+
+        response_data = {
+            'estimate_id': estimate.estimate_id,
+            'project_name': estimate.project_name,
+            'client_data': ClientDataSerializer(client_data, many=True).data,
+            'project_data': ProjectDataSerializer(project_data, many=True).data,
+        }
+
+        print("Response Data:", response_data)
+
+        return Response(response_data)
     except UserEstimates.DoesNotExist:
         return Response({'error': 'Estimate not found'}, status=404)
+    except Exception as e:
+        print("Error:", e)
+        return Response({'error': str(e)}, status=500)
+
 
 
 
@@ -623,12 +639,15 @@ class SaveEstimateItems(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
+        print("Request received with data:", request.data)  # Confirm the request reaches here
+
         estimate_id = request.data.get('estimate_id')
+        print('estimate_id:', estimate_id)
         tasks = request.data.get('tasks')
         user = request.user
 
         try:
-            estimate = UserEstimates.objects.get(id=estimate_id, user=user)
+            estimate = UserEstimates.objects.get(estimate_id=estimate_id, user=user)
         except UserEstimates.DoesNotExist:
             return Response({'error': 'Estimate not found'}, status=status.HTTP_404_NOT_FOUND)
 
@@ -657,7 +676,7 @@ class FetchEstimateItems(APIView):
 
     def get(self, request, estimate_id):
         try:
-            estimate = UserEstimates.objects.get(id=estimate_id, user=request.user)
+            estimate = UserEstimates.objects.get(estimate_id=estimate_id, user=request.user)
         except UserEstimates.DoesNotExist:
             return Response({'error': 'Estimate not found'}, status=status.HTTP_404_NOT_FOUND)
 
@@ -683,7 +702,7 @@ class UpdateTaskView(APIView):
         task_description = request.data.get('task_description')
 
         try:
-            task = EstimateItems.objects.get(estimate__id=estimate_id, task_number=task_number)
+            task = EstimateItems.objects.get(estimate_id=estimate_id, task_number=task_number)
         except EstimateItems.DoesNotExist:
             return Response({'error': 'Task not found'}, status=status.HTTP_404_NOT_FOUND)
 
@@ -700,7 +719,7 @@ class DeleteTaskView(APIView):
 
     def delete(self, request, estimate_id, task_number):
         try:
-            task = EstimateItems.objects.get(estimate__id=estimate_id, task_number=task_number)
+            task = EstimateItems.objects.get(estimate_id=estimate_id, task_number=task_number)
             task.delete()  # Delete the task
             return Response(status=status.HTTP_204_NO_CONTENT)  # Explicitly return 204 for deletion success
         except EstimateItems.DoesNotExist:

@@ -139,7 +139,7 @@ const useDynamicTable = (apiUrl, estimateId, selectedString, setSelectedString )
           setInputFields((prevFields) => [...prevFields, selectedString]);
           setSelectedString('');
         }
-      }, [selectedString, setSelectedString, inputFields]);
+      }, [selectedString, inputFields]);
 
     // const handleInputChange = (index, value) => {
     //     const updatedFields = [...inputFields];
@@ -151,6 +151,10 @@ const useDynamicTable = (apiUrl, estimateId, selectedString, setSelectedString )
         const newTasks = inputFields.filter((value) => value.trim() !== '');
 
         const tasksToSave = newTasks.map(task => splitTaskIntoColumns(task));
+        console.log('Estimate ID:', estimateId);
+        console.log('Tasks to Save:', tasksToSave);
+        console.log(localStorage.getItem('access_token')); // Should log a token value
+        console.log('API URL:', apiUrl);
 
         try {
             const accessToken = localStorage.getItem('access_token');
@@ -178,7 +182,7 @@ const useDynamicTable = (apiUrl, estimateId, selectedString, setSelectedString )
             console.error('Error saving tasks:', error);
         }
 
-         localStorage.removeItem('selectedStrings');
+        //  localStorage.removeItem('selectedStrings');
     };
 
 
@@ -243,6 +247,7 @@ const useDynamicTable = (apiUrl, estimateId, selectedString, setSelectedString )
     };
 
     const handleUpdateClick = async (index) => {
+
         const { job, laborCost, materialCost } = splitTaskIntoColumns(tableData[index]);
 
         const updatedJob = editValues.job || job;
@@ -263,6 +268,7 @@ const useDynamicTable = (apiUrl, estimateId, selectedString, setSelectedString )
         setEditIndex(null);
 
         const taskNumber = tableData[index].task_number;
+        console.log('Task Number:', taskNumber);
 
         try {
             const accessToken = localStorage.getItem('access_token');

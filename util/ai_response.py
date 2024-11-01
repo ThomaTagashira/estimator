@@ -2,14 +2,14 @@ from langchain.prompts import PromptTemplate
 from langchain_openai import ChatOpenAI
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
-from langsmith import traceable
+# from langsmith import traceable
 from dotenv import load_dotenv
 import os
 
 load_dotenv()
 
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
-@traceable
+# @traceable
 def get_response(retriever, query):
 
     # RAG Template:

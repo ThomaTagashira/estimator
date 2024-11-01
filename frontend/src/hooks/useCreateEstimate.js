@@ -78,6 +78,8 @@ const useCreateEstimate = (apiUrl) => {
 
       if (response.status === 401) {
         console.log('Access token expired, trying to refresh...');
+        console.log(estimateData);
+
         const newAccessToken = await refreshAccessToken(apiUrl);
 
         if (newAccessToken) {

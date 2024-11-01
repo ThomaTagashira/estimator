@@ -108,14 +108,14 @@ class Subscription(models.Model):
 
 class UserEstimates(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='userEstimates')
-    estimate_id = models.CharField(max_length=255, unique=True, editable=False)
+    estimate_id = models.CharField(max_length=255, unique=True, primary_key=True, editable=False)
     date_created = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
     project_name = models.CharField(max_length=255, blank=True, null=True)
 
     def save(self, *args, **kwargs):
         if not self.estimate_id:
-            last_estimate = UserEstimates.objects.filter(user=self.user).order_by('id').last()
+            last_estimate = UserEstimates.objects.filter(user=self.user).order_by('estimate_id').last()
             new_id = 1 if not last_estimate else int(last_estimate.estimate_id.split('-')[-1]) + 1
             self.estimate_id = f"{str(new_id).zfill(5)}"
         super().save(*args, **kwargs)
@@ -124,7 +124,7 @@ class UserEstimates(models.Model):
 
 class ProjectData(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='projects')
-    estimate = models.ForeignKey(UserEstimates, on_delete=models.CASCADE, related_name='project_data')
+    estimate = models.ForeignKey(UserEstimates, on_delete=models.CASCADE, related_name='project_data', to_field='estimate_id')
     project_name = models.TextField(blank=True, null=True)
     project_location = models.TextField(blank=True, null=True)
     start_date = models.DateTimeField(null=True, blank=True)
@@ -147,14 +147,14 @@ class ProjectData(models.Model):
 
 class EstimateItems(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='estimateItems')
-    estimate = models.ForeignKey(UserEstimates, on_delete=models.CASCADE, related_name='estimate_items')
+    estimate = models.ForeignKey(UserEstimates, on_delete=models.CASCADE, related_name='estimate_items', to_field='estimate_id')
     task_description = models.TextField(blank=True, null=True)
     task_number = models.PositiveIntegerField(null=True, blank=True)
 
 
 class ClientData(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='clientData')
-    estimate = models.ForeignKey(UserEstimates, on_delete=models.CASCADE, related_name='client_data')
+    estimate = models.ForeignKey(UserEstimates, on_delete=models.CASCADE, related_name='client_data', to_field='estimate_id')
     client_name = models.CharField(max_length=255, unique=False, null=True, blank=True)
     client_address = models.CharField(max_length=255, unique=False, null=True, blank=True)
     client_phone = models.CharField(max_length=255, unique=False, null=True, blank=True)
