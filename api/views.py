@@ -738,7 +738,7 @@ class UpdateEstimateInfoView(APIView):
 
         # Update ClientData if provided
         try:
-            client_info = ClientData.objects.get(estimate_id=estimate_id)
+            client_info = ClientData.objects.get(estimate__estimate_id=estimate_id)  # Correct lookup
             if updated_client_info:
                 client_info.client_name = updated_client_info.get('client_name', client_info.client_name)
                 client_info.client_address = updated_client_info.get('client_address', client_info.client_address)
@@ -750,7 +750,7 @@ class UpdateEstimateInfoView(APIView):
 
         # Update ProjectData if provided
         try:
-            project_info = ProjectData.objects.get(estimate_id=estimate_id)
+            project_info = ProjectData.objects.get(estimate__estimate_id=estimate_id)  # Correct lookup
             if updated_project_info:
                 project_info.project_name = updated_project_info.get('project_name', project_info.project_name)
                 project_info.project_location = updated_project_info.get('project_location', project_info.project_location)
@@ -761,5 +761,3 @@ class UpdateEstimateInfoView(APIView):
             return Response({'error': 'Project data not found'}, status=status.HTTP_404_NOT_FOUND)
 
         return Response({'message': 'Estimate information updated successfully'}, status=status.HTTP_200_OK)
-
-

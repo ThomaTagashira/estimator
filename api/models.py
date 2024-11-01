@@ -122,6 +122,9 @@ class UserEstimates(models.Model):
 
 
 
+from django.utils import timezone
+from dateutil import parser
+
 class ProjectData(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='projects')
     estimate = models.ForeignKey(UserEstimates, on_delete=models.CASCADE, related_name='project_data', to_field='estimate_id')
@@ -131,17 +134,39 @@ class ProjectData(models.Model):
     end_date = models.DateTimeField(null=True, blank=True)
 
     def save(self, *args, **kwargs):
+        # Parse and ensure datetime fields are timezone-aware
+        if isinstance(self.start_date, str):
+            self.start_date = parser.parse(self.start_date)
+        if isinstance(self.end_date, str):
+            self.end_date = parser.parse(self.end_date)
+
+        if self.start_date and timezone.is_naive(self.start_date):
+            self.start_date = timezone.make_aware(self.start_date)
+        if self.end_date and timezone.is_naive(self.end_date):
+            self.end_date = timezone.make_aware(self.end_date)
+
+        # Set project_name if not provided
         if not self.project_name:
-            existing_projects = ProjectData.objects.filter(user=self.user, project_name__startswith='Estimate').values_list('project_name', flat=True)
+            existing_projects = ProjectData.objects.filter(
+                user=self.user, project_name__startswith='Estimate'
+            ).values_list('project_name', flat=True)
             project_number = 1
             while f"Estimate{project_number}" in existing_projects:
                 project_number += 1
             self.project_name = f"Estimate{project_number}"
 
+        # Save ProjectData instance first to ensure `estimate` relationship is valid
         super().save(*args, **kwargs)
-        if self.project_name:
-            self.estimate.project_name = self.project_name
-            self.estimate.save()
+
+        # Ensure `self.estimate` exists before updating its `project_name`
+        if self.estimate_id and self.project_name:
+            try:
+                estimate = UserEstimates.objects.get(estimate_id=self.estimate.estimate_id)
+                estimate.project_name = self.project_name
+                estimate.save()
+            except UserEstimates.DoesNotExist:
+                print("Linked UserEstimates instance does not exist for estimate_id:", self.estimate_id)
+
 
 
 
@@ -150,6 +175,14 @@ class EstimateItems(models.Model):
     estimate = models.ForeignKey(UserEstimates, on_delete=models.CASCADE, related_name='estimate_items', to_field='estimate_id')
     task_description = models.TextField(blank=True, null=True)
     task_number = models.PositiveIntegerField(null=True, blank=True)
+
+    def save(self, *args, **kwargs):
+        # Ensure `estimate_id` is zero-padded
+        if self.estimate_id:
+            self.estimate_id = f"{int(self.estimate_id):05}"
+
+        super().save(*args, **kwargs)
+
 
 
 class ClientData(models.Model):
@@ -160,3 +193,9 @@ class ClientData(models.Model):
     client_phone = models.CharField(max_length=255, unique=False, null=True, blank=True)
     client_email = models.CharField(max_length=255, unique=False, null=True, blank=True)
 
+    def save(self, *args, **kwargs):
+        # Ensure `estimate_id` is zero-padded
+        if self.estimate_id:
+            self.estimate_id = f"{int(self.estimate_id):05}"
+
+        super().save(*args, **kwargs)

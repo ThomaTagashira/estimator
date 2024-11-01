@@ -268,7 +268,9 @@ const useDynamicTable = (apiUrl, estimateId, selectedString, setSelectedString )
         setEditIndex(null);
 
         const taskNumber = tableData[index].task_number;
-        console.log('Task Number:', taskNumber);
+         console.log('Table Data:', tableData);
+
+         console.log('Task Number:', taskNumber);
 
         try {
             const accessToken = localStorage.getItem('access_token');
