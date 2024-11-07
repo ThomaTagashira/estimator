@@ -1,6 +1,6 @@
 import React from 'react';
-import ClientInfoForm from '../components/ClientInfoForm';
-import ProjectInfoForm from '../components/ProjectInfoForm';
+import ClientInfoForm from '../components/Form/ClientInfoForm';
+import ProjectInfoForm from '../components/Form/ProjectInfoForm';
 import useCreateEstimate from '../hooks/useCreateEstimate';
 
 const apiUrl = process.env.REACT_APP_API_URL;

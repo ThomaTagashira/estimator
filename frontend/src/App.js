@@ -4,7 +4,7 @@ import { BrowserRouter as Router, Route, Routes, redirect } from 'react-router-d
 import setupInterceptors from './components/setupInterceptor';
 import GoogleCallback from './components/GoogleCallback';
 // import GitHubCallback from './components/GitHubCallback';
-import { SuccessPage, SearchResults, CancelPage, SubscriptionPage, TokenPurchasePage, DashboardPage, LoginPage, RegisterPage, CreateEstimatePage, EstimatesPage, EstimateDetailPage }  from './pages';
+import { BusinessInfoUpdateSuccessPage, SuccessPage, SearchResults, CancelPage, SubscriptionPage, TokenPurchasePage, DashboardPage, LoginPage, RegisterPage, CreateEstimatePage, EstimatesPage, EstimateDetailPage, BusinessInfoPage }  from './pages';
 import Header from './components/Header';
 import AuthenticatedRoute from './components/Auth/AuthenticatedRoute';
 
@@ -78,6 +78,16 @@ function App() {
                 <Route path="/saved-estimate/:estimateId" element={
             <AuthenticatedRoute isAuthenticated={isAuthenticated} hasActiveSubscription={hasActiveSubscription}>
               <EstimateDetailPage apiUrl={apiUrl} />
+            </AuthenticatedRoute>
+        }/>
+                <Route path="/save-business-info" element={
+            <AuthenticatedRoute isAuthenticated={isAuthenticated} hasActiveSubscription={hasActiveSubscription}>
+              <BusinessInfoPage apiUrl={apiUrl} />
+            </AuthenticatedRoute>
+        }/>
+                <Route path="/business-info-update-success" element={
+            <AuthenticatedRoute isAuthenticated={isAuthenticated} hasActiveSubscription={hasActiveSubscription}>
+              <BusinessInfoUpdateSuccessPage apiUrl={apiUrl} />
             </AuthenticatedRoute>
         }/>
 

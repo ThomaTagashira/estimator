@@ -36,6 +36,8 @@ urlpatterns = [
     path('api/update-task/<str:estimate_id>/<int:task_number>/', UpdateTaskView.as_view(), name='update_task'),
     path('api/delete-task/<str:estimate_id>/<int:task_number>/', DeleteTaskView.as_view(), name='delete_task'),
     path('api/update-estimate/<str:estimate_id>/', UpdateEstimateInfoView.as_view(), name='update_estimate'),
+    path('api/save-business-info/', save_business_info, name='save_business_info'),
+    path('api/get-saved-business-info/', get_saved_business_info, name='get_saved_business_info'),
 
 
 

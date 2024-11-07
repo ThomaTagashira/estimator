@@ -40,7 +40,7 @@ class DeleteTaskTestCase(APITestCase):
                 task_description=task_description
             )
 
-        self.delete_url = reverse('delete_task', kwargs={'estimate_id': self.estimate.id, 'task_number': saved_tasks.task_number})
+        self.delete_url = reverse('delete_task', kwargs={'estimate_id': self.estimate.estimate_id, 'task_number': saved_tasks.task_number})
 
     def test_delete_task(self):
 

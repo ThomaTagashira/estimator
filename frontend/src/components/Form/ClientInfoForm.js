@@ -1,6 +1,11 @@
 import React from 'react';
 
-const ClientInfoForm = ({ clientInfo, handleClientInfoChange, handleNext }) => {
+const ClientInfoForm = ({
+    clientInfo,
+    handleClientInfoChange,
+    handleNext
+}) => {
+
   return (
     <div className="client-info">
       <h3>Client Information</h3>

@@ -720,8 +720,8 @@ class DeleteTaskView(APIView):
     def delete(self, request, estimate_id, task_number):
         try:
             task = EstimateItems.objects.get(estimate_id=estimate_id, task_number=task_number)
-            task.delete()  # Delete the task
-            return Response(status=status.HTTP_204_NO_CONTENT)  # Explicitly return 204 for deletion success
+            task.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
         except EstimateItems.DoesNotExist:
             return Response({'error': 'Task not found'}, status=status.HTTP_404_NOT_FOUND)
 
@@ -732,13 +732,11 @@ class UpdateEstimateInfoView(APIView):
     permission_classes = [IsAuthenticated]
 
     def patch(self, request, estimate_id):
-        # Get updated data from the request
         updated_client_info = request.data.get('client_data')
         updated_project_info = request.data.get('project_data')
 
-        # Update ClientData if provided
         try:
-            client_info = ClientData.objects.get(estimate__estimate_id=estimate_id)  # Correct lookup
+            client_info = ClientData.objects.get(estimate__estimate_id=estimate_id)
             if updated_client_info:
                 client_info.client_name = updated_client_info.get('client_name', client_info.client_name)
                 client_info.client_address = updated_client_info.get('client_address', client_info.client_address)
@@ -748,9 +746,8 @@ class UpdateEstimateInfoView(APIView):
         except ClientData.DoesNotExist:
             return Response({'error': 'Client data not found'}, status=status.HTTP_404_NOT_FOUND)
 
-        # Update ProjectData if provided
         try:
-            project_info = ProjectData.objects.get(estimate__estimate_id=estimate_id)  # Correct lookup
+            project_info = ProjectData.objects.get(estimate__estimate_id=estimate_id)
             if updated_project_info:
                 project_info.project_name = updated_project_info.get('project_name', project_info.project_name)
                 project_info.project_location = updated_project_info.get('project_location', project_info.project_location)
@@ -761,3 +758,37 @@ class UpdateEstimateInfoView(APIView):
             return Response({'error': 'Project data not found'}, status=status.HTTP_404_NOT_FOUND)
 
         return Response({'message': 'Estimate information updated successfully'}, status=status.HTTP_200_OK)
+
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def save_business_info(request):
+    business_data = request.data
+    user = request.user
+    print(business_data)
+    business_info = BusinessInfo.objects.create(
+        user=user,
+        business_name=business_data.get('business_name'),
+        business_address=business_data.get('business_address'),
+        business_phone=business_data.get('business_phone'),
+        business_email=business_data.get('business_email'),
+    )
+
+    return Response(
+        {
+            'business_name': business_info.business_name,
+            'business_address': business_info.business_address,
+            'business_phone': business_info.business_phone,
+            'business_email': business_info.business_email,
+        },
+        status=status.HTTP_201_CREATED
+    )
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_saved_business_info(request):
+    business_infos = BusinessInfo.objects.filter(user=request.user)
+    serializer = BusinessInfoSerializer(business_infos, many=True)
+    return Response(serializer.data)

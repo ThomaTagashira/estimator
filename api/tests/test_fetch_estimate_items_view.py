@@ -19,7 +19,7 @@ class FetchEstimateItemsTestCase(APITestCase):
             project_name='test project'
         )
 
-        self.url = reverse('get_saved_estimate_items', kwargs={'estimate_id': self.estimate.id})
+        self.url = reverse('get_saved_estimate_items', kwargs={'estimate_id': self.estimate.estimate_id})
         
         tasks_to_save = [
             {'job': 'job1', 'laborCost': '1.11', 'materialCost': '1.11'},

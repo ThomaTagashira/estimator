@@ -40,7 +40,7 @@ class UpdateTaskTestCase(APITestCase):
                 task_description=task_description
             )
         
-        self.url = reverse('delete_task', kwargs={'estimate_id': self.estimate.id, 'task_number': saved_tasks.task_number})
+        self.url = reverse('delete_task', kwargs={'estimate_id': self.estimate.estimate_id, 'task_number': saved_tasks.task_number})
  
     def test_update_existing_estimate_items(self):
 
@@ -48,7 +48,7 @@ class UpdateTaskTestCase(APITestCase):
         updated_task_1 = {
             'task_description': 'updated job1 Labor Cost: $11.11 Material Cost: $11.11'
         }
-        url_task_1 = reverse('update_task', kwargs={'estimate_id': self.estimate.id, 'task_number': 1})
+        url_task_1 = reverse('update_task', kwargs={'estimate_id': self.estimate.estimate_id, 'task_number': 1})
         response = self.client.patch(url_task_1, updated_task_1, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -56,7 +56,7 @@ class UpdateTaskTestCase(APITestCase):
         updated_task_2 = {
             'task_description': 'updated job2 Labor Cost: $22.22 Material Cost: $22.22'
         }
-        url_task_2 = reverse('update_task', kwargs={'estimate_id': self.estimate.id, 'task_number': 2})
+        url_task_2 = reverse('update_task', kwargs={'estimate_id': self.estimate.estimate_id, 'task_number': 2})
         response = self.client.patch(url_task_2, updated_task_2, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -64,11 +64,11 @@ class UpdateTaskTestCase(APITestCase):
         updated_task_3 = {
             'task_description': 'updated job3 Labor Cost: $33.33 Material Cost: $33.33'
         }
-        url_task_3 = reverse('update_task', kwargs={'estimate_id': self.estimate.id, 'task_number': 3})
+        url_task_3 = reverse('update_task', kwargs={'estimate_id': self.estimate.estimate_id, 'task_number': 3})
         response = self.client.patch(url_task_3, updated_task_3, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        fetch_url = reverse('get_saved_estimate_items', kwargs={'estimate_id': self.estimate.id})
+        fetch_url = reverse('get_saved_estimate_items', kwargs={'estimate_id': self.estimate.estimate_id})
         response = self.client.get(fetch_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 

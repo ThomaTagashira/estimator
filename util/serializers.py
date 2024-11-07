@@ -131,3 +131,9 @@ class UserEstimatesSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserEstimates
         fields = ['estimate_id', 'date_created', 'last_modified', 'project_name', 'client_data', 'project_data', 'estimate_items']
+
+
+class BusinessInfoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BusinessInfo
+        fields = ['business_name', 'business_address', 'business_phone', 'business_email']

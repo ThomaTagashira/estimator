@@ -6,6 +6,7 @@ const ProjectInfoForm = ({
   handlePrevious,
   handleSubmit,
 }) => {
+
   return (
     <div className="project-info">
       <h3>Project Information</h3>

@@ -134,7 +134,6 @@ class ProjectData(models.Model):
     end_date = models.DateTimeField(null=True, blank=True)
 
     def save(self, *args, **kwargs):
-        # Parse and ensure datetime fields are timezone-aware
         if isinstance(self.start_date, str):
             self.start_date = parser.parse(self.start_date)
         if isinstance(self.end_date, str):
@@ -145,7 +144,6 @@ class ProjectData(models.Model):
         if self.end_date and timezone.is_naive(self.end_date):
             self.end_date = timezone.make_aware(self.end_date)
 
-        # Set project_name if not provided
         if not self.project_name:
             existing_projects = ProjectData.objects.filter(
                 user=self.user, project_name__startswith='Estimate'
@@ -155,10 +153,8 @@ class ProjectData(models.Model):
                 project_number += 1
             self.project_name = f"Estimate{project_number}"
 
-        # Save ProjectData instance first to ensure `estimate` relationship is valid
         super().save(*args, **kwargs)
 
-        # Ensure `self.estimate` exists before updating its `project_name`
         if self.estimate_id and self.project_name:
             try:
                 estimate = UserEstimates.objects.get(estimate_id=self.estimate.estimate_id)
@@ -177,7 +173,6 @@ class EstimateItems(models.Model):
     task_number = models.PositiveIntegerField(null=True, blank=True)
 
     def save(self, *args, **kwargs):
-        # Ensure `estimate_id` is zero-padded
         if self.estimate_id:
             self.estimate_id = f"{int(self.estimate_id):05}"
 
@@ -194,8 +189,16 @@ class ClientData(models.Model):
     client_email = models.CharField(max_length=255, unique=False, null=True, blank=True)
 
     def save(self, *args, **kwargs):
-        # Ensure `estimate_id` is zero-padded
         if self.estimate_id:
             self.estimate_id = f"{int(self.estimate_id):05}"
 
         super().save(*args, **kwargs)
+
+
+
+class BusinessInfo(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='businessInfo')
+    business_name = models.CharField(max_length=255, unique=False, null=True, blank=True)
+    business_address = models.CharField(max_length=255, unique=False, null=True, blank=True)
+    business_phone = models.CharField(max_length=255, unique=False, null=True, blank=True)
+    business_email = models.CharField(max_length=255, unique=False, null=True, blank=True)

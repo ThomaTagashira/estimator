@@ -11,7 +11,9 @@ const DashboardPage = () => {
             <div style={styles.cards}>
                 <div style={styles.card}>
                     <h2>Account Information</h2>
-                    <p>View and update your account details.</p>
+                    <Link to="/save-business-info">
+                        <button>Update Business Information</button>
+                    </Link>
                 </div>
                 <div style={styles.card}>
                     <h2>Subscription</h2>
@@ -22,10 +24,10 @@ const DashboardPage = () => {
                     <p>Adjust your preferences and settings.</p>
                 </div>
                 <div className="dashboard-page">
-      <         h2>Dashboard</h2>
-                  <Link to="/create-estimate">
-                    <button>Create New Estimate</button>
-                  </Link>
+                    <h2>Dashboard</h2>
+                    <Link to="/create-estimate">
+                        <button>Create New Estimate</button>
+                    </Link>
                 </div>
             </div>
         </div>

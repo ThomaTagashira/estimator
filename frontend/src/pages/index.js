@@ -11,3 +11,5 @@ export { default as DynamicTablePage } from './DynamicTablePage';
 export { default as CreateEstimatePage } from './CreateEstimatePage';
 export { default as EstimatesPage } from './EstimatesPage';
 export { default as EstimateDetailPage } from './EstimateDetailPage';
+export { default as BusinessInfoUpdateSuccessPage } from './BusinessInfoSuccessPage';
+export { default as BusinessInfoPage } from './BusinessInfoPage';
