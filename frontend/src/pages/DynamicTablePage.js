@@ -21,9 +21,6 @@ const DynamicTablePage = ({ apiUrl, estimateId, selectedString, setSelectedStrin
         applyMargin,
         marginPercent,
         // logo,
-        companyName,
-        address,
-        phone,
         totalLaborCost,
         totalMaterialCost,
         combinedTotal,
@@ -48,9 +45,6 @@ const DynamicTablePage = ({ apiUrl, estimateId, selectedString, setSelectedStrin
         calculateTotals,
         splitTaskIntoColumns,
         applyMarginToLaborCost,
-        setCompanyName,
-        setAddress,
-        setPhone,
         exportTablePDF,
         saveEstimateData,
         setTableData,
@@ -58,6 +52,9 @@ const DynamicTablePage = ({ apiUrl, estimateId, selectedString, setSelectedStrin
         tableData,
     } = useDynamicTable(apiUrl, estimateId, selectedString, setSelectedString);
 
+  const [companyName, setCompanyName] = useState('');
+  const [address, setAddress] = useState('');
+  const [phone, setPhone] = useState('');
   const [clientName, setClientName] = useState('');
   const [clientAddress, setClientAddress] = useState('');
   const [clientPhone, setClientPhone] = useState('');
@@ -112,6 +109,40 @@ const DynamicTablePage = ({ apiUrl, estimateId, selectedString, setSelectedStrin
     fetchEstimateData();
   }, [apiUrl, estimateId]);
 
+  useEffect(() => {
+    const fetchBusinessData = async () => {
+      try {
+        const accessToken = localStorage.getItem('access_token');
+        const response = await fetch(`${apiUrl}/api/get-saved-business-info/`, {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+        });
+              if (response.ok) {
+                const businessData = await response.json();
+                console.log(businessData)
+
+                
+                if (businessData.length > 0) {
+                  const businessInfo = businessData[0]; // Access the first item
+                  setCompanyName(businessInfo.business_name);
+                  setAddress(businessInfo.business_address);
+                  setPhone(businessInfo.business_phone);
+              } else {
+                  console.error('No business data found');
+              }
+          } else {
+              console.error('Failed to fetch business data: Status', response.status);
+          }
+      } catch (error) {
+          console.error('Failed to fetch business data:', error);
+      }
+  };
+
+  fetchBusinessData();
+}, [apiUrl]);
 
   useEffect(() => {
     const fetchSavedEstimateItems = async () => {
@@ -224,6 +255,7 @@ const DynamicTablePage = ({ apiUrl, estimateId, selectedString, setSelectedStrin
                     type="text"
                     value={companyName}
                     onChange={(e) => setCompanyName(e.target.value)}
+                    disabled={!isEditable}
                     placeholder="Company Name"
                   />
                 </div>
@@ -232,6 +264,7 @@ const DynamicTablePage = ({ apiUrl, estimateId, selectedString, setSelectedStrin
                     type="text"
                     value={address}
                     onChange={(e) => setAddress(e.target.value)}
+                    disabled={!isEditable}
                     placeholder="Address"
                   />
                 </div>
@@ -240,6 +273,7 @@ const DynamicTablePage = ({ apiUrl, estimateId, selectedString, setSelectedStrin
                     type="text"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
+                    disabled={!isEditable}
                     placeholder="Phone"
                   />
                 </div>
@@ -338,12 +372,34 @@ const DynamicTablePage = ({ apiUrl, estimateId, selectedString, setSelectedStrin
 
       <div className="edit-buttons">
         {!isEditable ? (
-          <button onClick={() => setIsEditable(true)}>Edit</button>
+          <button onClick={() => setIsEditable(true)}>Edit Client and Project Info</button>
         ) : (
           <button onClick={handleSave}>Save</button>
         )}
       </div>
-
+              {/* Discount & Margin */}
+              <div>
+                <button onClick={toggleDiscount}>
+                  {applyDiscount ? 'Remove Discount' : 'Apply Discount'}
+                </button>
+              </div>
+              <div>
+                <button onClick={toggleMargin}>
+                  {applyMargin ? 'Remove Margin' : 'Add Margin %'}
+                </button>
+                {applyMargin && (
+                  <div>
+                    <span>Enter Margin Percentage</span>
+                    <input
+                      type="number"
+                      value={marginPercent}
+                      onChange={handleMarginChange}
+                      style={{ width: '50px' }}
+                      placeholder="0"
+                    />
+                  </div>
+                )}
+              </div>
               {/* Dynamic Table */}
               <div ref={tableRef}>
                 <table>
@@ -474,35 +530,27 @@ const DynamicTablePage = ({ apiUrl, estimateId, selectedString, setSelectedStrin
                 </table>
               </div>
 
-              {/* Discount & Margin */}
-              <div>
-                <button onClick={toggleDiscount}>
-                  {applyDiscount ? 'Remove Discount' : 'Apply Discount'}
-                </button>
-              </div>
-              <div>
-                <button onClick={toggleMargin}>
-                  {applyMargin ? 'Remove Margin' : 'Add Margin %'}
-                </button>
-                {applyMargin && (
-                  <div>
-                    <span>Enter Margin Percentage</span>
-                    <input
-                      type="number"
-                      value={marginPercent}
-                      onChange={handleMarginChange}
-                      style={{ width: '50px' }}
-                      placeholder="0"
-                    />
-                  </div>
-                )}
-              </div>
-
               {/* Export to PDF */}
-              <button onClick={exportTablePDF}>Generate Estimate</button>
-
-              {/* Save Estimate */}
-              <button onClick={handleSave}>Save Estimate</button>
+              <button
+                onClick={() =>
+                    exportTablePDF({
+                        companyName,
+                        address,
+                        phone,
+                        estimateId,
+                        clientName,
+                        clientAddress,
+                        clientPhone,
+                        clientEmail,
+                        projectName,
+                        projectLocation,
+                        startDate,
+                        endDate,
+                    })
+                }
+            >
+                Generate Estimate
+              </button>
             </div>
     </div>
   );

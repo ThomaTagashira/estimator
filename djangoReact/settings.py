@@ -83,7 +83,7 @@ REST_USE_JWT = True
 
 SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('Bearer',),
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=7),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
     'ROTATE_REFRESH_TOKENS': True,  # Disable rotation if you don't want to rotate tokens
     'BLACKLIST_AFTER_ROTATION': True,  # Disable blacklisting since it's no longer relevant
@@ -107,12 +107,12 @@ REST_FRAMEWORK = {
 }
 
 CRONJOBS = [
-    ('0 0 * * *', 'api.tasks.allocate_monthly_tokens')  # Run daily at midnight
+    ('0 0 * * *', 'api.tasks.allocate_monthly_tokens')  # Runs at midnight
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'corsheaders.middleware.CorsMiddleware',  # Place CorsMiddleware here
+    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     #'django.middleware.csrf.CsrfViewMiddleware',

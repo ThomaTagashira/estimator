@@ -72,7 +72,7 @@ const useCreateBusinessInfo = (apiUrl) => {
 
             if (response.ok) {
             console.log('Business Info created successfully', responseData);
-            // navigate(`/business-info-update-success`);
+            navigate(`/business-info-update-success`);
         } else {
             console.error('Failed to create Business Info', responseData);
             setError('Failed to create Business Info');
@@ -81,14 +81,15 @@ const useCreateBusinessInfo = (apiUrl) => {
             console.error('Error submitting data:', error);
             setError('Failed to save the Business Info');
         }
-        };
+    };
 
-    return {
-        businessInfo,
-        handleBusinessInfoChange,
-        handleBusinessSubmit,
-        error,
-      };
-};
+        return {
+            businessInfo,
+            handleBusinessInfoChange,
+            handleBusinessSubmit,
+            setBusinessInfo,
+            error,
+        };
+    };
 
 export default useCreateBusinessInfo;

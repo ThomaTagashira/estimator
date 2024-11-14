@@ -766,25 +766,32 @@ class UpdateEstimateInfoView(APIView):
 def save_business_info(request):
     business_data = request.data
     user = request.user
-    print(business_data)
-    business_info = BusinessInfo.objects.create(
-        user=user,
-        business_name=business_data.get('business_name'),
-        business_address=business_data.get('business_address'),
-        business_phone=business_data.get('business_phone'),
-        business_email=business_data.get('business_email'),
-    )
 
+    # Try to get the existing business info for the user
+    business_info, created = BusinessInfo.objects.get_or_create(user=user)
+
+    # Update the fields if the record already exists
+    business_info.business_name = business_data.get('business_name', business_info.business_name)
+    business_info.business_address = business_data.get('business_address', business_info.business_address)
+    business_info.business_phone = business_data.get('business_phone', business_info.business_phone)
+    business_info.business_email = business_data.get('business_email', business_info.business_email)
+    
+    # Save changes (new record or update existing)
+    business_info.save()
+
+    # Prepare response data
+    response_data = {
+        'business_name': business_info.business_name,
+        'business_address': business_info.business_address,
+        'business_phone': business_info.business_phone,
+        'business_email': business_info.business_email,
+    }
+
+    # Return appropriate response status
     return Response(
-        {
-            'business_name': business_info.business_name,
-            'business_address': business_info.business_address,
-            'business_phone': business_info.business_phone,
-            'business_email': business_info.business_email,
-        },
-        status=status.HTTP_201_CREATED
+        response_data,
+        status=status.HTTP_201_CREATED if created else status.HTTP_200_OK
     )
-
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])

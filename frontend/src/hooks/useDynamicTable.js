@@ -148,14 +148,19 @@ const useDynamicTable = (apiUrl, estimateId, selectedString, setSelectedString )
     // };
 
     const handleAddAllRows = async () => {
-        const newTasks = inputFields.filter((value) => value.trim() !== '');
-
+        console.log('input:', inputFields);
+    
+        // Flatten the array and filter only strings, then trim them
+        const newTasks = inputFields
+            .flat() // Flattens any nested arrays
+            .filter(value => typeof value === 'string' && value.trim() !== '');
+    
         const tasksToSave = newTasks.map(task => splitTaskIntoColumns(task));
         console.log('Estimate ID:', estimateId);
         console.log('Tasks to Save:', tasksToSave);
-        console.log(localStorage.getItem('access_token')); // Should log a token value
+        console.log(localStorage.getItem('access_token'));
         console.log('API URL:', apiUrl);
-
+    
         try {
             const accessToken = localStorage.getItem('access_token');
             const response = await fetch(`${apiUrl}/api/save-estimate-items/`, {
@@ -169,22 +174,22 @@ const useDynamicTable = (apiUrl, estimateId, selectedString, setSelectedString )
                     tasks: tasksToSave
                 }),
             });
-
+    
             if (!response.ok) {
                 throw new Error('Failed to save tasks');
             }
-
+    
             console.log('Tasks saved to database');
             setTableData((prevTableData) => [...prevTableData, ...newTasks]);
             setInputFields([]);
-
+    
         } catch (error) {
             console.error('Error saving tasks:', error);
         }
-
-        //  localStorage.removeItem('selectedStrings');
+    
+        localStorage.removeItem('selectedStrings');
     };
-
+    
 
 
     const handleAddCustomRow = () => {
@@ -195,6 +200,7 @@ const useDynamicTable = (apiUrl, estimateId, selectedString, setSelectedString )
     const handleRemoveField = (index) => {
         const updatedFields = inputFields.filter((_, i) => i !== index);
         setInputFields(updatedFields);
+        localStorage.removeItem('selectedStrings');
     };
 
 
@@ -386,23 +392,28 @@ const useDynamicTable = (apiUrl, estimateId, selectedString, setSelectedString )
         };
     };
 
-    const exportTablePDF = () => {
+    const exportTablePDF = (data) => {
+        console.log("Data received in exportTablePDF:", data);
+        console.log(tableData)
+        
         const totals = calculateTotals();
 
         exportPDF({
             // logo,
-            companyName,
-            address,
-            phone,
+            companyName:data.companyName,
+            address:data.address,
+            phone:data.phone,
             estimateId,
-            clientName,
-            clientAddress,
-            clientPhone,
-            clientEmail,
-            projectName,
-            projectLocation,
-            startDate,
-            endDate,
+            clientName:data.clientName,
+            clientAddress:data.clientAddress,
+            clientPhone:data.clientPhone,
+            clientEmail:data.clientEmail,
+            projectName:data.projectName,
+            projectLocation:data.projectLocation,
+            startDate:data.startDate,
+            endDate:data.endDate,
+
+            
             totalLaborCost: totals.totalLaborCost,
             totalMaterialCost: totals.totalMaterialCost,
             combinedTotal: totals.combinedTotal,

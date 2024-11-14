@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import BusinessInfoForm from '../components/Form/BusinessInfoForm';
 import useCreateBusinessInfo from '../hooks/useCreateBusinessInfo';
 
 const apiUrl = process.env.REACT_APP_API_URL;
@@ -9,13 +8,9 @@ const BusinessInfoPage = () => {
         businessInfo,
         handleBusinessInfoChange,
         handleBusinessSubmit,
+        setBusinessInfo,  // Add this in the hook if not present
     } = useCreateBusinessInfo(apiUrl);
 
-    const [businessName, setBusinessName] = useState('');
-    const [businessAddress, setBusinessAddress] = useState('');
-    const [businessPhone, setBusinessPhone] = useState('');
-    const [businessEmail, setBusinessEmail] = useState('');
-    const [originalBusinessInfo, setOriginalBusinessInfo] = useState({});
     const [isEditable, setIsEditable] = useState(false);
 
     useEffect(() => {
@@ -30,73 +25,76 @@ const BusinessInfoPage = () => {
             });
 
             const data = await response.json();
+            console.log('API Response:', data);
 
-            console.log('API Response:', data); // Check structure
-
-            if (data && data.length > 0) {  // Check if the array has entries
-                setBusinessName(data[0].business_name || '');
-                setBusinessAddress(data[0].business_address || '');
-                setBusinessPhone(data[0].business_phone || '');
-                setBusinessEmail(data[0].business_email || '');
-
-                setOriginalBusinessInfo(data[0]);
+            if (data && data.length > 0) {
+                setBusinessInfo({
+                    businessName: data[0].business_name || '',
+                    businessAddress: data[0].business_address || '',
+                    businessPhone: data[0].business_phone || '',
+                    businessEmail: data[0].business_email || ''
+                });
             } else {
                 console.error('Business data not found');
             }
         };
 
         fetchBusinessData();
-      }, [apiUrl]);
+    }, [apiUrl, setBusinessInfo]);
 
     return (
         <div className="business-info-section">
-        <h3>Business Information</h3>
-        <div>
-          <input
-            type="text"
-            value={businessName}
-            onChange={(e) => handleBusinessInfoChange(e.target.value)}
-            disabled={!isEditable}
-            placeholder="Business Name"
-          />
-        </div>
-        <div>
-          <input
-            type="text"
-            value={businessAddress}
-            onChange={(e) => handleBusinessInfoChange(e.target.value)}
-            disabled={!isEditable}
-            placeholder="Business Address"
-          />
-        </div>
-        <div>
-          <input
-            type="text"
-            value={businessPhone}
-            onChange={(e) => handleBusinessInfoChange(e.target.value)}
-            disabled={!isEditable}
-            placeholder="Business Phone"
-          />
-        </div>
-        <div>
-          <input
-            type="text"
-            value={businessEmail}
-            onChange={(e) => handleBusinessInfoChange(e.target.value)}
-            disabled={!isEditable}
-            placeholder="Business Email"
-          />
-        </div>
+            <h3>Business Information</h3>
+            <div>
+                <input
+                    type="text"
+                    name="businessName"
+                    value={businessInfo.businessName}
+                    onChange={handleBusinessInfoChange}
+                    disabled={!isEditable}
+                    placeholder="Business Name"
+                />
+            </div>
+            <div>
+                <input
+                    type="text"
+                    name="businessAddress"
+                    value={businessInfo.businessAddress}
+                    onChange={handleBusinessInfoChange}
+                    disabled={!isEditable}
+                    placeholder="Business Address"
+                />
+            </div>
+            <div>
+                <input
+                    type="text"
+                    name="businessPhone"
+                    value={businessInfo.businessPhone}
+                    onChange={handleBusinessInfoChange}
+                    disabled={!isEditable}
+                    placeholder="Business Phone"
+                />
+            </div>
+            <div>
+                <input
+                    type="text"
+                    name="businessEmail"
+                    value={businessInfo.businessEmail}
+                    onChange={handleBusinessInfoChange}
+                    disabled={!isEditable}
+                    placeholder="Business Email"
+                />
+            </div>
 
-        <div className="edit-buttons">
-        {!isEditable ? (
-          <button onClick={() => setIsEditable(true)}>Edit</button>
-        ) : (
-          <button onClick={handleBusinessSubmit}>Save</button>
-        )}
+            <div className="edit-buttons">
+                {!isEditable ? (
+                    <button onClick={() => setIsEditable(true)}>Update</button>
+                ) : (
+                    <button onClick={handleBusinessSubmit}>Save</button>
+                )}
+            </div>
         </div>
-    </div>
-    )
+    );
 };
 
-export default BusinessInfoPage
+export default BusinessInfoPage;
