@@ -56,7 +56,7 @@ jobs:
       DB_HOST: localhost
       DB_PORT: 5432
       SECRET_KEY: ${{ secrets.SECRET_KEY }}
-      CONNECTION_STRING: "postgresql+psycopg2://test_user:test_password@localhost:5432/mock_test_db"
+      CONNECTION_STRING: "postgresql+psycopg://test_user:test_password@localhost:5432/mock_test_db"
       COLLECTION_NAME: 'test_cost_vectors'
       DJANGO_SETTINGS_MODULE: djangoReact.settings
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
