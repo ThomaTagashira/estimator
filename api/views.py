@@ -799,3 +799,13 @@ def get_saved_business_info(request):
     business_infos = BusinessInfo.objects.filter(user=request.user)
     serializer = BusinessInfoSerializer(business_infos, many=True)
     return Response(serializer.data)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_user_token_count(request):
+    try:
+        user_token = UserToken.objects.get(user=request.user)
+        return Response({'token_balance': user_token.token_balance})
+    except UserToken.DoesNotExist:
+        return Response({'error': 'Token balance not found for user'}, status=404)

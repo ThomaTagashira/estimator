@@ -1,11 +1,14 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
-const Header = ({ handleLogout, hasActiveSubscription, }) => {
+const Header = ({ handleLogout, hasActiveSubscription, tokenCount }) => {
     return (
         <header style={headerStyle}>
             <div style={logoStyle}>
                 <h1>MyApp</h1>
+            </div>
+            <div style={{ fontSize: '18px', fontWeight: 'bold' }}>
+                Tokens: {tokenCount}
             </div>
             <nav style={navStyle}>
                 <ul style={ulStyle}>
