@@ -11,7 +11,7 @@ const SearchPage = ({ apiUrl }) => {
   const [activeTab, setActiveTab] = useState('search');
   const [tableData, setTableData] = useState([]);  // For dynamic table content
   const [searchParams] = useSearchParams();
-  const [inputFields, setInputFields] = useState([]);
+  const [setInputFields] = useState([]);
 
   const estimateId = searchParams.get('estimateId');
 

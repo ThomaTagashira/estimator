@@ -40,7 +40,7 @@ const BusinessInfoPage = () => {
         };
 
         fetchBusinessData();
-    }, [apiUrl, setBusinessInfo]);
+    }, [setBusinessInfo]);
 
     return (
         <div className="business-info-section">

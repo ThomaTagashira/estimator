@@ -139,7 +139,7 @@ const useDynamicTable = (apiUrl, estimateId, selectedString, setSelectedString )
           setInputFields((prevFields) => [...prevFields, selectedString]);
           setSelectedString('');
         }
-      }, [selectedString, inputFields]);
+      }, [selectedString, inputFields, setSelectedString]);
 
     // const handleInputChange = (index, value) => {
     //     const updatedFields = [...inputFields];
