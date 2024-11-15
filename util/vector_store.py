@@ -1,5 +1,5 @@
 import os
-from langchain_community.vectorstores import PGVector
+from langchain_postgres.vectorstores import PGVector
 from langchain_openai import OpenAIEmbeddings
 from dotenv import load_dotenv
 
