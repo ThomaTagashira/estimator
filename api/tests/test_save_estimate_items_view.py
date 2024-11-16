@@ -17,7 +17,7 @@ class SaveEstimateItemsTestCase(APITestCase):
         self.url = reverse('save_estimate_items')
         self.estimate = UserEstimates.objects.create(
             user=self.user,
-            estimate_id='000001',
+            estimate_id='00001',
             project_name='test project'
         )
 
@@ -30,7 +30,7 @@ class SaveEstimateItemsTestCase(APITestCase):
             {'job': 'job3', 'laborCost': '3.33', 'materialCost': '3.33'}
         ]
 
-        current_max_task_number = EstimateItems.objects.filter(estimate='000001').aggregate(
+        current_max_task_number = EstimateItems.objects.filter(estimate=self.estimate).aggregate(
             max_task_number=Max('task_number')
         )['max_task_number'] or 0
 

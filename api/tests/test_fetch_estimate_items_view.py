@@ -15,7 +15,7 @@ class FetchEstimateItemsTestCase(APITestCase):
         
         self.estimate = UserEstimates.objects.create(
             user=self.user,
-            estimate_id='000001',
+            estimate_id='00001',
             project_name='test project'
         )
 
@@ -27,27 +27,27 @@ class FetchEstimateItemsTestCase(APITestCase):
             {'job': 'job3', 'laborCost': '3.33', 'materialCost': '3.33'}
         ]
 
-        current_max_task_number = EstimateItems.objects.filter(estimate='000001').aggregate(
+        current_max_task_number = EstimateItems.objects.filter(estimate=self.estimate).aggregate(
             max_task_number=Max('task_number')
         )['max_task_number'] or 0
 
         for task in tasks_to_save:
             current_max_task_number += 1
-            task_description = f"{task['job']} Labor Cost: ${task['laborCost']} Material Cost: ${task['materialCost']}"
-        
             EstimateItems.objects.create(
                 user=self.user,
                 estimate=self.estimate,
                 task_number=current_max_task_number,
-                task_description=task_description
+                task_description=f"{task['job']} Labor Cost: ${task['laborCost']} Material Cost: ${task['materialCost']}"
             )
 
     def test_get_existing_estimate_items(self):
 
         response = self.client.get(self.url)
+
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         response_data = response.json()
+
         self.assertEqual(response_data[0]['task_number'], 1)
         self.assertEqual(response_data[0]['task_description'], 'job1 Labor Cost: $1.11 Material Cost: $1.11')
 
