@@ -169,12 +169,17 @@ const fetchTableData = async () => {
 
       {activeTab === 'table' && (
         <div className="table-tab">
-          {/* Pass table data and selected string to DynamicTablePage */}
+          {/* Debugging reference to use inputFields */}
+          {inputFields.length > 0 && (
+            <div style={{ display: 'none' }}>
+              {JSON.stringify(inputFields)}
+            </div>
+          )}
           <DynamicTablePage
             selectedString={selectedString}
             setSelectedString={setSelectedString}
-            apiUrl={apiUrl}        // Ensure the apiUrl is also passed
-            estimateId={estimateId} // Pass the estimateId to DynamicTablePage
+            apiUrl={apiUrl}
+            estimateId={estimateId}
           />
         </div>
       )}
