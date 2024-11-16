@@ -104,6 +104,12 @@ jobs:
             bash scripts/install_dependencies.sh
           fi
 
+      - name: Run database migrations
+        env:
+          DATABASE_URL: "postgresql://test_user:test_password@localhost:5432/mock_test_db"
+        run: |
+          python manage.py migrate
+
       - name: Run build_frontend script
         run: |
           if [ -f scripts/build_frontend.sh ]; then
