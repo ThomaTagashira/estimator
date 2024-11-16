@@ -71,6 +71,8 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'django_crontab',
     'rest_framework_simplejwt.token_blacklist',
+    'pgvector.django',
+
 
 ]
 
