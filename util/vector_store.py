@@ -21,6 +21,6 @@ engine = create_engine(connection_string)
 # Initialize PGVector with the engine (not the result of `engine.connect()`)
 db = PGVector(
     connection=engine,  # Pass the engine here
-    embedding_function=OpenAIEmbeddings(),
+    embeddings=OpenAIEmbeddings(),
     collection_name=collection_name,
 )
