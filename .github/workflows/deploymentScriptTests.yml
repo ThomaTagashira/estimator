@@ -143,29 +143,29 @@ jobs:
             bash scripts/validate_service.sh
           fi
 
-      - name: Zip the deployment package
-        run: zip -r deploy-package.zip . -x ".*" -x "*/.*"
+      # - name: Zip the deployment package
+      #   run: zip -r deploy-package.zip . -x ".*" -x "*/.*"
 
-      - name: Test S3 upload (for Dev branch, testing only)
-        if: github.ref == 'refs/heads/Dev'
-        env:
-          TEST_S3_BUCKET_NAME: ${{ secrets.TEST_S3_BUCKET_NAME }}
-        run: |
-          echo "Uploading test deployment package to S3..."
-          aws s3 cp deploy-package.zip s3://$TEST_S3_BUCKET_NAME/deploy-package.zip
-          echo "Verifying upload..."
-          aws s3 ls s3://$TEST_S3_BUCKET_NAME/deploy-package.zip
+      # - name: Test S3 upload (for Dev branch, testing only)
+      #   if: github.ref == 'refs/heads/Dev'
+      #   env:
+      #     TEST_S3_BUCKET_NAME: ${{ secrets.TEST_S3_BUCKET_NAME }}
+      #   run: |
+      #     echo "Uploading test deployment package to S3..."
+      #     aws s3 cp deploy-package.zip s3://$TEST_S3_BUCKET_NAME/deploy-package.zip
+      #     echo "Verifying upload..."
+      #     aws s3 ls s3://$TEST_S3_BUCKET_NAME/deploy-package.zip
 
-      - name: Run cleanup script (for Dev branch, testing only)
-        if: github.ref == 'refs/heads/Dev'
-        env:
-          AWS_BUCKET_NAME: ${{ secrets.TEST_S3_BUCKET_NAME }}
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_REGION: ${{ secrets.AWS_REGION }}
-        run: |
-          chmod +x scripts/cleanup_s3.sh
-          ./scripts/cleanup_s3.sh
+      # - name: Run cleanup script (for Dev branch, testing only)
+      #   if: github.ref == 'refs/heads/Dev'
+      #   env:
+      #     AWS_BUCKET_NAME: ${{ secrets.TEST_S3_BUCKET_NAME }}
+      #     AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      #     AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      #     AWS_REGION: ${{ secrets.AWS_REGION }}
+      #   run: |
+      #     chmod +x scripts/cleanup_s3.sh
+      #     ./scripts/cleanup_s3.sh
 
       - name: Run tests
         run: |
