@@ -34,7 +34,6 @@ const DashboardPage = () => {
     );
 };
 
-// Some simple inline styles for layout
 const styles = {
     container: {
         padding: '20px',

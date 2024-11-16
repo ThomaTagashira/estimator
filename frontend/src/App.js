@@ -14,6 +14,45 @@ const apiUrl = process.env.REACT_APP_API_URL;
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [hasActiveSubscription, setHasActiveSubscription] = useState(false);
+  const [tokenCount, setTokenCount] = useState(0);
+
+  const fetchTokenCount = async () => {
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+        console.error('No access token found');
+        return;
+    }
+
+    try {
+        const response = await fetch(`${apiUrl}/api/get-user-token-count/`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+            },
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            // console.log('Fetched token balance from API:', data.token_balance); 
+            setTokenCount(data.token_balance); 
+        } else {
+            console.error('Failed to fetch token count:', await response.json());
+        }
+    } catch (error) {
+        console.error('Error fetching token balance:', error);
+    }
+};
+
+    useEffect(() => {
+      fetchTokenCount();
+  
+      const interval = setInterval(() => {
+          fetchTokenCount(); 
+      }, 30000); // 30 second intervals
+  
+      return () => clearInterval(interval); 
+  }, []);
+
 
   const handleLogout = () => {
     localStorage.removeItem('access_token');
@@ -47,7 +86,7 @@ function App() {
 
   return (
     <Router>
-      <Header handleLogout={handleLogout} hasActiveSubscription={hasActiveSubscription} />
+      <Header handleLogout={handleLogout} hasActiveSubscription={hasActiveSubscription} tokenCount={tokenCount} />
       <Routes>
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/google-callback" element={<GoogleCallback setIsAuthenticated={setIsAuthenticated} setHasActiveSubscription={setHasActiveSubscription} />} />

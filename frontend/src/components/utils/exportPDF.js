@@ -28,7 +28,7 @@ function generateHTMLContent({
     salesTaxPercent,
     totalSalesTax,
     grandTotal,
-    tableData = [], // Ensure tableData defaults to an empty array
+    tableData = [], 
     applyDiscount
 }) {
     const todayDate = getTodayDate();

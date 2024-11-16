@@ -214,9 +214,9 @@ class GoogleLoginView(APIView):
                     'redirect_uri': f'{REDIR_URI}/google-callback',
                     'grant_type': 'authorization_code'
                 },
-                timeout=10  # Add a timeout for network stability
+                timeout=10  #timeout for network stability
             )
-            token_response.raise_for_status()  # Will raise an HTTPError for bad responses
+            token_response.raise_for_status()  #raise an HTTPError for bad responses
             token_data = token_response.json()
         except requests.exceptions.RequestException as e:
             return Response({'error': f'Failed to exchange token: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -231,11 +231,10 @@ class GoogleLoginView(APIView):
             return Response({'error': 'Invalid token response'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            # Get user info using the access token
             user_info_response = requests.get(
                 'https://www.googleapis.com/oauth2/v1/userinfo',
                 params={'access_token': access_token},
-                timeout=10  # Add a timeout
+                timeout=10 
             )
             user_info_response.raise_for_status()
         except requests.exceptions.RequestException as e:
@@ -357,24 +356,27 @@ class CreateSubscriptionCheckoutSessionView(APIView):
 
 class CreateTokenCheckoutSessionView(APIView):
     def post(self, request):
-        token_amount = request.data.get('tokenQty')
-        price_id = None
+        user = request.user  
+        if not user.is_authenticated:
+            return Response({'error': 'Authentication required'}, status=401)
 
+        try:
+            subscription = Subscription.objects.get(user=user, is_active=True)
+        except Subscription.DoesNotExist:
+            return Response({'error': 'Active subscription required to purchase tokens'}, status=403)
+
+        try:
+            stripe_profile = StripeProfile.objects.get(user=user)
+            if not stripe_profile.stripe_customer_id:
+                return Response({'error': 'Stripe customer ID is missing. Contact support.'}, status=400)
+        except StripeProfile.DoesNotExist:
+            return Response({'error': 'Stripe profile not found. Contact support.'}, status=400)
+
+        token_amount = request.data.get('tokenQty')
         TOKEN_PRICE_MAP = os.getenv('TOKEN_PRICE_MAP')
         TOKEN_PRICE_MAP = json.loads(TOKEN_PRICE_MAP)
 
-        if token_amount == '50':
-            price_id = TOKEN_PRICE_MAP.get(token_amount)
-            logger.info(f"50 Token Price ID: {price_id}")
-
-        elif token_amount == '75':
-            price_id = TOKEN_PRICE_MAP.get(token_amount)
-            logger.info(f"75 Token Price ID: {price_id}")
-
-        elif token_amount == '100':
-            price_id = TOKEN_PRICE_MAP.get(token_amount)
-            logger.info(f"100 Token Price ID: {price_id}")
-
+        price_id = TOKEN_PRICE_MAP.get(token_amount)
         if not price_id:
             return Response({'error': 'Invalid token amount'}, status=400)
 
@@ -382,23 +384,31 @@ class CreateTokenCheckoutSessionView(APIView):
             session = stripe.checkout.Session.create(
                 payment_method_types=['card'],
                 mode='payment',
+                customer=stripe_profile.stripe_customer_id,  
                 line_items=[{
                     'price': price_id,
                     'quantity': 1,
                 }],
+                metadata={
+                    'type': 'token_purchase',  
+                    'tokenQty': token_amount,  
+                },
                 success_url=f'{REDIR_URI}/success',
                 cancel_url=f'{REDIR_URI}/cancel',
             )
             return Response({'sessionId': session.id})
         except Exception as e:
+            logger.error(f"Error creating Stripe checkout session: {str(e)}")
             return Response({'error': str(e)}, status=400)
+
+
 
 
 @csrf_exempt
 @api_view(['POST'])
 def stripe_webhook(request):
     payload = request.body.decode('utf-8')
-    logger.info(f"Raw payload: {payload}")
+    #logger.info(f"Raw payload: {payload}")
 
     try:
         webhook_secret = os.getenv('STRIPE_WEBHOOK_SECRET')
@@ -417,16 +427,23 @@ def stripe_webhook(request):
         logger.error(f"Unexpected error: {e}")
         return HttpResponse(status=400)
 
-    logger.info(f"Event type: {event['type']} with event data: {event['data']}")
+    # logger.info(f"Event type: {event['type']} with event data: {event['data']}")
 
+    if event['type'] == 'checkout.session.completed':
+        session = event['data']['object']
+        if session.get('mode') == 'subscription':
+            handle_checkout_session_completed(session)
+        elif session.get('mode') == 'payment' and session.get('metadata', {}).get('type') == 'token_purchase':
+            handle_token_purchase(session)
+    
+    
+    # elif event['type'] == 'invoice.payment_succeeded':
+    #     handle_subscription_invoice(event['data']['object'])
 
-    if event['type'] == 'invoice.payment_succeeded':
-        handle_checkout_session_completed(event)
     else:
         logger.info(f"Unhandled event type: {event['type']}")
 
     return JsonResponse({'status': 'success'})
-
 
 
 def handle_payment_failed(event):
@@ -437,7 +454,7 @@ def handle_payment_failed(event):
         subscription = Subscription.objects.get(stripe_subscription_id=subscription_id)
         subscription.is_active = False
         subscription.save()
-        # Additional logic, like notifying the user, can be added here
+        # add notify user payment failed email logic (Email)
     except Subscription.DoesNotExist:
         pass
 
@@ -451,9 +468,34 @@ def handle_subscription_deleted(event):
         subscription.is_active = False
         subscription.cancellation_date = timezone.now()
         subscription.save()
-        # Additional logic, like notifying the user, can be added here
+        # Add notify user subscription canceled logic here (Email)
     except Subscription.DoesNotExist:
         pass
+
+def handle_token_purchase(session):
+    stripe_customer_id = session.get('customer')
+    logger.info(f"Received customer data: {session.get('customer')}")
+
+    metadata = session.get('metadata', {})
+    token_qty = metadata.get('tokenQty')
+    logger.info(f"Received session metadata: {session.get('metadata', {})}")
+    logger.info(f"Received metadata tokenQty: {metadata.get('tokenQty')}")
+
+    if not stripe_customer_id or not token_qty:
+        logger.error("Missing customer ID or token quantity in session metadata.")
+        return
+
+    try:
+        user = User.objects.get(profile__stripe_customer_id=stripe_customer_id)
+        logger.info(f"Adding {token_qty} tokens to user {user.username}")
+        user_token, created = UserToken.objects.get_or_create(user=user)
+        user_token.token_balance += int(token_qty)
+        user_token.save()
+        logger.info(f"New token balance for user {user.username}: {user_token.token_balance}")
+    except User.DoesNotExist:
+        logger.error(f"No user found with Stripe customer ID: {stripe_customer_id}")
+    except Exception as e:
+        logger.error(f"Error updating token balance for user: {e}")
 
 
 def handle_checkout_session_completed(event):
@@ -639,10 +681,9 @@ class SaveEstimateItems(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        print("Request received with data:", request.data)  # Confirm the request reaches here
-
+        # print("Request received with data:", request.data)  
         estimate_id = request.data.get('estimate_id')
-        print('estimate_id:', estimate_id)
+        # print('estimate_id:', estimate_id)
         tasks = request.data.get('tasks')
         user = request.user
 
@@ -767,19 +808,15 @@ def save_business_info(request):
     business_data = request.data
     user = request.user
 
-    # Try to get the existing business info for the user
     business_info, created = BusinessInfo.objects.get_or_create(user=user)
 
-    # Update the fields if the record already exists
     business_info.business_name = business_data.get('business_name', business_info.business_name)
     business_info.business_address = business_data.get('business_address', business_info.business_address)
     business_info.business_phone = business_data.get('business_phone', business_info.business_phone)
     business_info.business_email = business_data.get('business_email', business_info.business_email)
     
-    # Save changes (new record or update existing)
     business_info.save()
 
-    # Prepare response data
     response_data = {
         'business_name': business_info.business_name,
         'business_address': business_info.business_address,
@@ -787,7 +824,6 @@ def save_business_info(request):
         'business_email': business_info.business_email,
     }
 
-    # Return appropriate response status
     return Response(
         response_data,
         status=status.HTTP_201_CREATED if created else status.HTTP_200_OK
@@ -807,5 +843,6 @@ def get_user_token_count(request):
     try:
         user_token = UserToken.objects.get(user=request.user)
         return Response({'token_balance': user_token.token_balance})
+    
     except UserToken.DoesNotExist:
         return Response({'error': 'Token balance not found for user'}, status=404)

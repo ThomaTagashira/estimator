@@ -56,13 +56,13 @@ const setupInterceptors = () => {
                             processQueue(refreshError, null);
                             localStorage.removeItem('access_token');
                             localStorage.removeItem('refresh_token');
-                            window.location.href = '/login'; // Redirect to login on failure
+                            window.location.href = '/login';
                             return Promise.reject(refreshError);
                         } finally {
                             isRefreshing = false;
                         }
                     } else {
-                        window.location.href = '/login'; // If no refresh token, log out
+                        window.location.href = '/login';
                         return Promise.reject(error);
                     }
                 }

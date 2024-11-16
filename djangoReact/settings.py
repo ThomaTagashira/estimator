@@ -87,10 +87,10 @@ SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('Bearer',),
     'ACCESS_TOKEN_LIFETIME': timedelta(days=7),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
-    'ROTATE_REFRESH_TOKENS': True,  # Disable rotation if you don't want to rotate tokens
-    'BLACKLIST_AFTER_ROTATION': True,  # Disable blacklisting since it's no longer relevant
+    'ROTATE_REFRESH_TOKENS': True,  
+    'BLACKLIST_AFTER_ROTATION': True,  
     'ALGORITHM': 'HS256',
-    'SIGNING_KEY': SECRET_KEY,  # Use your actual secret key
+    'SIGNING_KEY': SECRET_KEY,
     'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
     'TOKEN_TYPE_CLAIM': 'token_type',
     'JTI_CLAIM': 'jti',

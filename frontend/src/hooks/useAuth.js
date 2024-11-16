@@ -9,14 +9,14 @@ const useAuth = ({ setIsAuthenticated, setHasActiveSubscription }) => {
     const navigate = useNavigate();
 
     const validateAndFetchSubscriptionStatus = useCallback(async () => {
-        let isFetching = false;  // Local variable to control fetching
+        let isFetching = false; 
 
         const accessToken = localStorage.getItem('access_token');
         const refreshToken = localStorage.getItem('refresh_token');
 
         if (!accessToken) {
             setIsAuthenticated(false);
-            navigate('/'); // Redirect to login if no access token
+            navigate('/'); 
             return;
         }
 
@@ -25,7 +25,7 @@ const useAuth = ({ setIsAuthenticated, setHasActiveSubscription }) => {
             try {
                 const response = await axios.get(`${apiUrl}/api/subscription/status/`);
                 setHasActiveSubscription(response.data.has_active_subscription);
-                navigate('/'); // Redirect to home page if the subscription is valid
+                navigate('/'); 
             } catch (error) {
                 setHasActiveSubscription(false);
 
@@ -37,24 +37,23 @@ const useAuth = ({ setIsAuthenticated, setHasActiveSubscription }) => {
                         localStorage.setItem('access_token', newAccessToken);
                         axios.defaults.headers.common['Authorization'] = `Bearer ${newAccessToken}`;
 
-                        // Retry fetching the subscription status after refreshing the token
                         await validateAndFetchSubscriptionStatus();
                     } catch (refreshError) {
                         setIsAuthenticated(false);
                         localStorage.removeItem('access_token');
                         localStorage.removeItem('refresh_token');
-                        navigate('/'); // Redirect to login if token refresh fails
+                        navigate('/'); 
                     }
                 } else {
                     setIsAuthenticated(false);
-                    navigate('/'); // Redirect if the error is not token-related
+                    navigate('/'); 
                 }
             }
         }
     }, [setIsAuthenticated, setHasActiveSubscription, navigate]);
 
     useEffect(() => {
-        validateAndFetchSubscriptionStatus(); // Call once when component mounts
+        validateAndFetchSubscriptionStatus(); 
     }, [validateAndFetchSubscriptionStatus]);
 
     const login = async (username, password, csrftoken) => {
@@ -77,12 +76,12 @@ const useAuth = ({ setIsAuthenticated, setHasActiveSubscription }) => {
             setHasActiveSubscription(has_active_subscription);
 
             if (has_active_subscription) {
-                navigate('/'); // Redirect to home page after successful login
+                navigate('/'); 
             } else {
-                navigate('/subscribe'); // Redirect to subscription page
+                navigate('/subscribe'); 
             }
         } catch (err) {
-            setError('Invalid credentials'); // Set error state if login fails
+            setError('Invalid credentials'); 
         }
     };
 
