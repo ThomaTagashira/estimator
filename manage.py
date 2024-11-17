@@ -4,7 +4,9 @@ import os
 import sys
 
 
-***REMOVED***
+
+def main():
+
     """Run administrative tasks."""
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'djangoReact.settings')
     try:
@@ -19,4 +21,4 @@ import sys
 
 
 if __name__ == '__main__':
-    ***REMOVED***
+    main()

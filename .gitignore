@@ -8,7 +8,7 @@ __pycache__/
 
 # Django specific
 /media/
-/static/
+/staticfiles/
 *.log 
 
 # Environments
@@ -16,6 +16,8 @@ __pycache__/
 env/
 venv/
 ENV/
+.env
+.env.backup
 
 # IDEs and Editors
 .idea/
@@ -29,3 +31,6 @@ ENV/
 # Packages
 *.egg-info/
 .eggs/
+Dockerfile
+
+*.ipynb

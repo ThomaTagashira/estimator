@@ -4,6 +4,10 @@ from api.models import *
 import json
 import logging
 
+
+logger = logging.getLogger(__name__)
+
+
 class LangchainPgCollectionSearializer(serializers.ModelSerializer):
     class Meta:
         model = LangchainPgCollection
@@ -14,8 +18,6 @@ class LangchainPgEmbeddingSerializer(serializers.ModelSerializer):
         model = LangchainPgEmbedding
         fields = '__all__'
 
-
-logger = logging.getLogger(__name__)
 
 class MyResponseSerializer(serializers.Serializer):
     response = serializers.CharField()
@@ -50,17 +52,39 @@ class JSONFileSerializer(serializers.Serializer):
 
         return json_data
 
+
 class StringListSerializer(serializers.Serializer):
-    strings = serializers.ListField(child=serializers.CharField(max_length=100000))
+    strings = serializers.ListField(
+        child=serializers.CharField(max_length=100000)
+    )
+
+    def validate_strings(self, value):
+        logger.debug("Validating 'strings' field in StringListSerializer")
+        if value is None or len(value) == 0:
+            raise serializers.ValidationError(
+                f"The 'strings' field cannot be null or empty. Raised in {self.__class__.__name__}."
+            )
+        return value
+
 
 class NoteSerializer(serializers.Serializer):
     key = serializers.CharField(max_length=50)
     value = serializers.CharField(max_length=200)
 
+
 class NoteDictSerializer(serializers.Serializer):
     strings = serializers.DictField(
         child=serializers.CharField(max_length=200)
     )
+
+    def validate_strings(self, value):
+        logger.debug("Validating 'strings' field in NoteDictSerializer")
+        if not value:
+            raise serializers.ValidationError(
+                f"The 'strings' field cannot be null or empty. Raised in {self.__class__.__name__}."
+            )
+        return value
+
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -71,3 +95,45 @@ class UserSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         user = User.objects.create_user(**validated_data)
         return user
+
+
+from dj_rest_auth.registration.serializers import SocialLoginSerializer
+
+class CustomGoogleLoginSerializer(SocialLoginSerializer):
+    def validate(self, attrs):
+        if 'password' in attrs:
+            attrs.pop('password')
+        return super().validate(attrs)
+
+
+class ClientDataSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ClientData
+        fields = ['client_name', 'client_address', 'client_phone', 'client_email']
+
+class ProjectDataSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProjectData
+        fields = ['project_name', 'project_location', 'start_date', 'end_date']
+
+class EstimateItemsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EstimateItems
+        fields = ['task_description', 'task_number']
+
+# Main serializer for UserEstimates
+class UserEstimatesSerializer(serializers.ModelSerializer):
+    # Add related fields using the nested serializers
+    client_data = ClientDataSerializer(many=True, read_only=True)  # 'many=True' because it's related_name='client_data'
+    project_data = ProjectDataSerializer(many=True, read_only=True)  # 'many=True' because it's related_name='project_data'
+    estimate_items = EstimateItemsSerializer(many=True, read_only=True)  # 'many=True' because it's related_name='estimate_items'
+
+    class Meta:
+        model = UserEstimates
+        fields = ['estimate_id', 'date_created', 'last_modified', 'project_name', 'client_data', 'project_data', 'estimate_items']
+
+
+class BusinessInfoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BusinessInfo
+        fields = ['business_name', 'business_address', 'business_phone', 'business_email']

@@ -1,37 +1,51 @@
 import os
-***REMOVED***
+from pathlib import Path
 from dotenv import load_dotenv
+from django.core.exceptions import ImproperlyConfigured
+from datetime import timedelta
 
 load_dotenv()
 
-SECRET_KEY = os.getenv('SECRET_KEY')
+
+SECRET_KEY = os.getenv('TEST_SECRET_KEY', os.getenv('SECRET_KEY'))
+
+if not SECRET_KEY:
+    raise ImproperlyConfigured("The SECRET_KEY setting must not be empty.")
+
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 
-GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID')
-GOOGLE_SECRET_KEY = os.getenv('GOOGLE_SECRET_KEY')
-
-GITHUB_CLIENT_ID = os.getenv('GITHUB_CLIENT_ID')
-GITHUB_SECRET_KEY = os.getenv('GITHUB_SECRET_KEY')
-
-DB_ENGINE = os.getenv('DB_ENGINE')
-DB_NAME = os.getenv('DB_DB1')
-DB_USER = os.getenv('DB_USER')
-DB_PASSWORD = os.getenv('DB_POSTGRES_PASS')
-DB_HOST = os.getenv('DB_HOST')
-DB_PORT = os.getenv('DB_PORT')
+if not OPENAI_API_KEY:
+    raise ImproperlyConfigured("The OPENAI_API_KEY setting must not be empty.")
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 REACT_APP_BUILD_PATH='frontend/build'
 
-
+SITE_ID=4
 DEBUG = True
 
-ALLOWED_HOSTS = ['54.244.104.221', 
-                 'thomatagashira.com',
-                 'http://localhost:8000',
-                 '127.0.0.1',
-                 'localhost']
-
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',')
+# LOGGING = {
+#     'version': 1,
+#     'disable_existing_loggers': False,
+#     'handlers': {
+#         'console': {
+#             'level': 'DEBUG',
+#             'class': 'logging.StreamHandler',
+#         },
+#         'file': {
+#             'level': 'DEBUG',
+#             'class': 'logging.FileHandler',
+#             'filename': 'debug.log',
+#         },
+#     },
+#     'loggers': {
+#         'django': {
+#             'handlers': ['console', 'file'],
+#             'level': 'DEBUG',
+#             'propagate': True,
+#         },
+#     },
+# }
 
 INSTALLED_APPS = [
     'django.contrib.sites',
@@ -55,6 +69,11 @@ INSTALLED_APPS = [
     'corsheaders',
     'util',
     'rest_framework_simplejwt',
+    'django_crontab',
+    'rest_framework_simplejwt.token_blacklist',
+    'pgvector.django',
+
+
 ]
 
 AUTHENTICATION_BACKENDS = (
@@ -66,32 +85,49 @@ REST_USE_JWT = True
 
 SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('Bearer',),
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=7),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    'ROTATE_REFRESH_TOKENS': True,  
+    'BLACKLIST_AFTER_ROTATION': True,  
+    'ALGORITHM': 'HS256',
+    'SIGNING_KEY': SECRET_KEY,
+    'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
+    'TOKEN_TYPE_CLAIM': 'token_type',
+    'JTI_CLAIM': 'jti',
 }
 
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.AllowAny',
-        #'rest_framework_simplejwt.authentication.JWTAuthentication',
-        #'rest_framework.permissions.IsAuthenticated',
-    ]
+    ],
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+
+    ],
 }
 
+CRONJOBS = [
+    ('0 0 * * *', 'api.tasks.allocate_monthly_tokens')  # Runs at midnight
+]
+
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
+    #'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'allauth.account.middleware.AccountMiddleware',
 ]
-CORS_ALLOWED_ORIGINS = [
-    'https://thomatagashira.com',
-    'http://localhost',
+
+
+CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', '').split(',')
   
-]
+
 
 ROOT_URLCONF = 'djangoReact.urls'
 
@@ -119,17 +155,15 @@ WSGI_APPLICATION = 'djangoReact.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': DB_ENGINE,
-        'NAME': DB_NAME,
-        'USER': DB_USER,
-        'PASSWORD': DB_PASSWORD,
-        'HOST': DB_HOST,
-        'PORT': DB_PORT,
-        'OPTIONS': {
-            'sslmode': 'require',
-        }
-    },
+        'ENGINE': os.getenv('DB_ENGINE', 'django.db.backends.postgresql'),
+        'NAME': os.getenv('TEST_DB_NAME', os.getenv('DB_DB1')),
+        'USER': os.getenv('TEST_DB_USER', os.getenv('DB_USER')),
+        'PASSWORD': os.getenv('TEST_DB_PASSWORD', os.getenv('DB_POSTGRES_PASS')),
+        'HOST': os.getenv('DB_HOST', 'localhost'),
+        'PORT': os.getenv('DB_PORT', '5432'),
+    }
 }
+
 
 
 # Password validation
@@ -165,5 +199,6 @@ USE_TZ = True
 
 
 STATIC_URL = 'django_static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

@@ -1,17 +1,29 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
-const Header = ({ handleLogout }) => {
+const Header = ({ handleLogout, hasActiveSubscription, tokenCount }) => {
     return (
         <header style={headerStyle}>
             <div style={logoStyle}>
                 <h1>MyApp</h1>
             </div>
+            <div style={{ fontSize: '18px', fontWeight: 'bold' }}>
+                Tokens: {tokenCount}
+            </div>
             <nav style={navStyle}>
                 <ul style={ulStyle}>
-                    <li style={liStyle}><Link to="/">Home</Link></li>
+                    {hasActiveSubscription ? (
+                        <>
+                            <li style={liStyle}><Link to="/">Home</Link></li>
+                            <li style={liStyle}><Link to="/saved-estimates">Saved Estimates</Link></li>
+                            <li style={liStyle}><Link to="/buy-tokens">Buy Tokens</Link></li>
+                        </>
+                    ) : (
+                        <>
+                            <li style={liStyle}><Link to="/">Sign Up</Link></li>
+                        </>
+                    )}
                     <li style={liStyle}><Link to="/about">About</Link></li>
-                    <li style={liStyle}><Link to="/profile">Profile</Link></li>
                 </ul>
             </nav>
             <button style={logoutButtonStyle} onClick={handleLogout}>Logout</button>

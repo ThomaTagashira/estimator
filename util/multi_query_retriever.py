@@ -4,9 +4,9 @@ from util.output_parsers import LineListOutputParser
 from langchain_openai import ChatOpenAI
 from langchain.chains import LLMChain
 from langchain.prompts import PromptTemplate
-from langsmith import traceable
+# from langsmith import traceable
 
-@traceable
+# @traceable
 def generate_response(query):
 
     print('Query:', query)

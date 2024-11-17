@@ -1,5 +1,5 @@
 from openai import OpenAI
-from langsmith import traceable
+# from langsmith import traceable
 from rest_framework.response import Response
 import logging
 from rest_framework import status
@@ -7,7 +7,7 @@ from rest_framework import status
 
 logger = logging.getLogger(__name__)
 
-@traceable
+# @traceable
 def image_to_text(base64_photo):
     base64_image = f"data:image/jpeg;base64,{base64_photo}"
     client = OpenAI()
