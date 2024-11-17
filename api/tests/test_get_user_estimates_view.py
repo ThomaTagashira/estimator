@@ -33,11 +33,9 @@ class GetUserEstimatesTestCase(APITestCase):
 
     def test_get_existing_estimate(self):
 
-        # Now make a GET request to retrieve the created estimate
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        # Check if the estimate returned in the response matches the one we created
         response_data = response.json()
         self.assertEqual(response_data[0]['estimate_id'], '000001')
         self.assertEqual(response_data[0]['project_name'], 'test project')

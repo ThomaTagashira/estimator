@@ -36,9 +36,7 @@ class UploadPhotoViewTestCase(TestCase):
 
     @patch('api.views.image_to_text')
     def test_post_request_with_invalid_photo_format(self, mock_image_to_text):
-        # Mock image_to_text to return None or an invalid response to simulate failure
         mock_image_to_text.return_value = None
-        # Simulate invalid file type e.g: txt
         text_file = SimpleUploadedFile("test_image.txt", b"file_content", content_type="text/plain")
         data = {'photo': text_file}
 
@@ -47,7 +45,6 @@ class UploadPhotoViewTestCase(TestCase):
 
     @patch('api.views.image_to_text')
     def test_post_request_with_valid_photo(self, mock_image_to_text):
-        # Simulate Success
         mock_image_to_text.return_value = {
             'line_1': 'Mock1',
             'line_2': 'Mock2'

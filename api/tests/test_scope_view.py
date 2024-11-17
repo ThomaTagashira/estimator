@@ -12,15 +12,15 @@ class HandleScopeViewTestCase(TestCase):
         self.client = APIClient()
         self.url = reverse('scope')
 
-    @patch('api.views.process_job_scope')  # Mock process_job_scope
+    @patch('api.views.process_job_scope')  
     def test_post_request_with_valid_job_scope(self, mock_process_job_scope):
-        # Mocks the return value of process_job_scope
         mock_process_job_scope.return_value = Response({'result': 'success'}, status=status.HTTP_200_OK)
-        # Make sure this matches the structure of the responses from React
+
         data = {'job_scope': { 'key': 'value' }}
         response = self.client.post(self.url, data, format='json')
+        
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        mock_process_job_scope.assert_called_once_with({'key': 'value'})  # Ensure the mock was called with the correct data
+        mock_process_job_scope.assert_called_once_with({'key': 'value'})  
 
     @patch('api.views.process_line')
     def test_post_request_with_valid_line(self, mock_process_line):

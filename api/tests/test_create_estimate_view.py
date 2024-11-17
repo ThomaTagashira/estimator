@@ -49,7 +49,7 @@ class CreateEstimateTestCase(APITestCase):
 
 
     def test_create_estimate_unauthenticated(self):
-        self.client.credentials()  # Clears the token
+        self.client.credentials()  
         
         response = self.client.post(self.url, self.valid_payload, format='json')
 

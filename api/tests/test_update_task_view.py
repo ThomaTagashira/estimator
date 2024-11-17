@@ -44,7 +44,6 @@ class UpdateTaskTestCase(APITestCase):
  
     def test_update_existing_estimate_items(self):
 
-        # Update task 1
         updated_task_1 = {
             'task_description': 'updated job1 Labor Cost: $11.11 Material Cost: $11.11'
         }
@@ -52,7 +51,6 @@ class UpdateTaskTestCase(APITestCase):
         response = self.client.patch(url_task_1, updated_task_1, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        # Update task 2
         updated_task_2 = {
             'task_description': 'updated job2 Labor Cost: $22.22 Material Cost: $22.22'
         }
@@ -60,7 +58,6 @@ class UpdateTaskTestCase(APITestCase):
         response = self.client.patch(url_task_2, updated_task_2, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        # Update task 3
         updated_task_3 = {
             'task_description': 'updated job3 Labor Cost: $33.33 Material Cost: $33.33'
         }
