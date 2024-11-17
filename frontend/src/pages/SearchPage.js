@@ -3,13 +3,13 @@ import { useSearchParams } from 'react-router-dom';
 
 import SearchForm from '../components/Form/SearchForm';
 import PhotoUploadForm from '../components/Form/PhotoUploadForm';
-import useSearch from '../hooks/useSearch';  // Import the custom hook
+import useSearch from '../hooks/useSearch';  
 import usePhotoUpload from '../hooks/usePhotoUpload';
-import DynamicTablePage from '../pages/DynamicTablePage';  // Assuming you have DynamicTablePage as a component
+import DynamicTablePage from '../pages/DynamicTablePage'; 
 
 const SearchPage = ({ apiUrl }) => {
   const [activeTab, setActiveTab] = useState('search');
-  const [tableData, setTableData] = useState([]);  // For dynamic table content
+  const [tableData, setTableData] = useState([]);  
   const [searchParams] = useSearchParams();
   const [inputFields, setInputFields] = useState([]);
 
@@ -19,12 +19,11 @@ const SearchPage = ({ apiUrl }) => {
     console.log('Estimate ID:', estimateId);
   }, [estimateId]);
 
-  // Fetch estimate data if `estimateId` is present
   useEffect(() => {
     const fetchEstimateData = async () => {
       if (!estimateId) return;
       try {
-        const accessToken = localStorage.getItem('access_token');  // Fetch access token
+        const accessToken = localStorage.getItem('access_token');  
         const response = await fetch(`${apiUrl}/api/saved-estimates/${estimateId}/`, {
           method: 'GET',
           headers: {
@@ -33,12 +32,11 @@ const SearchPage = ({ apiUrl }) => {
           },
         });
 
-        // Check if the response is JSON
         const contentType = response.headers.get("content-type");
         if (contentType && contentType.includes("application/json")) {
           const data = await response.json();
           if (response.ok) {
-            setTableData(data.tasks || []);  // Assuming the estimate has tasks
+            setTableData(data.tasks || []);  
           } else {
             console.error('Failed to fetch estimate data:', data);
           }
@@ -64,7 +62,7 @@ const SearchPage = ({ apiUrl }) => {
     fetchTextData,
     fetchScopeData,
     handleSearch,
-  } = useSearch(apiUrl);  // Use the custom search hook
+  } = useSearch(apiUrl);  
 
   const {
     selectedFile,
@@ -75,53 +73,23 @@ const SearchPage = ({ apiUrl }) => {
     handleLineChange,
     handleRemoveLine,
     handleAllSearches,
-  } = usePhotoUpload();  // Use the photo upload hook
-
-  // Update tableData with search results
-//   useEffect(() => {
-//     if (searchResult) {
-//       console.log("SearchPage - API searchResult:", searchResult);
-//         const extractedTasks = searchResult?.tasks || [];
-//         setTableData((prevTableData) => {
-//           console.log("Previous tableData:", prevTableData);
-//           console.log("New extracted tasks:", extractedTasks);
-//           return [...prevTableData, ...extractedTasks];  // Append new tasks to the table
-//         });
-
-//       // Extract selected string from the response
-//       const context = searchResult?.response || '';
-//       const startIndex = context.indexOf(':') + 1;
-//       let endIndex = context.indexOf('Total Cost:');
-//       if (endIndex === -1) {
-//         endIndex = context.length;
-//       }
-//       const newSelectedString = context.substring(startIndex, endIndex).trim();
-//       console.log("SearchPage - New selectedString:", newSelectedString);
-//       setSelectedString(newSelectedString);
-//     }
-//   }, [searchResult]);
-
+  } = usePhotoUpload();  
 
 
 const handleTabSwitch = (tab) => {
   setActiveTab(tab);
 
-  // Only handle when switching to the 'table' tab
+
   if (tab === 'table') {
-    // Pull selectedStrings from local storage
     const savedStrings = JSON.parse(localStorage.getItem('selectedStrings')) || [];
+    setInputFields(savedStrings);  
 
-    // Set the saved strings into the table data or input fields
-    setInputFields(savedStrings);  // Assuming you are using `inputFields` for editable fields
-
-    // Fetch the estimate data only the first time we switch to the table tab
     if (tableData.length === 0) {
-      fetchTableData();  // Only fetch if data hasn't been loaded yet
+      fetchTableData();  
     }
   }
 };
 
-// Fetch the estimate data for the table
 const fetchTableData = async () => {
     try {
       const accessToken = localStorage.getItem('access_token');
@@ -133,7 +101,7 @@ const fetchTableData = async () => {
         },
       });
       const data = await response.json();
-      setTableData(data?.tasks || []);  // Assuming `tasks` is part of the estimate data
+      setTableData(data?.tasks || []);  
     } catch (error) {
       console.error('Failed to fetch estimate data:', error);
     }
@@ -142,19 +110,17 @@ const fetchTableData = async () => {
 
   return (
     <div className="App">
-      {/* Tabs for toggling between Search and Dynamic Table */}
       <div className="tab-buttons">
         <button onClick={() => handleTabSwitch('search')}>Search Tasks</button>
         <button onClick={() => handleTabSwitch('table')}>Estimate</button>
       </div>
 
-      {/* Conditional rendering based on active tab */}
       {activeTab === 'search' && (
         <div className="search-tab">
           <SearchForm onTextSubmit={fetchTextData} onScopeSubmit={fetchScopeData} />
           <h1>Photo Upload Form</h1>
           <PhotoUploadForm
-            onSearch={handleSearch}  // Trigger handleSearch when file upload is done
+            onSearch={handleSearch}  
             selectedFile={selectedFile}
             data={data}
             error={uploadError}
@@ -169,7 +135,6 @@ const fetchTableData = async () => {
 
       {activeTab === 'table' && (
         <div className="table-tab">
-          {/* Debugging reference to use inputFields */}
           {inputFields.length > 0 && (
             <div style={{ display: 'none' }}>
               {JSON.stringify(inputFields)}

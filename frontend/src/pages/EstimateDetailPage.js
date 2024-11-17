@@ -4,7 +4,7 @@ import useFetchEstimateDetails from '../hooks/useFetchEstimateDetails';
 import EstimateDetails from '../components/EstimateDetails';
 
 const EstimateDetailPage = ({ apiUrl }) => {
-  const { estimateId } = useParams();  // Get the estimateId from the URL params
+  const { estimateId } = useParams(); 
   const { estimate, loading, error } = useFetchEstimateDetails(apiUrl, estimateId);
 
   if (loading) return <p>Loading...</p>;

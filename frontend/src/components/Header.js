@@ -15,9 +15,7 @@ const Header = ({ handleLogout, hasActiveSubscription, tokenCount }) => {
                     {hasActiveSubscription ? (
                         <>
                             <li style={liStyle}><Link to="/">Home</Link></li>
-                            <li style={liStyle}><Link to="/saved-estimates">Estimates</Link></li>
-                            <li style={liStyle}><Link to="/search">Search</Link></li>
-                            <li style={liStyle}><Link to="/profile">Profile</Link></li>
+                            <li style={liStyle}><Link to="/saved-estimates">Saved Estimates</Link></li>
                             <li style={liStyle}><Link to="/buy-tokens">Buy Tokens</Link></li>
                         </>
                     ) : (

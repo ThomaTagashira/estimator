@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import {SubscriptionCheckoutButton} from '../components/StripeCheckoutButton'; // Assume you already have this component
+import {SubscriptionCheckoutButton} from '../components/StripeCheckoutButton'; 
 
 const SubscriptionPage = () => {
-    const [selectedTier, setSelectedTier] = useState(''); // State to hold the selected subscription tier
+    const [selectedTier, setSelectedTier] = useState(''); 
 
     const handleSelectTier = (tier) => {
         setSelectedTier(tier);
@@ -13,7 +13,6 @@ const SubscriptionPage = () => {
             <h1>Subscribe to Our Service</h1>
             <p>Please choose a subscription tier to access our features.</p>
 
-            {/* Subscription Tier Options */}
             <div>
                 <h2>Select Your Plan:</h2>
                 <ul>
@@ -35,11 +34,9 @@ const SubscriptionPage = () => {
                 </ul>
             </div>
 
-            {/* Display the selected tier */}
             {selectedTier && (
                 <div>
                     <h3>You have selected the {selectedTier} plan.</h3>
-                    {/* Pass the selected tier to the StripeCheckoutButton */}
                     <SubscriptionCheckoutButton
                         apiEndpoint="/api/payments/"
                         tier={selectedTier}

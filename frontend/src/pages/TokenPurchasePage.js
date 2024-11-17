@@ -5,7 +5,7 @@ import { TokenCheckoutButton } from '../components/StripeCheckoutButton';
 
 
 const TokenPurchasePage = () => {
-    const [selectedToken, setSelectedToken] = useState(''); // State to hold the selected token #
+    const [selectedToken, setSelectedToken] = useState('');
 
     const handleSelectToken = (tokenQty) => {
         setSelectedToken(tokenQty);

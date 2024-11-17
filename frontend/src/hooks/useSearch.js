@@ -1,7 +1,8 @@
+
 import { useState } from 'react';
 import axios from 'axios';
 
-const useSearch = (apiUrl) => {
+const useSearch = (apiUrl, tokenApiUrl) => {
     const [textResults, setTextResults] = useState({});
     const [scopeResults, setScopeResults] = useState(null);
     const [handymanScopeResults, setHandymanScopeResults] = useState(null);
@@ -10,78 +11,127 @@ const useSearch = (apiUrl) => {
     const [selectedString, setSelectedString] = useState([]);
     const [searchResult, setSearchResult] = useState(null);
 
-    const fetchTextData = (inputText) => {
-      setLoading(true);
-      setError(null);
-
-      axios.post(`${apiUrl}/api/index/`, { input_text: inputText })
-        .then(response => {
-          setTextResults(response.data);
-          setScopeResults(null);
-          setHandymanScopeResults(null);
-        })
-        .catch(error => {
-          setError('Error fetching text data: ' + error.message);
-        })
-        .finally(() => setLoading(false));
+    const fetchTokenBalance = async () => {
+        try {
+            const response = await axios.get(`${apiUrl}/api/get-user-token-count/`, {
+                headers: { Authorization: `Bearer ${localStorage.getItem('access_token')}` },
+            });
+            return response.data.token_balance || 0;
+        } catch (error) {
+            console.error('Error fetching token balance:', error.message);
+            return 0;
+        }
     };
 
-    const fetchScopeData = (jobScope) => {
-      setLoading(true);
-      setError(null);
-
-      axios.post(`${apiUrl}/api/scope/`, { job_scope: jobScope })
-        .then(response => {
-          setScopeResults(response.data);
-          setTextResults({});
-          setHandymanScopeResults(null);
-
-          const context = response.data.response;
-          const startIndex = context.indexOf(':') + 1;
-          let endIndex = context.indexOf('Total Cost:');
-          if (endIndex === -1) {
-            endIndex = context.length;
-          }
-          const newSelectedString = context.substring(startIndex, endIndex).trim();
-
-          setSelectedString((prev) => [...prev, newSelectedString]);
-        })
-        .catch(error => {
-          setError('Error fetching scope data: ' + error.message);
-        })
-        .finally(() => setLoading(false));
+    const deductTokens = async (tokensToDeduct) => {
+        try {
+            await axios.post(`${apiUrl}/api/deduct-tokens/`, 
+                { tokens: tokensToDeduct },
+                { headers: { Authorization: `Bearer ${localStorage.getItem('access_token')}` } }
+            );
+        } catch (error) {
+            console.error('Error deducting tokens:', error.message);
+        }
     };
 
-
-    const handleSearch = async (lines) => {
+    const fetchTextData = async (inputText) => {
         setLoading(true);
         setError(null);
 
         try {
-          const response = await axios.post(`${apiUrl}/api/line/`, { Line: lines });
-          setSearchResult(response.data);
+            const tokenBalance = await fetchTokenBalance();
+            if (tokenBalance < 1) {
+                setError('Insufficient tokens to perform this search.');
+                return;
+            }
 
+            const response = await axios.post(`${apiUrl}/api/index/`, { input_text: inputText })
+            setTextResults(response.data);
+            setScopeResults(null);
+            setHandymanScopeResults(null);
+
+            await deductTokens(1); // number of tokens to deduct here (1)
+        } catch (error) {
+            setError('Error fetching text data: ' + error.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const fetchScopeData = async (jobScope) => {
+        setLoading(true);
+        setError(null);
+
+        try {
+            const tokenBalance = await fetchTokenBalance();
+            if (tokenBalance < 1) {
+                setError('Insufficient tokens to perform this search.');
+                return;
+            }
+
+            const response = await axios.post(`${apiUrl}/api/scope/`, { job_scope: jobScope });
+            setScopeResults(response.data);
+            setTextResults({});
+            setHandymanScopeResults(null);
+
+            const context = response.data.response;
+            const startIndex = context.indexOf(':') + 1;
+            let endIndex = context.indexOf('Total Cost:');
+            if (endIndex === -1) {
+                endIndex = context.length;
+            }
+            const newSelectedString = context.substring(startIndex, endIndex).trim();
+
+            setSelectedString((prev) => [...prev, newSelectedString]);
+
+            await deductTokens(1); // number of tokens to deduct here (1)
+        } catch (error) {
+            setError('Error fetching scope data: ' + error.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleSearch = async (query) => {
+      setLoading(true);
+      setError(null);
+  
+      try {
+          const tokenBalance = await fetchTokenBalance();
+  
+          const tokensRequiredPerSearch = 1; // number of tokens to deduct here (1)
+          if (tokenBalance < tokensRequiredPerSearch) {
+              setError('Insufficient tokens to perform this search.');
+              return;
+          }
+  
+          const response = await axios.post(`${apiUrl}/api/line/`, { Line: query });
+  
+          await deductTokens(tokensRequiredPerSearch);
+  
           const context = response.data.response;
           const startIndex = context.indexOf(':') + 1;
           let endIndex = context.indexOf('Total Cost:');
           if (endIndex === -1) {
-            endIndex = context.length;
+              endIndex = context.length;
           }
           const newSelectedString = context.substring(startIndex, endIndex).trim();
-
+  
           setSelectedString((prev) => {
-            const updatedStrings = [...prev, newSelectedString];
-
-            localStorage.setItem('selectedStrings', JSON.stringify(updatedStrings));
-
-            return updatedStrings;
+              const updatedStrings = [...prev, newSelectedString];
+  
+              localStorage.setItem('selectedStrings', JSON.stringify(updatedStrings));
+  
+              return updatedStrings;
           });
-        } catch (error) {
+  
+          setSearchResult(response.data);
+      } catch (error) {
           setError('Error performing search: ' + error.message);
-        } finally {
+      } finally {
           setLoading(false);
-        }
-      };
+      }
+  };
 
     return {
       textResults,

@@ -846,3 +846,19 @@ def get_user_token_count(request):
     
     except UserToken.DoesNotExist:
         return Response({'error': 'Token balance not found for user'}, status=404)
+    
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def deduct_tokens(request):
+    try:
+        user_token = UserToken.objects.get(user=request.user)
+        tokens_to_deduct = int(request.data.get('tokens', 0))
+        if user_token.token_balance < tokens_to_deduct:
+            return Response({'error': 'Insufficient tokens'}, status=400)
+
+        user_token.token_balance -= tokens_to_deduct
+        user_token.save()
+        return Response({'new_token_balance': user_token.token_balance})
+    except UserToken.DoesNotExist:
+        return Response({'error': 'Token balance not found'}, status=404)

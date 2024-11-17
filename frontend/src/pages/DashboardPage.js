@@ -23,12 +23,6 @@ const DashboardPage = () => {
                     <h2>Settings</h2>
                     <p>Adjust your preferences and settings.</p>
                 </div>
-                <div className="dashboard-page">
-                    <h2>Dashboard</h2>
-                    <Link to="/create-estimate">
-                        <button>Create New Estimate</button>
-                    </Link>
-                </div>
             </div>
         </div>
     );
