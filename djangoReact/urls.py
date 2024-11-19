@@ -40,6 +40,7 @@ urlpatterns = [
     path('api/get-saved-business-info/', get_saved_business_info, name='get_saved_business_info'),
     path('api/get-user-token-count/', get_user_token_count, name='get_user_token_count'),
     path('api/deduct-tokens/', deduct_tokens, name='deduct_tokens'),
+    path('api/cancel-subscription/', cancel_subscription, name='cancel_subscription'),
 
 
 

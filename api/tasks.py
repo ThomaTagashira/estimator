@@ -3,6 +3,7 @@ from django.utils import timezone
 from .models import Subscription, UserToken
 import os
 import json
+from django.utils.timezone import now
 
 token_allocation_map_str = os.getenv('TOKEN_ALLOCATION_MAP', '{}')
 print(f"Raw TOKEN_ALLOCATION_MAP string from env: {bool(token_allocation_map_str)} (non-empty string check)")
@@ -48,3 +49,11 @@ def allocate_monthly_tokens():
         else:
             days_since_last_allocation = (timezone.now() - subscription.last_token_allocation_date).days
             print(f"No allocation needed; only {days_since_last_allocation} days since last allocation.")
+
+
+def deactivate_expired_subscriptions():
+    """
+    Deactivate subscriptions that have passed their end_date.
+    """
+    expired_subscriptions = Subscription.objects.filter(end_date__lt=now(), is_active=True)
+    expired_subscriptions.update(is_active=False)

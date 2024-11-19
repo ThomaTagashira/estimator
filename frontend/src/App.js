@@ -4,7 +4,7 @@ import { BrowserRouter as Router, Route, Routes, redirect } from 'react-router-d
 import setupInterceptors from './components/setupInterceptor';
 import GoogleCallback from './components/GoogleCallback';
 // import GitHubCallback from './components/GitHubCallback';
-import { BusinessInfoUpdateSuccessPage, SuccessPage, SearchResults, CancelPage, SubscriptionPage, TokenPurchasePage, DashboardPage, LoginPage, RegisterPage, CreateEstimatePage, EstimatesPage, EstimateDetailPage, BusinessInfoPage }  from './pages';
+import { BusinessInfoUpdateSuccessPage, SuccessPage, SearchResults, CancelPage, SubscriptionPage, TokenPurchasePage, DashboardPage, LoginPage, RegisterPage, CreateEstimatePage, EstimatesPage, EstimateDetailPage, BusinessInfoPage, CancelSubscription }  from './pages';
 import Header from './components/Header';
 import AuthenticatedRoute from './components/Auth/AuthenticatedRoute';
 
@@ -129,7 +129,11 @@ function App() {
               <BusinessInfoUpdateSuccessPage apiUrl={apiUrl} />
             </AuthenticatedRoute>
         }/>
-
+                <Route path="/cancel-subscription" element={
+            <AuthenticatedRoute isAuthenticated={isAuthenticated} hasActiveSubscription={hasActiveSubscription}>
+              <CancelSubscription  apiUrl={apiUrl} />
+            </AuthenticatedRoute>
+        }/>
         <Route path="/" element={isAuthenticated && hasActiveSubscription ? (<DashboardPage />) : (<LoginPage setIsAuthenticated={setIsAuthenticated}setHasActiveSubscription={setHasActiveSubscription} />)} />
       </Routes>
     </Router>

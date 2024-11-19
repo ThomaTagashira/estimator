@@ -17,7 +17,9 @@ const DashboardPage = () => {
                 </div>
                 <div style={styles.card}>
                     <h2>Subscription</h2>
-                    <p>Manage your subscription and payment methods.</p>
+                    <Link to="/cancel-subscription">
+                        <button>Cancel Subscription</button>
+                    </Link>
                 </div>
                 <div style={styles.card}>
                     <h2>Settings</h2>
