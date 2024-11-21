@@ -4,11 +4,10 @@ on:
   pull_request:
     branches:
       - Dev
-      - Tokens
+
   push:
     branches:
       - Dev
-      - Tokens
 
 jobs:
   validate-appspec:

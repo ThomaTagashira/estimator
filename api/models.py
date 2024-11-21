@@ -82,17 +82,13 @@ class UserToken(models.Model):
 class Subscription(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     is_active = models.BooleanField(default=False)
+    cancellation_pending = models.BooleanField(default=False)
     subscription_type = models.CharField(
         max_length=50,
         choices=[('Basic', 'Basic'), ('Premium', 'Premium'), ('Enterprise', 'Enterprise')]
     )
     start_date = models.DateTimeField(auto_now_add=True)
     end_date = models.DateTimeField(null=True, blank=True)
-    renewal_date = models.DateTimeField(null=True, blank=True)
-    payment_method = models.CharField(
-        max_length=50,
-        choices=[('Credit Card', 'Credit Card'), ('PayPal', 'PayPal'), ('Stripe', 'Stripe')]
-    )
     stripe_subscription_id = models.CharField(max_length=255, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

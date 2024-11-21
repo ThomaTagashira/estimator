@@ -141,11 +141,11 @@ const useDynamicTable = (apiUrl, estimateId, selectedString, setSelectedString )
         }
       }, [selectedString, inputFields, setSelectedString]);
 
-    // const handleInputChange = (index, value) => {
-    //     const updatedFields = [...inputFields];
-    //     updatedFields[index] = value;
-    //     setInputFields(updatedFields);
-    // };
+    const handleInputChange = (index, value) => {
+        const updatedFields = [...inputFields];
+        updatedFields[index] = value;
+        setInputFields(updatedFields);
+    };
 
     const handleAddAllRows = async () => {
         console.log('input:', inputFields);
@@ -482,6 +482,7 @@ const useDynamicTable = (apiUrl, estimateId, selectedString, setSelectedString )
         handleEditClick,
         handleEditChange,
         handleUpdateClick,
+        handleInputChange,
         toggleDiscount,
         handleMarginChange,
         toggleMargin,

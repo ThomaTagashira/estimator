@@ -5,7 +5,7 @@ const CancelSubscription = () => {
   const [loading, setLoading] = useState(false);
 
   const handleCancelSubscription = async () => {
-    const apiUrl = process.env.REACT_APP_API_URL; // Load from environment variables
+    const apiUrl = process.env.REACT_APP_API_URL;
 
     if (!apiUrl) {
       alert('API URL is not configured. Please contact support.');
@@ -30,7 +30,7 @@ const CancelSubscription = () => {
 
       alert(`Success: ${response.data.message}`);
     } catch (error) {
-      console.error('Error during cancellation:', error.response || error.message); // Log for debugging
+      console.error('Error during cancellation:', error.response || error.message);
       alert(`Error: ${error.response?.data?.error || 'An error occurred'}`);
     } finally {
       setLoading(false);

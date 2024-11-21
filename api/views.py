@@ -26,6 +26,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.db import transaction
+from rest_framework.exceptions import ValidationError
 
 load_dotenv()
 logger = logging.getLogger('django')
@@ -307,6 +308,8 @@ class GitHubLoginView(APIView):
 
 
 
+
+
 stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
 
 class CreateSubscriptionCheckoutSessionView(APIView):
@@ -354,7 +357,12 @@ class CreateSubscriptionCheckoutSessionView(APIView):
             return JsonResponse({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
+
+
+
+
 class CreateTokenCheckoutSessionView(APIView):
+
     def post(self, request):
         user = request.user  
         if not user.is_authenticated:
@@ -404,6 +412,62 @@ class CreateTokenCheckoutSessionView(APIView):
 
 
 
+
+
+class ChangeSubscriptionTierView(APIView):
+
+    def post(self, request):
+        try:
+            logger.info(f"Request data: {request.data}")
+            new_tier = request.data.get('newTier')
+
+            if not new_tier:
+                raise ValidationError({'error': 'Subscription tier is required'})
+
+            TOKEN_ALLOCATION_MAP = json.loads(os.getenv('TOKEN_ALLOCATION_MAP', '{}'))
+            tier_data = TOKEN_ALLOCATION_MAP.get(new_tier)
+
+            if not tier_data:
+                logger.error(f"Invalid subscription tier: {new_tier}")
+                raise ValidationError({'error': 'Invalid subscription tier'})
+
+
+            stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
+            session = stripe.checkout.Session.create(
+                customer=request.user.profile.stripe_customer_id,
+                payment_method_types=['card'],
+                line_items=[{
+                    'price': tier_data['stripe_price_id'],
+                    'quantity': 1,
+                }],
+                mode='subscription',
+                success_url=f'{REDIR_URI}/success',
+                cancel_url=f'{REDIR_URI}/cancel',
+            )
+
+            logger.info(f"Stripe session created: {session['id']}")
+            return Response({
+                'sessionId': session['id'],
+                'newTier': new_tier,
+                'priceId': tier_data['stripe_price_id'],
+            }, status=200)
+
+        except ValidationError as e:
+            logger.error(f"Validation error: {str(e)}")
+            return Response({'error': str(e.detail)}, status=400)
+        except stripe.error.StripeError as e:
+            logger.error(f"Stripe error: {str(e)}")
+            return Response({'error': 'An error occurred with Stripe'}, status=500)
+        except Exception as e:
+            logger.error(f"Unexpected error: {str(e)}")
+            return Response({'error': str(e)}, status=500)
+
+
+
+
+
+
+
 @csrf_exempt
 @api_view(['POST'])
 def stripe_webhook(request):
@@ -429,14 +493,17 @@ def stripe_webhook(request):
 
     logger.info(f"Event type: {event['type']} with event data: {event['data']}")
 
-    if event['type'] == 'checkout.session.completed':
+    if event['type'] == 'customer.subscription.updated':
+        handle_invoice_payment_succeeded(event['data']['object'])
+
+
+    elif event['type'] == 'checkout.session.completed':
         session = event['data']['object']
         if session.get('mode') == 'subscription':
             handle_checkout_session_completed(session)
         elif session.get('mode') == 'payment' and session.get('metadata', {}).get('type') == 'token_purchase':
             handle_token_purchase(session)
-    
-    
+
     elif event['type'] == 'invoice.payment_succeeded':
         handle_invoice_payment_succeeded(event['data']['object'])
 
@@ -444,6 +511,11 @@ def stripe_webhook(request):
         logger.info(f"Unhandled event type: {event['type']}")
 
     return JsonResponse({'status': 'success'})
+
+
+
+
+
 
 
 def handle_payment_failed(event):
@@ -459,6 +531,11 @@ def handle_payment_failed(event):
         pass
 
 
+
+
+
+
+
 def handle_subscription_deleted(event):
     subscription_id = event['data']['object']['id']
     stripe_customer_id = event['data']['object']['customer']
@@ -471,6 +548,11 @@ def handle_subscription_deleted(event):
         # Add notify user subscription canceled logic here (Email)
     except Subscription.DoesNotExist:
         pass
+
+
+
+
+
 
 def handle_token_purchase(session):
     stripe_customer_id = session.get('customer')
@@ -498,36 +580,46 @@ def handle_token_purchase(session):
         logger.error(f"Error updating token balance for user: {e}")
 
 
+
+
+
+
+
+
 def handle_checkout_session_completed(session):
     logger.info("Handling checkout.session.completed")
     customer_id = session.get('customer')
+    subscription_id = session.get('subscription')  
 
-    if not customer_id:
-        logger.error("Customer ID is None, skipping processing.")
+    if not customer_id or not subscription_id:
+        logger.error("Customer ID or Subscription ID is None, skipping processing.")
         return
 
     try:
         user = User.objects.get(profile__stripe_customer_id=customer_id)
         logger.info(f"Processing user: {user.username}")
 
-        # Prevent processing for exempt users
         if user.is_staff or user.is_superuser or getattr(user.profile, 'is_exempt', False):
             logger.info(f"Skipping processing for exempt user: {user.username}")
             return
 
-        # Activate the user
         user.is_active = True
         user.save()
 
-        # Create a new subscription
-        subscription, created = Subscription.objects.get_or_create(user=user)
+        subscription, created = Subscription.objects.get_or_create(
+            user=user,
+            defaults={'stripe_subscription_id': subscription_id}  
+        )
         if created:
             logger.info(f"New subscription created for user: {user.username}")
         else:
             logger.info(f"Existing subscription found for user: {user.username}")
 
-        # Process subscription details
+            if subscription.stripe_subscription_id != subscription_id:
+                subscription.stripe_subscription_id = subscription_id
+
         subscription.is_active = True
+
         line_items = session.get('lines', {}).get('data', [])
         logger.info(f"Line items: {line_items}")
 
@@ -536,26 +628,28 @@ def handle_checkout_session_completed(session):
             product_id = price.get('product')
             logger.info(f"Product ID: {product_id}")
 
-        # Determine subscription type and allocate tokens
-        PRODUCT_TYPE_MAP = json.loads(os.getenv('PRODUCT_TYPE_MAP', '{}'))
-        subscription_type = PRODUCT_TYPE_MAP.get(product_id)
+            PRODUCT_TYPE_MAP = json.loads(os.getenv('PRODUCT_TYPE_MAP', '{}'))
+            subscription_type = PRODUCT_TYPE_MAP.get(product_id)
 
-        if not subscription_type:
-            logger.error(f"Unknown Product ID: {product_id}. Skipping token allocation.")
-            return
+            if not subscription_type:
+                logger.error(f"Unknown Product ID: {product_id}. Skipping token allocation.")
+                continue
 
-        TOKEN_ALLOCATION_MAP = json.loads(os.getenv('TOKEN_ALLOCATION_MAP', '{}'))
-        tokens_to_add = int(TOKEN_ALLOCATION_MAP.get(subscription_type, 0))
+            TOKEN_ALLOCATION_MAP = json.loads(os.getenv('TOKEN_ALLOCATION_MAP', '{}'))
+            tokens_to_add = int(TOKEN_ALLOCATION_MAP.get(subscription_type, 0))
 
-        subscription.subscription_type = subscription_type
-        subscription.token_allocation = tokens_to_add
-        subscription.last_payment_date = now()
+            subscription.subscription_type = subscription_type
+            subscription.token_allocation = tokens_to_add
+            subscription.cancellation_pending=False
+            subscription.last_payment_date = now()
+            subscription.save()
+
+            user_token, _ = UserToken.objects.get_or_create(user=user)
+            user_token.token_balance += tokens_to_add
+            user_token.save()
+
+        subscription.last_token_allocation_date = now()
         subscription.save()
-
-        # Update token balance
-        user_token, _ = UserToken.objects.get_or_create(user=user)
-        user_token.token_balance += tokens_to_add
-        user_token.save()
 
         logger.info(f"Subscription set up for user: {user.username}, tokens added: {tokens_to_add}")
 
@@ -563,6 +657,13 @@ def handle_checkout_session_completed(session):
         logger.error(f"No user found for customer ID: {customer_id}")
     except Exception as e:
         logger.error(f"Error processing checkout.session.completed: {e}")
+
+
+
+
+
+
+
 
 
 def handle_invoice_payment_succeeded(invoice):
@@ -578,14 +679,17 @@ def handle_invoice_payment_succeeded(invoice):
         user = User.objects.get(profile__stripe_customer_id=customer_id)
         logger.info(f"Processing user: {user.username}")
 
-        # Fetch the user's subscription
         subscription, created = Subscription.objects.get_or_create(user=user)
+
+        if subscription.stripe_subscription_id != subscription_id:
+            logger.info(f"Updating subscription ID for user: {user.username}")
+            subscription.stripe_subscription_id = subscription_id
+
         subscription.is_active = True
         subscription.save()
 
         logger.info(f"Subscription reactivated for user: {user.username}")
 
-        # Allocate tokens for the recurring subscription
         line_items = invoice.get('lines', {}).get('data', [])
         logger.info(f"Line items: {line_items}")
 
@@ -594,32 +698,36 @@ def handle_invoice_payment_succeeded(invoice):
             product_id = price.get('product')
             logger.info(f"Product ID: {product_id}")
 
-        PRODUCT_TYPE_MAP = json.loads(os.getenv('PRODUCT_TYPE_MAP', '{}'))
-        subscription_type = PRODUCT_TYPE_MAP.get(product_id)
+            PRODUCT_TYPE_MAP = json.loads(os.getenv('PRODUCT_TYPE_MAP', '{}'))
+            subscription_type = PRODUCT_TYPE_MAP.get(product_id)
 
-        if not subscription_type:
-            logger.error(f"Unknown Product ID: {product_id}. Skipping token allocation.")
-            return
+            if not subscription_type:
+                logger.error(f"Unknown Product ID: {product_id}. Skipping token allocation.")
+                continue
 
-        TOKEN_ALLOCATION_MAP = json.loads(os.getenv('TOKEN_ALLOCATION_MAP', '{}'))
-        tokens_to_add = int(TOKEN_ALLOCATION_MAP.get(subscription_type, 0))
+            TOKEN_ALLOCATION_MAP = json.loads(os.getenv('TOKEN_ALLOCATION_MAP', '{}'))
+            tokens_to_add = int(TOKEN_ALLOCATION_MAP.get(subscription_type, 0))
 
-        subscription.subscription_type = subscription_type
-        subscription.token_allocation = tokens_to_add
-        subscription.last_payment_date = now()
-        subscription.save()
+            subscription.subscription_type = subscription_type
+            subscription.token_allocation = tokens_to_add
+            subscription.last_payment_date = now()
+            subscription.cancellation_pending=False
+            subscription.save()
 
-        # Update token balance
-        user_token, _ = UserToken.objects.get_or_create(user=user)
-        user_token.token_balance += tokens_to_add
-        user_token.save()
+            user_token, _ = UserToken.objects.get_or_create(user=user)
+            user_token.token_balance += tokens_to_add
+            user_token.save()
 
-        logger.info(f"Renewal processed for user: {user.username}, tokens added: {tokens_to_add}")
+            logger.info(f"Renewal processed for user: {user.username}, tokens added: {tokens_to_add}")
 
     except User.DoesNotExist:
         logger.error(f"No user found for customer ID: {customer_id}")
     except Exception as e:
         logger.error(f"Error processing invoice.payment_succeeded: {e}")
+
+
+
+
 
 
 def user_estimate_view(request):
@@ -916,6 +1024,7 @@ def cancel_subscription(request):
 
         # Calculate the end date (e.g., 30 days from today for monthly plans)
         subscription.cancellation_date = now()
+        subscription.cancellation_pending = True
         subscription.end_date = subscription.last_payment_date + timedelta(days=30)
         subscription.save()
 
@@ -930,3 +1039,5 @@ def cancel_subscription(request):
 
     except Exception as e:
         return JsonResponse({'error': f'An error occurred: {str(e)}'}, status=500)
+    
+

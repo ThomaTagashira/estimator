@@ -14,3 +14,4 @@ export { default as EstimateDetailPage } from './EstimateDetailPage';
 export { default as BusinessInfoUpdateSuccessPage } from './BusinessInfoSuccessPage';
 export { default as BusinessInfoPage } from './BusinessInfoPage';
 export { default as CancelSubscription } from './CancelSubscriptionButton';
+export { default as ChangeSubscriptionPage } from './ChangeSubscriptionPage';

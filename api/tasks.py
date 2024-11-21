@@ -55,5 +55,5 @@ def deactivate_expired_subscriptions():
     """
     Deactivate subscriptions that have passed their end_date.
     """
-    expired_subscriptions = Subscription.objects.filter(end_date__lt=now(), is_active=True)
-    expired_subscriptions.update(is_active=False)
+    expired_subscriptions = Subscription.objects.filter(end_date__lt=now(), cancellation_pending=True, is_active=True)
+    expired_subscriptions.update(is_active=False, cancellation_pending=False)

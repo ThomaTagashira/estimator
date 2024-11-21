@@ -17,14 +17,14 @@ const DashboardPage = () => {
                 </div>
                 <div style={styles.card}>
                     <h2>Subscription</h2>
+                    <Link to="/change-subscription-tier">
+                        <button>Change Subscription Tier</button>
+                    </Link>
                     <Link to="/cancel-subscription">
                         <button>Cancel Subscription</button>
                     </Link>
                 </div>
-                <div style={styles.card}>
-                    <h2>Settings</h2>
-                    <p>Adjust your preferences and settings.</p>
-                </div>
+
             </div>
         </div>
     );

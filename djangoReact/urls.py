@@ -27,6 +27,7 @@ urlpatterns = [
     path('api/subscription/status/', subscription_status, name='subscription_status'),
     path('api/payments/', CreateSubscriptionCheckoutSessionView.as_view(), name='create_subscription_checkout_session'),
     path('api/token-payments/', CreateTokenCheckoutSessionView.as_view(), name='create_token_checkout_session'),
+    path('api/update_subscription/', ChangeSubscriptionTierView.as_view(), name='change_subscription_tier'),
     path('stripe_webhook/', stripe_webhook, name='stripe_webhook'),
     path('api/estimates/', create_estimate, name='create_estimate'),
     path('api/saved-estimates/', get_user_estimates, name='user_estimates'),
@@ -41,6 +42,7 @@ urlpatterns = [
     path('api/get-user-token-count/', get_user_token_count, name='get_user_token_count'),
     path('api/deduct-tokens/', deduct_tokens, name='deduct_tokens'),
     path('api/cancel-subscription/', cancel_subscription, name='cancel_subscription'),
+ 
 
 
 
