@@ -8,29 +8,48 @@ const githubID = process.env.REACT_APP_GITHUB_CLIENT_ID;
 const redirUrl = process.env.REACT_APP_REDIR_URL;
 
 const LoginForm = ({ onSubmit, error }) => {
-    const [username, setUsername] = useState('');
+    const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [formError, setFormError] = useState('');
 
     const handleSubmit = (e) => {
         e.preventDefault();
+        setFormError(''); // Clear previous errors
+
+        if (!email) {
+            setFormError('Email is required.');
+            return;
+        }
+        if (!password) {
+            setFormError('Password is required.');
+            return;
+        }
+
         const csrftoken = getCookie('csrftoken');
-        onSubmit(username, password, csrftoken);
+        onSubmit(email, password, csrftoken);
+    };
+
+    const constructOAuthUrl = (baseUrl, clientId, redirectUri, scope, responseType = 'code') => {
+        return `${baseUrl}?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=${responseType}&scope=${scope}`;
     };
 
     const handleGoogleLogin = () => {
-        const clientId = googleID;
-        const redirectUri = `${redirUrl}/google-callback`;
-        const scope = 'profile email';
-        const responseType = 'code';
-
-        const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=${responseType}&scope=${scope}`;
+        const authUrl = constructOAuthUrl(
+            'https://accounts.google.com/o/oauth2/v2/auth',
+            googleID,
+            `${redirUrl}/google-callback`,
+            'profile email'
+        );
         window.location.href = authUrl;
     };
 
     const handleGitHubLogin = () => {
-        const clientId = githubID;
-        const redirectUri = `${redirUrl}/github-callback`;
-        const authUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&scope=read:user`;
+        const authUrl = constructOAuthUrl(
+            'https://github.com/login/oauth/authorize',
+            githubID,
+            `${redirUrl}/github-callback`,
+            'read:user'
+        );
         window.location.href = authUrl;
     };
 
@@ -40,9 +59,9 @@ const LoginForm = ({ onSubmit, error }) => {
             <form onSubmit={handleSubmit}>
                 <input
                     type="text"
-                    placeholder="Username"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
+                    placeholder="Email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                 />
                 <input
                     type="password"
@@ -50,9 +69,11 @@ const LoginForm = ({ onSubmit, error }) => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                 />
-                <button type="submit">Login using Username</button>
+                <button type="submit">Login</button>
             </form>
-            {error && <p>{error}</p>}
+            {formError && <p style={{ color: 'red' }}>{formError}</p>}
+            {error && <p style={{ color: 'red' }}>{error}</p>}
+
             <p>Don't have an account? <Link to="/register">Register</Link></p>
 
             <GoogleOAuthProvider clientId={googleID}>

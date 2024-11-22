@@ -4,7 +4,7 @@ import { BrowserRouter as Router, Route, Routes, redirect } from 'react-router-d
 import setupInterceptors from './components/setupInterceptor';
 import GoogleCallback from './components/GoogleCallback';
 // import GitHubCallback from './components/GitHubCallback';
-import { BusinessInfoUpdateSuccessPage, SuccessPage, SearchResults, CancelPage, SubscriptionPage, TokenPurchasePage, DashboardPage, LoginPage, RegisterPage, CreateEstimatePage, EstimatesPage, EstimateDetailPage, BusinessInfoPage, CancelSubscription, ChangeSubscriptionPage }  from './pages';
+import { BusinessInfoUpdateSuccessPage, SuccessPage, SearchResults, CancelPage, SubscriptionPage, TokenPurchasePage, DashboardPage, LoginPage, RegisterPage, CreateEstimatePage, EstimatesPage, EstimateDetailPage, BusinessInfoPage, CancelSubscriptionPage, ChangeSubscriptionPage }  from './pages';
 import Header from './components/Header';
 import AuthenticatedRoute from './components/Auth/AuthenticatedRoute';
 
@@ -15,6 +15,7 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [hasActiveSubscription, setHasActiveSubscription] = useState(false);
   const [tokenCount, setTokenCount] = useState(0);
+  const [userSubscriptionTier, setUserSubscriptionTier] = useState('');
 
   const fetchTokenCount = async () => {
     const token = localStorage.getItem('access_token');
@@ -53,6 +54,38 @@ function App() {
       return () => clearInterval(interval); 
   }, []);
 
+  useEffect(() => {
+    const fetchSubscriptionTier = async () => {
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+          console.error('No access token found');
+          return;
+      }
+
+      try {
+          const response = await fetch(`${apiUrl}/api/get-user-subscription-tier/`, {
+              method: 'GET',
+              headers: {
+                  'Authorization': `Bearer ${token}`,
+              },
+          });
+
+          if (response.ok) {
+              const data = await response.json();
+              setUserSubscriptionTier(data['subscription tier']); 
+              console.log('user tier:', userSubscriptionTier)
+
+          } else {
+              console.error('Failed to fetch user subscription:', await response.json());
+          }
+      } catch (error) {
+          console.error('Error fetching subscription tier:', error);
+      }
+  }; 
+
+  fetchSubscriptionTier();
+}, );
+
 
   const handleLogout = () => {
     localStorage.removeItem('access_token');
@@ -86,7 +119,7 @@ function App() {
 
   return (
     <Router>
-      <Header handleLogout={handleLogout} hasActiveSubscription={hasActiveSubscription} tokenCount={tokenCount} />
+      <Header handleLogout={handleLogout} hasActiveSubscription={hasActiveSubscription} tokenCount={tokenCount} userSubscriptionTier={userSubscriptionTier} />
       <Routes>
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/google-callback" element={<GoogleCallback setIsAuthenticated={setIsAuthenticated} setHasActiveSubscription={setHasActiveSubscription} />} />
@@ -131,12 +164,12 @@ function App() {
         }/>
                 <Route path="/cancel-subscription" element={
             <AuthenticatedRoute isAuthenticated={isAuthenticated} hasActiveSubscription={hasActiveSubscription}>
-              <CancelSubscription  apiUrl={apiUrl} />
+              <CancelSubscriptionPage  apiUrl={apiUrl} />
             </AuthenticatedRoute>
         }/>
                 <Route path="/change-subscription-tier" element={
             <AuthenticatedRoute isAuthenticated={isAuthenticated} hasActiveSubscription={hasActiveSubscription}>
-              <ChangeSubscriptionPage  apiUrl={apiUrl} />
+              <ChangeSubscriptionPage  apiUrl={apiUrl} userSubscriptionTier={userSubscriptionTier} />
             </AuthenticatedRoute>
         }/>
         <Route path="/" element={isAuthenticated && hasActiveSubscription ? (<DashboardPage />) : (<LoginPage setIsAuthenticated={setIsAuthenticated}setHasActiveSubscription={setHasActiveSubscription} />)} />

@@ -179,10 +179,19 @@ const useDynamicTable = (apiUrl, estimateId, selectedString, setSelectedString )
                 throw new Error('Failed to save tasks');
             }
     
-            console.log('Tasks saved to database');
-            setTableData((prevTableData) => [...prevTableData, ...newTasks]);
+            const result = await response.json();
+            console.log('API Response:', result);
+    
+            // Add saved tasks (with task numbers) to the dynamic table
+            const savedTasks = result.tasks.map(task => ({
+                task_number: task.task_number,
+                task_description: task.task_description,
+            }));
+    
+            setTableData((prevTableData) => [...prevTableData, ...savedTasks]);
             setInputFields([]);
     
+            console.log('Tasks saved to database and updated in table');
         } catch (error) {
             console.error('Error saving tasks:', error);
         }
@@ -192,11 +201,42 @@ const useDynamicTable = (apiUrl, estimateId, selectedString, setSelectedString )
     
 
 
-    const handleAddCustomRow = () => {
-        const customRow = 'Custom Job Labor Cost: $0.00 Material Cost: $0.00';
-        setTableData((prevTableData) => [...prevTableData, customRow]);
+    const handleAddCustomRow = async () => {
+        const customTask = {
+            job: 'Custom Job',
+            laborCost: 0.0,
+            materialCost: 0.0,
+        };
+    
+        try {
+            const accessToken = localStorage.getItem('access_token');
+            const response = await fetch(`${apiUrl}/api/save-estimate-items/`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    estimate_id: estimateId,
+                    tasks: [customTask], // Send as an array with a single custom task
+                }),
+            });
+    
+            if (!response.ok) {
+                throw new Error('Failed to save custom task');
+            }
+    
+            const result = await response.json();
+            console.log('API Response for Custom Task:', result);
+    
+            // Extract the saved task from the API response
+            const savedTask = result.tasks[0]; 
+            setTableData((prevTableData) => [...prevTableData, savedTask]);
+        } catch (error) {
+            console.error('Error saving custom task:', error);
+        }
     };
-
+    
     const handleRemoveField = (index) => {
         const updatedFields = inputFields.filter((_, i) => i !== index);
         setInputFields(updatedFields);

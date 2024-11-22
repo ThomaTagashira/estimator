@@ -120,11 +120,12 @@ REST_FRAMEWORK = {
     ],
 }
 
-CRONJOBS = [
-    ('0 0 * * *', 'api.tasks.allocate_monthly_tokens'),  # runs daily at midnight for monthly token allocation job
-    ('0 0 * * *', 'api.tasks.deactivate_expired_subscriptions'),  # runs daily at midnight for changing is_active=False for users who canceled their subscription
+#stripe API handles timed jobs
+# CRONJOBS = [
+#     ('0 0 * * *', 'api.tasks.allocate_monthly_tokens'),  # runs daily at midnight for monthly token allocation job
+#     ('0 0 * * *', 'api.tasks.deactivate_expired_subscriptions'),  # runs daily at midnight for changing is_active=False for users who canceled their subscription
 
-]
+# ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -189,6 +190,9 @@ AUTH_PASSWORD_VALIDATORS = [
     },
     {
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        'OPTIONS': {
+            'min_length': 8, 
+        },
     },
     {
         'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
@@ -196,7 +200,11 @@ AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
+    {
+        'NAME': 'util.validators.CustomPasswordValidator',  
+    },
 ]
+
 
 
 # Internationalization

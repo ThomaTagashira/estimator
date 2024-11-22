@@ -6,27 +6,42 @@ import { useNavigate } from 'react-router-dom';
 const apiUrl = process.env.REACT_APP_API_URL;
 
 const useRegister = () => {
-    const [username, setUsername] = useState('');
+    const [userEmail, setUserEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const navigate = useNavigate();
 
-    const register = async (e) => {
-        e.preventDefault();
-        try {
-            await axios.post(`${apiUrl}/api/register/`, {
-                username,
-                password,
-            });
-            navigate('/');
-        } catch (err) {
-            setError('Error creating account: ' + err.message);
+const register = async (email, password, csrftoken) => {
+    try {
+        const response = await axios.post(`${apiUrl}/api/register/`, {
+            userEmail: email,
+            password,
+        }, {
+            headers: {
+                'X-CSRFToken': csrftoken,
+            },
+        });
+
+        const { access, refresh } = response.data;
+
+
+        localStorage.setItem('access_token', access);
+        localStorage.setItem('refresh_token', refresh);
+        axios.defaults.headers.common['Authorization'] = `Bearer ${access}`;
+
+        if (response.data.has_active_subscription) {
+            navigate('/dashboard');
+        } else {
+            navigate('/subscribe');
         }
-    };
+    } catch (err) {
+        setError('Error during registration. Please try again.'+err.message);
+    }
+};
 
     return {
-        username,
-        setUsername,
+        userEmail,
+        setUserEmail,
         password,
         setPassword,
         error,

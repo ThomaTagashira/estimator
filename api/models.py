@@ -81,6 +81,7 @@ class UserToken(models.Model):
 
 class Subscription(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
+    user_email = models.CharField(max_length=150, editable=False)  
     is_active = models.BooleanField(default=False)
     cancellation_pending = models.BooleanField(default=False)
     subscription_type = models.CharField(
@@ -97,9 +98,16 @@ class Subscription(models.Model):
     trial_end_date = models.DateTimeField(null=True, blank=True)
     token_allocation = models.PositiveIntegerField(default=0)
     last_token_allocation_date = models.DateTimeField(null=True, blank=True)
-    last_payment_date = models.DateTimeField(null=True, blank=True)  
+    last_payment_date = models.DateTimeField(null=True, blank=True)
+    last_processed_invoice_id = models.CharField(max_length=255, null=True, blank=True)
+
+    def save(self, *args, **kwargs):
+        self.user_email = self.user.email
+        super().save(*args, **kwargs)
+    
     def __str__(self):
         return f"{self.user.username}'s subscription: {self.subscription_type} - {'Active' if self.is_active else 'Inactive'}"
+
 
 
 class UserEstimates(models.Model):

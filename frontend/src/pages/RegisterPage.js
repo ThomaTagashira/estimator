@@ -1,26 +1,28 @@
-// pages/RegisterPage.js
 import React from 'react';
 import RegisterForm from '../components/Form/RegisterForm';
 import useRegister from '../hooks/useRegister';
 
 const RegisterPage = () => {
     const {
-        username,
-        setUsername,
+        userEmail,
+        setUserEmail,
         password,
         setPassword,
         error,
         register,
-    } = useRegister();
+    } = useRegister({
+        setIsAuthenticated: () => {}, 
+        setHasActiveSubscription: () => {}, 
+    });
 
     return (
         <RegisterForm
-            username={username}
-            setUsername={setUsername}
+            userEmail={userEmail}
+            setUserEmail={setUserEmail}
             password={password}
             setPassword={setPassword}
             error={error}
-            onSubmit={register}
+            register={register}
         />
     );
 };

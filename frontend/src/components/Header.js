@@ -1,15 +1,23 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
-const Header = ({ handleLogout, hasActiveSubscription, tokenCount }) => {
+const Header = ({ handleLogout, hasActiveSubscription, tokenCount, userSubscriptionTier }) => {
     return (
         <header style={headerStyle}>
             <div style={logoStyle}>
                 <h1>MyApp</h1>
             </div>
-            <div style={{ fontSize: '18px', fontWeight: 'bold' }}>
-                Tokens: {tokenCount}
-            </div>
+            {hasActiveSubscription && (
+                <>
+                    <div style={{ fontSize: '18px', fontWeight: 'bold' }}>
+                        Tokens: {tokenCount}
+                    </div>
+                    
+                    <div style={{ fontSize: '18px', fontWeight: 'bold' }}>
+                        Current Subscription: {userSubscriptionTier}
+                    </div>
+                </>
+            )}
             <nav style={navStyle}>
                 <ul style={ulStyle}>
                     {hasActiveSubscription ? (

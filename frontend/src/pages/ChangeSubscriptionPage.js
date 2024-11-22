@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {SubscriptionCheckoutButton} from '../components/StripeCheckoutButton'; 
 
-const ChangeSubscriptionPage = () => {
+const ChangeSubscriptionPage = (userSubscriptionTier) => {
     const [tier, setNewTier] = useState(''); 
 
     const handleSelectNewTier = (tier) => {
@@ -11,7 +11,7 @@ const ChangeSubscriptionPage = () => {
     return (
         <div>
             <h1>Which Tier Would You Like to Change Your Current Subscription To?</h1>
-            <p>Your Current Subscription: </p>
+            <p>Your Current Subscription: {userSubscriptionTier} </p>
 
             <div>
                 <h2>Select Your Plan:</h2>

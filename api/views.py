@@ -1,7 +1,7 @@
 import json, requests, logging, os, stripe
 from rest_framework.views import APIView
 from util.embedding import get_embedding
-from pgvector.django import L2Distance, CosineDistance
+from pgvector.django import CosineDistance
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework import status
@@ -9,7 +9,7 @@ from util.serializers import *
 from util.multi_query_retriever import generate_response
 from util.ai_response import get_response
 from util.image_encoder import encode_image
-from django.http import JsonResponse, HttpResponse
+from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from util.text_converter import image_to_text
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -20,13 +20,15 @@ from .models import *
 from django.utils._os import safe_join
 from django.views.static import serve as static_serve
 from datetime import timedelta
-from django.utils import timezone
 from rest_framework_simplejwt.views import TokenObtainPairView
 from django.contrib.auth.models import User
-from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.db import transaction
 from rest_framework.exceptions import ValidationError
+from django.utils.timezone import now
+from django.core.validators import validate_email
+from django.contrib.auth.password_validation import validate_password
+
 
 load_dotenv()
 logger = logging.getLogger('django')
@@ -64,6 +66,11 @@ def index(request):
         return Response(serializer.data)
 
 
+
+
+
+
+
 @api_view(['GET', 'POST'])
 def handle_scope(request):
     if request.method == 'POST':
@@ -83,6 +90,12 @@ def handle_scope(request):
         return Response({'error': 'Invalid request method'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 
+
+
+
+
+
+
 def process_job_scope(job_scope):
     query = job_scope
     retriever = generate_response(query)
@@ -97,6 +110,12 @@ def process_job_scope(job_scope):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+
+
+
+
+
+
 def process_line(Line):
     query = Line
     retriever = generate_response(query)
@@ -109,6 +128,12 @@ def process_line(Line):
     else:
         logger.error('Serializer errors: %s', serializer.errors)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+
+
+
 
 
 @api_view(['GET', 'POST'])
@@ -141,14 +166,71 @@ def upload_photo(request):
         return Response({'error': 'Invalid request method'}, status=status.HTTP_400_BAD_REQUEST)\
 
 
+
+
+
+
+
+
+
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def register_user(request):
-    serializer = UserSerializer(data=request.data)
-    if serializer.is_valid():
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    # print("request:", request.data)
+    email = request.data.get('userEmail')
+    password = request.data.get('password')
+    # print("email:", email)
+    # print("pass:", password)
+
+    if not email:
+        return Response({'error': 'Email is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        validate_email(email)
+    except ValidationError:
+        return Response({'error': 'Invalid email format.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    if User.objects.filter(email=email).exists():
+        return Response({'error': 'Email already in use.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        validate_password(password)
+    except ValidationError as e:
+        return Response({'error': e.messages}, status=status.HTTP_400_BAD_REQUEST)
+
+    with transaction.atomic():
+        user = User.objects.create_user(
+            username=email,
+            email=email,
+            password=password
+        )
+
+        existing_profile = StripeProfile.objects.filter(user=user).exists()
+        if not existing_profile:
+            try:
+                customer = stripe.Customer.create(email=user.email)
+                StripeProfile.objects.create(user=user, stripe_customer_id=customer['id'])
+            except Exception as e:
+                user.delete()  
+                return Response({'error': f'Failed to create Stripe customer: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        try:
+            refresh = RefreshToken.for_user(user)
+            jwt_access_token = str(refresh.access_token)
+            jwt_refresh_token = str(refresh)
+        except Exception as e:
+            return Response({'error': f'Failed to generate JWT tokens: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    return Response({
+        'user': {'email': user.email},
+        'access': jwt_access_token,
+        'refresh': jwt_refresh_token
+    }, status=status.HTTP_201_CREATED)
+
+
+
+
+
 
 
 @api_view(['GET', 'POST'])
@@ -175,6 +257,7 @@ class UsernameTokenObtainPairView(TokenObtainPairView):
         try:
             user = User.objects.get(username=username)
             active_subscription = Subscription.objects.filter(user=user, is_active=True).exists()
+            print(f"User {user.username} active subscription: {active_subscription}")
 
             response.data['has_active_subscription'] = active_subscription
 
@@ -182,10 +265,11 @@ class UsernameTokenObtainPairView(TokenObtainPairView):
                 response.data['detail'] = "Subscription required."
                 response.status_code = status.HTTP_403_FORBIDDEN
         except User.DoesNotExist:
-            response.data['detail'] = "Invalid credentials."
+            response.data = {'detail': "Invalid credentials."}
             response.status_code = status.HTTP_401_UNAUTHORIZED
 
         return response
+
 
 
 class GoogleTokenObtainPairView(TokenObtainPairView):
@@ -310,6 +394,10 @@ class GitHubLoginView(APIView):
 
 
 
+
+
+
+
 stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
 
 class CreateSubscriptionCheckoutSessionView(APIView):
@@ -356,228 +444,6 @@ class CreateSubscriptionCheckoutSessionView(APIView):
             logger.error(f"Error creating checkout session: {str(e)}")
             return JsonResponse({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-
-
-
-
-
-class CreateTokenCheckoutSessionView(APIView):
-
-    def post(self, request):
-        user = request.user  
-        if not user.is_authenticated:
-            return Response({'error': 'Authentication required'}, status=401)
-
-        try:
-            subscription = Subscription.objects.get(user=user, is_active=True)
-        except Subscription.DoesNotExist:
-            return Response({'error': 'Active subscription required to purchase tokens'}, status=403)
-
-        try:
-            stripe_profile = StripeProfile.objects.get(user=user)
-            if not stripe_profile.stripe_customer_id:
-                return Response({'error': 'Stripe customer ID is missing. Contact support.'}, status=400)
-        except StripeProfile.DoesNotExist:
-            return Response({'error': 'Stripe profile not found. Contact support.'}, status=400)
-
-        token_amount = request.data.get('tokenQty')
-        TOKEN_PRICE_MAP = os.getenv('TOKEN_PRICE_MAP')
-        TOKEN_PRICE_MAP = json.loads(TOKEN_PRICE_MAP)
-
-        price_id = TOKEN_PRICE_MAP.get(token_amount)
-        if not price_id:
-            return Response({'error': 'Invalid token amount'}, status=400)
-
-        try:
-            session = stripe.checkout.Session.create(
-                payment_method_types=['card'],
-                mode='payment',
-                customer=stripe_profile.stripe_customer_id,  
-                line_items=[{
-                    'price': price_id,
-                    'quantity': 1,
-                }],
-                metadata={
-                    'type': 'token_purchase',  
-                    'tokenQty': token_amount,  
-                },
-                success_url=f'{REDIR_URI}/success',
-                cancel_url=f'{REDIR_URI}/cancel',
-            )
-            return Response({'sessionId': session.id})
-        except Exception as e:
-            logger.error(f"Error creating Stripe checkout session: {str(e)}")
-            return Response({'error': str(e)}, status=400)
-
-
-
-
-
-
-class ChangeSubscriptionTierView(APIView):
-
-    def post(self, request):
-        try:
-            logger.info(f"Request data: {request.data}")
-            new_tier = request.data.get('newTier')
-
-            if not new_tier:
-                raise ValidationError({'error': 'Subscription tier is required'})
-
-            TOKEN_ALLOCATION_MAP = json.loads(os.getenv('TOKEN_ALLOCATION_MAP', '{}'))
-            tier_data = TOKEN_ALLOCATION_MAP.get(new_tier)
-
-            if not tier_data:
-                logger.error(f"Invalid subscription tier: {new_tier}")
-                raise ValidationError({'error': 'Invalid subscription tier'})
-
-
-            stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
-            session = stripe.checkout.Session.create(
-                customer=request.user.profile.stripe_customer_id,
-                payment_method_types=['card'],
-                line_items=[{
-                    'price': tier_data['stripe_price_id'],
-                    'quantity': 1,
-                }],
-                mode='subscription',
-                success_url=f'{REDIR_URI}/success',
-                cancel_url=f'{REDIR_URI}/cancel',
-            )
-
-            logger.info(f"Stripe session created: {session['id']}")
-            return Response({
-                'sessionId': session['id'],
-                'newTier': new_tier,
-                'priceId': tier_data['stripe_price_id'],
-            }, status=200)
-
-        except ValidationError as e:
-            logger.error(f"Validation error: {str(e)}")
-            return Response({'error': str(e.detail)}, status=400)
-        except stripe.error.StripeError as e:
-            logger.error(f"Stripe error: {str(e)}")
-            return Response({'error': 'An error occurred with Stripe'}, status=500)
-        except Exception as e:
-            logger.error(f"Unexpected error: {str(e)}")
-            return Response({'error': str(e)}, status=500)
-
-
-
-
-
-
-
-@csrf_exempt
-@api_view(['POST'])
-def stripe_webhook(request):
-    payload = request.body.decode('utf-8')
-    logger.info(f"Raw payload: {payload}")
-
-    try:
-        webhook_secret = os.getenv('STRIPE_WEBHOOK_SECRET')
-        event = stripe.Webhook.construct_event(
-            payload, request.META['HTTP_STRIPE_SIGNATURE'], webhook_secret
-        )
-        logger.info(f"Stripe event constructed successfully: {event}")
-
-    except json.JSONDecodeError as e:
-        logger.error(f"Failed to parse JSON payload: {e}")
-        return HttpResponse(status=400)
-    except stripe.error.SignatureVerificationError as e:
-        logger.error(f"Invalid signature: {e}")
-        return HttpResponse(status=400)
-    except Exception as e:
-        logger.error(f"Unexpected error: {e}")
-        return HttpResponse(status=400)
-
-    logger.info(f"Event type: {event['type']} with event data: {event['data']}")
-
-    if event['type'] == 'customer.subscription.updated':
-        handle_invoice_payment_succeeded(event['data']['object'])
-
-
-    elif event['type'] == 'checkout.session.completed':
-        session = event['data']['object']
-        if session.get('mode') == 'subscription':
-            handle_checkout_session_completed(session)
-        elif session.get('mode') == 'payment' and session.get('metadata', {}).get('type') == 'token_purchase':
-            handle_token_purchase(session)
-
-    elif event['type'] == 'invoice.payment_succeeded':
-        handle_invoice_payment_succeeded(event['data']['object'])
-
-    else:
-        logger.info(f"Unhandled event type: {event['type']}")
-
-    return JsonResponse({'status': 'success'})
-
-
-
-
-
-
-
-def handle_payment_failed(event):
-    subscription_id = event['data']['object']['subscription']
-    stripe_customer_id = event['data']['object']['customer']
-
-    try:
-        subscription = Subscription.objects.get(stripe_subscription_id=subscription_id)
-        subscription.is_active = False
-        subscription.save()
-        # add notify user payment failed email logic (Email)
-    except Subscription.DoesNotExist:
-        pass
-
-
-
-
-
-
-
-def handle_subscription_deleted(event):
-    subscription_id = event['data']['object']['id']
-    stripe_customer_id = event['data']['object']['customer']
-
-    try:
-        subscription = Subscription.objects.get(stripe_subscription_id=subscription_id)
-        subscription.is_active = False
-        subscription.cancellation_date = timezone.now()
-        subscription.save()
-        # Add notify user subscription canceled logic here (Email)
-    except Subscription.DoesNotExist:
-        pass
-
-
-
-
-
-
-def handle_token_purchase(session):
-    stripe_customer_id = session.get('customer')
-    logger.info(f"Received customer data: {session.get('customer')}")
-
-    metadata = session.get('metadata', {})
-    token_qty = metadata.get('tokenQty')
-    logger.info(f"Received session metadata: {session.get('metadata', {})}")
-    logger.info(f"Received metadata tokenQty: {metadata.get('tokenQty')}")
-
-    if not stripe_customer_id or not token_qty:
-        logger.error("Missing customer ID or token quantity in session metadata.")
-        return
-
-    try:
-        user = User.objects.get(profile__stripe_customer_id=stripe_customer_id)
-        logger.info(f"Adding {token_qty} tokens to user {user.username}")
-        user_token, created = UserToken.objects.get_or_create(user=user)
-        user_token.token_balance += int(token_qty)
-        user_token.save()
-        logger.info(f"New token balance for user {user.username}: {user_token.token_balance}")
-    except User.DoesNotExist:
-        logger.error(f"No user found with Stripe customer ID: {stripe_customer_id}")
-    except Exception as e:
-        logger.error(f"Error updating token balance for user: {e}")
 
 
 
@@ -642,6 +508,7 @@ def handle_checkout_session_completed(session):
             subscription.token_allocation = tokens_to_add
             subscription.cancellation_pending=False
             subscription.last_payment_date = now()
+            subscription.auto_renew = True
             subscription.save()
 
             user_token, _ = UserToken.objects.get_or_create(user=user)
@@ -666,10 +533,12 @@ def handle_checkout_session_completed(session):
 
 
 
+
 def handle_invoice_payment_succeeded(invoice):
     logger.info("Handling invoice.payment_succeeded")
     customer_id = invoice.get('customer')
     subscription_id = invoice.get('subscription')
+    invoice_id = invoice.get('id')
 
     if not customer_id or not subscription_id:
         logger.error("Customer ID or Subscription ID is missing, skipping processing.")
@@ -677,53 +546,363 @@ def handle_invoice_payment_succeeded(invoice):
 
     try:
         user = User.objects.get(profile__stripe_customer_id=customer_id)
-        logger.info(f"Processing user: {user.username}")
-
         subscription, created = Subscription.objects.get_or_create(user=user)
+
+        if created:
+            logger.info(f"New subscription created for user: {user.username}")
 
         if subscription.stripe_subscription_id != subscription_id:
             logger.info(f"Updating subscription ID for user: {user.username}")
             subscription.stripe_subscription_id = subscription_id
 
-        subscription.is_active = True
-        subscription.save()
+        # Check for idempotency
+        if subscription.last_processed_invoice_id == invoice_id:
+            logger.info(f"Invoice {invoice_id} already processed for user: {user.username}. Skipping.")
+            return
 
-        logger.info(f"Subscription reactivated for user: {user.username}")
+        subscription.is_active = True
+        subscription.last_payment_date = now()
+        subscription.last_processed_invoice_id = invoice_id
 
         line_items = invoice.get('lines', {}).get('data', [])
-        logger.info(f"Line items: {line_items}")
-
         for item in line_items:
             price = item.get('price', {})
             product_id = price.get('product')
-            logger.info(f"Product ID: {product_id}")
 
-            PRODUCT_TYPE_MAP = json.loads(os.getenv('PRODUCT_TYPE_MAP', '{}'))
+            try:
+                PRODUCT_TYPE_MAP = json.loads(os.getenv('PRODUCT_TYPE_MAP', '{}'))
+                TOKEN_ALLOCATION_MAP = json.loads(os.getenv('TOKEN_ALLOCATION_MAP', '{}'))
+            except json.JSONDecodeError as e:
+                logger.error(f"Error decoding environment variables: {e}")
+                return
+
             subscription_type = PRODUCT_TYPE_MAP.get(product_id)
 
             if not subscription_type:
                 logger.error(f"Unknown Product ID: {product_id}. Skipping token allocation.")
                 continue
 
-            TOKEN_ALLOCATION_MAP = json.loads(os.getenv('TOKEN_ALLOCATION_MAP', '{}'))
             tokens_to_add = int(TOKEN_ALLOCATION_MAP.get(subscription_type, 0))
 
             subscription.subscription_type = subscription_type
             subscription.token_allocation = tokens_to_add
-            subscription.last_payment_date = now()
-            subscription.cancellation_pending=False
-            subscription.save()
+            subscription.cancellation_pending = False
+            subscription.auto_renew = True
 
             user_token, _ = UserToken.objects.get_or_create(user=user)
             user_token.token_balance += tokens_to_add
             user_token.save()
 
-            logger.info(f"Renewal processed for user: {user.username}, tokens added: {tokens_to_add}")
+            logger.info(f"Tokens added for user: {user.username}, tokens: {tokens_to_add}")
+
+        subscription.save()
 
     except User.DoesNotExist:
         logger.error(f"No user found for customer ID: {customer_id}")
     except Exception as e:
         logger.error(f"Error processing invoice.payment_succeeded: {e}")
+
+
+
+
+
+
+
+
+class ChangeSubscriptionTierView(APIView):
+
+    def post(self, request):
+        try:
+            logger.info(f"Request data: {request.data}")
+            new_tier = request.data.get('newTier')
+
+            if not new_tier:
+                raise ValidationError({'error': 'Subscription tier is required'})
+
+            TOKEN_ALLOCATION_MAP = json.loads(os.getenv('TOKEN_ALLOCATION_MAP', '{}'))
+            tier_data = TOKEN_ALLOCATION_MAP.get(new_tier)
+
+            if not tier_data:
+                logger.error(f"Invalid subscription tier: {new_tier}")
+                raise ValidationError({'error': 'Invalid subscription tier'})
+
+
+            stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
+            session = stripe.checkout.Session.create(
+                customer=request.user.profile.stripe_customer_id,
+                payment_method_types=['card'],
+                line_items=[{
+                    'price': tier_data['stripe_price_id'],
+                    'quantity': 1,
+                }],
+                mode='subscription',
+                success_url=f'{REDIR_URI}/success',
+                cancel_url=f'{REDIR_URI}/cancel',
+            )
+
+            logger.info(f"Stripe session created: {session['id']}")
+            return Response({
+                'sessionId': session['id'],
+                'newTier': new_tier,
+                'priceId': tier_data['stripe_price_id'],
+            }, status=200)
+
+        except ValidationError as e:
+            logger.error(f"Validation error: {str(e)}")
+            return Response({'error': str(e.detail)}, status=400)
+        except stripe.error.StripeError as e:
+            logger.error(f"Stripe error: {str(e)}")
+            return Response({'error': 'An error occurred with Stripe'}, status=500)
+        except Exception as e:
+            logger.error(f"Unexpected error: {str(e)}")
+            return Response({'error': str(e)}, status=500)
+
+
+
+
+
+
+
+
+class CreateTokenCheckoutSessionView(APIView):
+
+    def post(self, request):
+        user = request.user  
+        if not user.is_authenticated:
+            return Response({'error': 'Authentication required'}, status=401)
+
+        try:
+            subscription = Subscription.objects.get(user=user, is_active=True)
+        except Subscription.DoesNotExist:
+            return Response({'error': 'Active subscription required to purchase tokens'}, status=403)
+
+        try:
+            stripe_profile = StripeProfile.objects.get(user=user)
+            if not stripe_profile.stripe_customer_id:
+                return Response({'error': 'Stripe customer ID is missing. Contact support.'}, status=400)
+        except StripeProfile.DoesNotExist:
+            return Response({'error': 'Stripe profile not found. Contact support.'}, status=400)
+
+        token_amount = request.data.get('tokenQty')
+        TOKEN_PRICE_MAP = os.getenv('TOKEN_PRICE_MAP')
+        TOKEN_PRICE_MAP = json.loads(TOKEN_PRICE_MAP)
+
+        price_id = TOKEN_PRICE_MAP.get(token_amount)
+        if not price_id:
+            return Response({'error': 'Invalid token amount'}, status=400)
+
+        try:
+            session = stripe.checkout.Session.create(
+                payment_method_types=['card'],
+                mode='payment',
+                customer=stripe_profile.stripe_customer_id,  
+                line_items=[{
+                    'price': price_id,
+                    'quantity': 1,
+                }],
+                metadata={
+                    'type': 'token_purchase',  
+                    'tokenQty': token_amount,  
+                },
+                success_url=f'{REDIR_URI}/success',
+                cancel_url=f'{REDIR_URI}/cancel',
+            )
+            return Response({'sessionId': session.id})
+        except Exception as e:
+            logger.error(f"Error creating Stripe checkout session: {str(e)}")
+            return Response({'error': str(e)}, status=400)
+
+
+
+
+
+
+
+
+def handle_token_purchase(session):
+    stripe_customer_id = session.get('customer')
+    logger.info(f"Received customer data: {session.get('customer')}")
+
+    metadata = session.get('metadata', {})
+    token_qty = metadata.get('tokenQty')
+    logger.info(f"Received session metadata: {session.get('metadata', {})}")
+    logger.info(f"Received metadata tokenQty: {metadata.get('tokenQty')}")
+
+    if not stripe_customer_id or not token_qty:
+        logger.error("Missing customer ID or token quantity in session metadata.")
+        return
+
+    try:
+        user = User.objects.get(profile__stripe_customer_id=stripe_customer_id)
+        logger.info(f"Adding {token_qty} tokens to user {user.username}")
+        user_token, created = UserToken.objects.get_or_create(user=user)
+        user_token.token_balance += int(token_qty)
+        user_token.save()
+        logger.info(f"New token balance for user {user.username}: {user_token.token_balance}")
+    except User.DoesNotExist:
+        logger.error(f"No user found with Stripe customer ID: {stripe_customer_id}")
+    except Exception as e:
+        logger.error(f"Error updating token balance for user: {e}")
+
+
+
+
+
+
+
+class CancelSubscriptionView(APIView):
+    """
+    Allows a user to cancel their subscription at the end of the billing cycle.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        try:
+            with transaction.atomic():
+                subscription = Subscription.objects.select_for_update().get(user=request.user, is_active=True)
+
+                if subscription.stripe_subscription_id:
+                    stripe.Subscription.modify(
+                        subscription.stripe_subscription_id,
+                        cancel_at_period_end=True
+                    )
+
+                subscription.cancellation_pending = True
+                subscription.end_date = subscription.last_payment_date + timedelta(days=30)
+                subscription.auto_renew = False
+                subscription.save()
+
+                return JsonResponse({
+                    'message': 'Subscription cancellation requested successfully. Your access will continue until the end of the billing cycle.',
+                    'end_date': subscription.end_date,
+                })
+
+        except Subscription.DoesNotExist:
+            return JsonResponse({'error': 'No active subscription found.'}, status=404)
+
+        except stripe.error.StripeError as e:
+            return JsonResponse({'error': f'Stripe error: {str(e)}'}, status=500)
+
+        except Exception as e:
+            return JsonResponse({'error': f'An unexpected error occurred: {str(e)}'}, status=500)
+
+
+
+
+
+
+
+def handle_cancel_subscription(subscription_data):
+    """
+    Handles the cancellation of a subscription when notified by Stripe.
+    """
+    customer_id = subscription_data.get('customer')
+    subscription_id = subscription_data.get('id')
+
+    if not customer_id or not subscription_id:
+        logger.error("Missing customer ID or subscription ID in webhook data.")
+        return False
+
+    try:
+        user = User.objects.get(profile__stripe_customer_id=customer_id)
+        subscription = Subscription.objects.get(user=user, stripe_subscription_id=subscription_id)
+
+        # Update subscription status in the database
+        subscription.is_active = False
+        subscription.cancellation_pending = False
+        subscription.save()
+
+        logger.info(f"Subscription {subscription_id} for user {user.username} has been finalized.")
+        return True
+
+    except User.DoesNotExist:
+        logger.error(f"No user found for Stripe customer ID: {customer_id}")
+    except Subscription.DoesNotExist:
+        logger.error(f"No subscription found for Stripe subscription ID: {subscription_id}")
+    except Exception as e:
+        logger.error(f"Error finalizing subscription cancellation: {e}")
+    return False
+
+
+
+
+
+
+
+
+
+@csrf_exempt
+@api_view(['POST'])
+def stripe_webhook(request):
+    payload = request.body.decode('utf-8')
+    logger.info(f"Raw payload (truncated): {payload[:500]}")
+
+    webhook_secret = os.getenv('STRIPE_WEBHOOK_SECRET')
+    if not webhook_secret:
+        logger.error("Stripe webhook secret is not configured.")
+        return JsonResponse({'status': 'error', 'message': 'Server misconfiguration'}, status=500)
+
+    try:
+        event = stripe.Webhook.construct_event(
+            payload, request.META['HTTP_STRIPE_SIGNATURE'], webhook_secret
+        )
+        logger.info(f"Stripe event constructed successfully: {event['type']}")
+    except ValueError as e:
+        logger.error(f"Invalid payload: {e}")
+        return JsonResponse({'status': 'error', 'message': 'Invalid payload'}, status=400)
+    except stripe.error.SignatureVerificationError as e:
+        logger.error(f"Invalid signature: {e}")
+        return JsonResponse({'status': 'error', 'message': 'Invalid signature'}, status=400)
+    except Exception as e:
+        logger.error(f"Unexpected error: {e}")
+        return JsonResponse({'status': 'error', 'message': 'Unexpected error'}, status=400)
+
+    event_type = event['type']
+    event_data = event['data']['object']
+    logger.info(f"Processing event type: {event_type}")
+
+    if event_type == 'customer.subscription.updated':
+        handle_invoice_payment_succeeded(event_data)
+
+    elif event_type == 'customer.subscription.deleted':
+        success = handle_cancel_subscription(event_data)
+        logger.info(f"Subscription {event_data['id']} was canceled.")
+        if not success:
+            return JsonResponse({'status': 'error', 'message': 'Failed to cancel subscription'}, status=500)
+
+    elif event_type == 'checkout.session.completed':
+        session = event_data
+        if session.get('mode') == 'subscription':
+            handle_checkout_session_completed(session)
+        elif session.get('mode') == 'payment' and session.get('metadata', {}).get('type') == 'token_purchase':
+            handle_token_purchase(session)
+
+    elif event_type == 'invoice.payment_succeeded':
+        handle_invoice_payment_succeeded(event_data)
+
+    else:
+        logger.warning(f"Unhandled event type received: {event_type}")
+
+    return JsonResponse({'status': 'success'})
+
+
+
+
+
+
+
+def handle_payment_failed(event):
+    subscription_id = event['data']['object']['subscription']
+    stripe_customer_id = event['data']['object']['customer']
+
+    try:
+        subscription = Subscription.objects.get(stripe_subscription_id=subscription_id)
+        subscription.is_active = False
+        subscription.save()
+        # add notify user payment failed email logic (Email)
+    except Subscription.DoesNotExist:
+        pass
+
 
 
 
@@ -826,9 +1005,7 @@ class SaveEstimateItems(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        # print("Request received with data:", request.data)  
         estimate_id = request.data.get('estimate_id')
-        # print('estimate_id:', estimate_id)
         tasks = request.data.get('tasks')
         user = request.user
 
@@ -841,18 +1018,25 @@ class SaveEstimateItems(APIView):
             max_task_number=Max('task_number')
         )['max_task_number'] or 0
 
+        saved_tasks = []  # Collect saved task details
+
         for task in tasks:
             current_max_task_number += 1
             task_description = f"{task['job']} Labor Cost: ${task['laborCost']} Material Cost: ${task['materialCost']}"
 
-            EstimateItems.objects.create(
+            estimate_item = EstimateItems.objects.create(
                 user=user,
                 estimate=estimate,
                 task_number=current_max_task_number,
                 task_description=task_description
             )
 
-        return Response({'message': 'Tasks saved successfully'}, status=status.HTTP_201_CREATED)
+            saved_tasks.append({
+                'task_number': estimate_item.task_number,
+                'task_description': estimate_item.task_description,
+            })
+
+        return Response({'message': 'Tasks saved successfully', 'tasks': saved_tasks}, status=status.HTTP_201_CREATED)
 
 
 
@@ -1009,35 +1193,13 @@ def deduct_tokens(request):
         return Response({'error': 'Token balance not found'}, status=404)
     
 
-from django.utils.timezone import now
-@api_view(['POST'])
+@api_view(['GET'])
 @permission_classes([IsAuthenticated])
-def cancel_subscription(request):
-    """
-    Allows a user to cancel their subscription.
-    """
-    if not request.user.is_authenticated:
-        return JsonResponse({'error': 'Authentication required'}, status=403)
-
+def get_user_subscription_tier(request):
     try:
-        subscription = Subscription.objects.get(user=request.user, is_active=True)
-
-        # Calculate the end date (e.g., 30 days from today for monthly plans)
-        subscription.cancellation_date = now()
-        subscription.cancellation_pending = True
-        subscription.end_date = subscription.last_payment_date + timedelta(days=30)
-        subscription.save()
-
-        return JsonResponse({
-            'message': 'Subscription cancellation requested successfully.',
-            'cancellation_date': subscription.cancellation_date,
-            'end_date': subscription.end_date,
-        })
-
-    except Subscription.DoesNotExist:
-        return JsonResponse({'error': 'No active subscription found.'}, status=404)
-
-    except Exception as e:
-        return JsonResponse({'error': f'An error occurred: {str(e)}'}, status=500)
+        subscription_tier = Subscription.objects.get(user=request.user)
+        return Response({'subscription tier': subscription_tier.subscription_type})
     
-
+    except Subscription.DoesNotExist:
+        return Response({'error': 'User subscription not found'}, status=404)
+    
