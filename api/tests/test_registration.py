@@ -9,16 +9,15 @@ class UserRegistrationTest(APITestCase):
         url = reverse('register_user')  
 
         data = {
-            'username': 'testuser',
-            'email': 'testuser@example.com',
-            'password': 'strong_password_123'
+            'userEmail': 'testuser@example.com',
+            'password': 'Testpass1!'
         }
 
         response = self.client.post(url, data, format='json')
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
-        user = User.objects.get(username='testuser')
+        user = User.objects.get(email='testuser@example.com')
         self.assertIsNotNone(user)
 
         stripe_profile = StripeProfile.objects.get(user=user)
