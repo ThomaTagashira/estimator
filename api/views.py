@@ -807,7 +807,6 @@ def handle_cancel_subscription(subscription_data):
         user = User.objects.get(profile__stripe_customer_id=customer_id)
         subscription = Subscription.objects.get(user=user, stripe_subscription_id=subscription_id)
 
-        # Update subscription status in the database
         subscription.is_active = False
         subscription.cancellation_pending = False
         subscription.save()
