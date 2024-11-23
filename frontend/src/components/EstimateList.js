@@ -17,11 +17,6 @@ const EstimateList = ({ estimates, loading, error }) => {
     
     <table>
       <thead>
-        <div className="create-new-estimate">
-            <Link to="/create-estimate">
-                <button>Create New Estimate</button>
-            </Link>
-        </div>
         <tr>
           <th>Project Name</th>
           <th>Estimate Number</th>

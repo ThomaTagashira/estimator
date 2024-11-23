@@ -28,7 +28,8 @@ from rest_framework.exceptions import ValidationError
 from django.utils.timezone import now
 from django.core.validators import validate_email
 from django.contrib.auth.password_validation import validate_password
-
+from django.core.mail import send_mail
+from django.conf import settings
 
 load_dotenv()
 logger = logging.getLogger('django')
@@ -879,6 +880,9 @@ def stripe_webhook(request):
     elif event_type == 'invoice.payment_succeeded':
         handle_invoice_payment_succeeded(event_data)
 
+    elif event_type == 'invoice.payment_failed':
+        handle_payment_failed(event_data)
+
     else:
         logger.warning(f"Unhandled event type received: {event_type}")
 
@@ -890,17 +894,32 @@ def stripe_webhook(request):
 
 
 
+
+
 def handle_payment_failed(event):
     subscription_id = event['data']['object']['subscription']
-    stripe_customer_id = event['data']['object']['customer']
 
     try:
         subscription = Subscription.objects.get(stripe_subscription_id=subscription_id)
         subscription.is_active = False
         subscription.save()
-        # add notify user payment failed email logic (Email)
+
+        user_email = subscription.user.email
+
+        send_mail(
+            subject="Subscription Payment Failed",
+            message=f"Greetings,\n\nWe encountered an issue processing your subscription payment. "
+                    f"Please update your payment information to continue enjoying our services.\n\n"
+                    f"Visit your account: (add URL to app here)",
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[user_email],
+            fail_silently=False,
+        )
+
     except Subscription.DoesNotExist:
-        pass
+        logger.error(f"Subscription with ID {subscription_id} does not exist.")
+    except Exception as e:
+        logger.error(f"Failed to send email: {e}")
 
 
 
@@ -928,8 +947,10 @@ def create_estimate(request):
 
     try:
         estimate = UserEstimates.objects.create(user=user)
+        print(f"Created estimate with ID: {estimate.estimate_id}")  # Log the estimate_id
 
         client_data = data.get('client', {})
+        print(f"Client Data: {client_data}")  # Log client data
         ClientData.objects.create(
             user=user,
             estimate=estimate,
@@ -940,6 +961,7 @@ def create_estimate(request):
         )
 
         project_data = data.get('project', {})
+        print(f"Project Data: {project_data}")  # Log project data
         ProjectData.objects.create(
             user=user,
             estimate=estimate,
@@ -956,6 +978,7 @@ def create_estimate(request):
         }, status=status.HTTP_201_CREATED)
 
     except Exception as e:
+        print(f"Error creating estimate: {e}")  # Log the error
         return JsonResponse({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 

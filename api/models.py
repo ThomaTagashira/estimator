@@ -112,17 +112,23 @@ class Subscription(models.Model):
 
 class UserEstimates(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='userEstimates')
-    estimate_id = models.CharField(max_length=255, unique=True, primary_key=True, editable=False)
+    estimate_id = models.CharField(max_length=255, editable=False, unique=True)  
     date_created = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
     project_name = models.CharField(max_length=255, blank=True, null=True)
 
+    class Meta:
+        unique_together = ('user', 'estimate_id')  
     def save(self, *args, **kwargs):
-        if not self.estimate_id:
+        if not self.estimate_id:  
             last_estimate = UserEstimates.objects.filter(user=self.user).order_by('estimate_id').last()
-            new_id = 1 if not last_estimate else int(last_estimate.estimate_id.split('-')[-1]) + 1
-            self.estimate_id = f"{str(new_id).zfill(5)}"
+
+            new_number = 1 if not last_estimate else int(last_estimate.estimate_id.split('-')[-1]) + 1
+
+            self.estimate_id = f"{self.user.id}{str(new_number).zfill(5)}"
+
         super().save(*args, **kwargs)
+
 
 
 
