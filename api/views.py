@@ -637,6 +637,9 @@ class ChangeSubscriptionTierView(APIView):
                     'quantity': 1,
                 }],
                 mode='subscription',
+                subscription_data={
+                    'proration_behavior': 'none', 
+                },
                 success_url=f'{REDIR_URI}/success',
                 cancel_url=f'{REDIR_URI}/cancel',
             )
