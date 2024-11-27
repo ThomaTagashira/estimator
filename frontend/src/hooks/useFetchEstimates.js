@@ -21,7 +21,16 @@ const useFetchEstimates = (apiUrl) => {
     fetchEstimates();
   }, [apiUrl]);
 
-  return { estimates, loading, error };
+const handleDeleteEstimate = (estimateId) => {
+    setEstimates(estimates.filter((e) => e.estimate_id !== estimateId));
+  };
+
+  return { 
+    estimates, 
+    loading, 
+    error,
+    handleDeleteEstimate
+  };
 };
 
 export default useFetchEstimates;

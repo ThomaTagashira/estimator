@@ -994,7 +994,15 @@ def get_user_estimates(request):
     serializer = UserEstimatesSerializer(estimates, many=True)
     return Response(serializer.data)
 
-
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def delete_user_estimate(request, estimate_id):
+    try:
+        estimate = UserEstimates.objects.get(estimate_id=estimate_id, user=request.user)
+        estimate.delete() 
+        return Response({'message': 'Estimate deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
+    except UserEstimates.DoesNotExist:
+        return Response({'error': 'Estimate not found or not authorized to delete'}, status=status.HTTP_404_NOT_FOUND)
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
