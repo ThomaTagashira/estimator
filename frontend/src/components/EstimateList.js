@@ -1,11 +1,24 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 
-const EstimateList = ({ estimates, loading, error, onDelete, apiUrl }) => {
-  const handleDelete = async (estimateId) => {
+const EstimateList = ({ estimates: initialEstimates, loading, error, apiUrl }) => {
+  const [estimates, setEstimates] = useState(initialEstimates);
+  const [deletingEstimate, setDeletingEstimate] = useState(null);
+
+  const confirmDelete = (estimate) => {
+    setDeletingEstimate(estimate); 
+  };
+
+  const cancelDelete = () => {
+    setDeletingEstimate(null); 
+  };
+
+  const handleDelete = async () => {
+    if (!deletingEstimate) return; 
+
     try {
       const accessToken = localStorage.getItem('access_token');
-      const response = await fetch(`${apiUrl}/api/delete-estimate/${estimateId}/`, {
+      const response = await fetch(`${apiUrl}/api/delete-estimate/${deletingEstimate.estimate_id}/`, {
         method: 'DELETE',
         headers: {
           Authorization: `Bearer ${accessToken}`,
@@ -14,7 +27,12 @@ const EstimateList = ({ estimates, loading, error, onDelete, apiUrl }) => {
       });
 
       if (response.ok) {
-        onDelete(estimateId);
+        console.log('Estimate deleted successfully.');
+
+        // Update local state to remove the deleted estimate
+        setEstimates((prev) => prev.filter((est) => est.estimate_id !== deletingEstimate.estimate_id));
+
+        setDeletingEstimate(null); // Close the confirmation panel
       } else {
         console.error('Failed to delete estimate:', response.statusText);
       }
@@ -22,49 +40,67 @@ const EstimateList = ({ estimates, loading, error, onDelete, apiUrl }) => {
       console.error('Error deleting estimate:', err);
     }
   };
-    if (loading) {
-      return <p>Loading estimates...</p>;
-    }
 
-    if (error) {
-      return <p>{error}</p>;
-    }
+  if (loading) {
+    return <p>Loading estimates...</p>;
+  }
 
-    if (estimates.length === 0) {
-      return <p>No estimates available</p>;
-    }
+  if (error) {
+    return <p>{error}</p>;
+  }
+
+  if (estimates.length === 0) {
+    return <p>No estimates available</p>;
+  }
+
   return (
-    
-    <table>
-      <thead>
-        <tr>
-          <th>Project Name</th>
-          <th>Estimate Number</th>
-          <th>Date Created</th>
-          <th>Last Modified</th>
-        </tr>
-      </thead>
-      <tbody>
-        {estimates.map(estimate => (
-          <tr key={estimate.estimateId}>
-            <td>
-              <Link to={`/search?estimateId=${estimate.estimate_id}`}>
-                {estimate.project_name || 'Unnamed Project'}
-              </Link>
-            </td>
-            <td>{estimate.estimate_id}</td>
-            <td>{new Date(estimate.date_created).toLocaleDateString()}</td>
-            <td>{new Date(estimate.last_modified).toLocaleDateString()}</td>
-            <td>
-              <button onClick={() => handleDelete(estimate.estimate_id)}>
-                Delete Estimate
-              </button>
-            </td>
+    <div className="estimate-list-container" style={{ position: 'relative' }}>
+      <table>
+        <thead>
+          <tr>
+            <th>Project Name</th>
+            <th>Estimate Number</th>
+            <th>Date Created</th>
+            <th>Last Modified</th>
+            <th>Actions</th>
           </tr>
-          
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {estimates.map((estimate) => (
+            <tr key={estimate.estimate_id}>
+              <td>
+                <Link to={`/search?estimateId=${estimate.estimate_id}`}>
+                  {estimate.project_name || 'Unnamed Project'}
+                </Link>
+              </td>
+              <td>{estimate.estimate_id}</td>
+              <td>{new Date(estimate.date_created).toLocaleDateString()}</td>
+              <td>{new Date(estimate.last_modified).toLocaleDateString()}</td>
+              <td>
+                <button onClick={() => confirmDelete(estimate)}>
+                  Delete Estimate
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      {/* Slide-Out Panel */}
+      {deletingEstimate && (
+        <div className="slide-out-panel">
+          <p><strong>WARNING:</strong></p>
+          <p>Are you sure you want to delete Estimate: <strong>{deletingEstimate.estimate_id}</strong>?</p>
+          <p>By selecting confirm, you will no longer have access to any records you have saved in:</p>
+          <p>Project: <strong>{deletingEstimate.project_name || 'Unnamed Project'}</strong></p>
+          <p>Estimate Number: <strong>{deletingEstimate.estimate_id}</strong></p>
+
+
+          <button onClick={handleDelete}>Confirm</button>
+          <button onClick={cancelDelete}>Cancel</button>
+        </div>
+      )}
+    </div>
   );
 };
 

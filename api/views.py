@@ -156,7 +156,7 @@ def upload_photo(request):
 
             else:
                 logger.error('Serializer errors: %s', serializer.errors)
-                print("invalid: ", serializer.errors)
+                # print("invalid: ", serializer.errors)
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         else:
             return Response({'error': 'No photo provided'}, status=status.HTTP_400_BAD_REQUEST)
@@ -950,10 +950,10 @@ def create_estimate(request):
 
     try:
         estimate = UserEstimates.objects.create(user=user)
-        print(f"Created estimate with ID: {estimate.estimate_id}")  # Log the estimate_id
+        # print(f"Created estimate with ID: {estimate.estimate_id}") 
 
         client_data = data.get('client', {})
-        print(f"Client Data: {client_data}")  # Log client data
+        # print(f"Client Data: {client_data}")  
         ClientData.objects.create(
             user=user,
             estimate=estimate,
@@ -964,7 +964,7 @@ def create_estimate(request):
         )
 
         project_data = data.get('project', {})
-        print(f"Project Data: {project_data}")  # Log project data
+        # print(f"Project Data: {project_data}") 
         ProjectData.objects.create(
             user=user,
             estimate=estimate,
@@ -981,28 +981,69 @@ def create_estimate(request):
         }, status=status.HTTP_201_CREATED)
 
     except Exception as e:
-        print(f"Error creating estimate: {e}")  # Log the error
+        # print(f"Error creating estimate: {e}")  
         return JsonResponse({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
+
+
+
+from django.db.models import Q
+from django.core.paginator import Paginator
 
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_user_estimates(request):
     user = request.user
+    search_query = request.query_params.get('search', '')
+    limit = int(request.query_params.get('limit', 10))  
+    offset = int(request.query_params.get('offset', 0))  
+
     estimates = UserEstimates.objects.filter(user=user)
-    serializer = UserEstimatesSerializer(estimates, many=True)
-    return Response(serializer.data)
+    if search_query:
+        estimates = estimates.filter(
+            Q(estimate_id__icontains=search_query) | Q(project_name__icontains=search_query)
+        )
+
+    estimates = estimates.order_by('estimate_id')
+
+    paginator = Paginator(estimates, limit)
+    page_number = offset // limit + 1  
+    page = paginator.get_page(page_number)
+
+    serializer = UserEstimatesSerializer(page.object_list, many=True)
+    return Response({
+        'estimates': serializer.data,
+        'total': paginator.count,  
+        'page': page_number,
+        'total_pages': paginator.num_pages,
+    })
+
+
+
+
+
 
 @api_view(['DELETE'])
 @permission_classes([IsAuthenticated])
 def delete_user_estimate(request, estimate_id):
     try:
+        print(f"Received DELETE request for estimate_id: {estimate_id}")  # Log each request
         estimate = UserEstimates.objects.get(estimate_id=estimate_id, user=request.user)
-        estimate.delete() 
-        return Response({'message': 'Estimate deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
+        estimate.delete()
+        print(f"Successfully deleted estimate_id: {estimate_id}")
+        return Response(status=status.HTTP_204_NO_CONTENT)
     except UserEstimates.DoesNotExist:
-        return Response({'error': 'Estimate not found or not authorized to delete'}, status=status.HTTP_404_NOT_FOUND)
+        print(f"Estimate_id {estimate_id} not found or already deleted.")  # Log if it no longer exists
+        return Response({'error': 'Estimate not found or unauthorized'}, status=status.HTTP_404_NOT_FOUND)
+
+
+
+
+
+
+
+
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -1051,7 +1092,7 @@ class SaveEstimateItems(APIView):
             max_task_number=Max('task_number')
         )['max_task_number'] or 0
 
-        saved_tasks = []  # Collect saved task details
+        saved_tasks = []  
 
         for task in tasks:
             current_max_task_number += 1

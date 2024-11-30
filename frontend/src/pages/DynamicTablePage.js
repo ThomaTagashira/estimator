@@ -3,8 +3,6 @@ import '../components/DynamicTable/DynamicTable.css';
 import useDynamicTable from '../hooks/useDynamicTable';
 import axios from 'axios';
 
-// import { exportPDF } from '../components/utils/exportPDF';
-
 const DynamicTablePage = ({ apiUrl, estimateId, selectedString, setSelectedString }) => {
     const {
         // textResults,
@@ -21,6 +19,7 @@ const DynamicTablePage = ({ apiUrl, estimateId, selectedString, setSelectedStrin
         applyMargin,
         marginPercent,
         // logo,
+        handleLogoUpload,
         totalLaborCost,
         totalMaterialCost,
         combinedTotal,
@@ -32,7 +31,6 @@ const DynamicTablePage = ({ apiUrl, estimateId, selectedString, setSelectedStrin
         handleAddCustomRow,
         handleSalesTaxChange,
         handleDiscountChange,
-        handleLogoUpload,
         handleMarginChange,
         toggleDiscount,
         toggleMargin,
@@ -42,11 +40,9 @@ const DynamicTablePage = ({ apiUrl, estimateId, selectedString, setSelectedStrin
         handleEditClick,
         handleEditChange,
         handleUpdateClick,
-        // calculateTotals,
         splitTaskIntoColumns,
         applyMarginToLaborCost,
         exportTablePDF,
-        // saveEstimateData,
         setTableData,
         tableRef,
         tableData,
@@ -66,6 +62,7 @@ const DynamicTablePage = ({ apiUrl, estimateId, selectedString, setSelectedStrin
   const [isEditable, setIsEditable] = useState(false);
   const [originalClientInfo, setOriginalClientInfo] = useState({});
   const [originalProjectInfo, setOriginalProjectInfo] = useState({});
+
 
   useEffect(() => {
     const fetchEstimateData = async () => {
@@ -126,7 +123,7 @@ const DynamicTablePage = ({ apiUrl, estimateId, selectedString, setSelectedStrin
 
                 
                 if (businessData.length > 0) {
-                  const businessInfo = businessData[0]; // Access the first item
+                  const businessInfo = businessData[0];
                   setCompanyName(businessInfo.business_name);
                   setAddress(businessInfo.business_address);
                   setPhone(businessInfo.business_phone);
@@ -230,7 +227,12 @@ const DynamicTablePage = ({ apiUrl, estimateId, selectedString, setSelectedStrin
     }
   };
 
+  React.useEffect(() => {
+    const initialFields = localStorage.getItem('selectedStrings');
+    console.log('LocalStorage selectedStrings:', initialFields);
+  }, []);
 
+  
   return (
     <div>
       {/* Dynamic Input Fields */}
@@ -245,50 +247,19 @@ const DynamicTablePage = ({ apiUrl, estimateId, selectedString, setSelectedStrin
             <button onClick={() => handleRemoveField(index)}>Remove Line</button>
         </div>
         ))}
-      <button onClick={handleAddAllRows}>Add All Tasks to Estimate</button>
 
-              {/* Company Information */}
-              <div className="info-section">
-                <h3>Company Information</h3>
-                <div>
-                  <input
-                    type="text"
-                    value={companyName}
-                    onChange={(e) => setCompanyName(e.target.value)}
-                    disabled={!isEditable}
-                    placeholder="Company Name"
-                  />
-                </div>
-                <div>
-                  <input
-                    type="text"
-                    value={address}
-                    onChange={(e) => setAddress(e.target.value)}
-                    disabled={!isEditable}
-                    placeholder="Address"
-                  />
-                </div>
-                <div>
-                  <input
-                    type="text"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    disabled={!isEditable}
-                    placeholder="Phone"
-                  />
-                </div>
-                <div>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleLogoUpload}
-                  />
-                </div>
-                <button onClick={handleAddCustomRow}>Add Custom Job</button>
-              </div>
+      <button onClick={handleAddAllRows}>Add All Tasks to Estimate</button>
 
         <div className="dynamic-table-page">
       <h2>Estimate ID: {estimateId}</h2>
+
+      <div>
+        <input
+          type="file"
+          accept="image/*"
+          onChange={handleLogoUpload}
+        />
+      </div>
 
       <div className="info-section">
         <h3>Client Information</h3>
@@ -377,29 +348,10 @@ const DynamicTablePage = ({ apiUrl, estimateId, selectedString, setSelectedStrin
           <button onClick={handleSave}>Save</button>
         )}
       </div>
-              {/* Discount & Margin */}
-              <div>
-                <button onClick={toggleDiscount}>
-                  {applyDiscount ? 'Remove Discount' : 'Apply Discount'}
-                </button>
-              </div>
-              <div>
-                <button onClick={toggleMargin}>
-                  {applyMargin ? 'Remove Margin' : 'Add Margin %'}
-                </button>
-                {applyMargin && (
-                  <div>
-                    <span>Enter Margin Percentage</span>
-                    <input
-                      type="number"
-                      value={marginPercent}
-                      onChange={handleMarginChange}
-                      style={{ width: '50px' }}
-                      placeholder="0"
-                    />
-                  </div>
-                )}
-              </div>
+
+      <div className="info-section">
+        <button onClick={handleAddCustomRow}>Add New Line</button>
+      </div>
               {/* Dynamic Table */}
               <div ref={tableRef}>
                 <table>
@@ -529,7 +481,29 @@ const DynamicTablePage = ({ apiUrl, estimateId, selectedString, setSelectedStrin
                   </tbody>
                 </table>
               </div>
-
+              {/* Discount & Margin */}
+              <div>
+                <button onClick={toggleDiscount}>
+                  {applyDiscount ? 'Remove Discount' : 'Apply Discount'}
+                </button>
+              </div>
+              <div>
+                <button onClick={toggleMargin}>
+                  {applyMargin ? 'Remove Margin' : 'Add Margin %'}
+                </button>
+                {applyMargin && (
+                  <div>
+                    <span>Enter Margin Percentage</span>
+                    <input
+                      type="number"
+                      value={marginPercent}
+                      onChange={handleMarginChange}
+                      style={{ width: '50px' }}
+                      placeholder="0"
+                    />
+                  </div>
+                )}
+              </div>
               {/* Export to PDF */}
               <button
                 onClick={() =>

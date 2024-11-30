@@ -1,12 +1,16 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { exportPDF } from '../components/utils/exportPDF';
 // import { resizeImage } from '../components/utils/logoResize';
 import axios from 'axios';
 
 const useDynamicTable = (apiUrl, estimateId, selectedString, setSelectedString ) => {
     const [isEditing, setIsEditing] = useState(false);
-    const [inputFields, setInputFields] = useState([]);
-    const [tableData, setTableData] = useState([]);
+
+    const [inputFields, setInputFields] = React.useState(() => {
+        const storedFields = JSON.parse(localStorage.getItem('selectedStrings')) || [];
+        return Array.isArray(storedFields) ? storedFields : [];
+      });    const [tableData, setTableData] = useState([]);
+
     const [editIndex, setEditIndex] = useState(null);
     const [editValues, setEditValues] = useState({ job: '', laborCost: '', materialCost: '' });
     const [salesTaxPercent, setSalesTaxPercent] = useState(0);
@@ -30,6 +34,10 @@ const useDynamicTable = (apiUrl, estimateId, selectedString, setSelectedString )
     // const [logo, setLogo] = useState(null);
     const tableRef = useRef();
 
+    useEffect(() => {
+        console.log('inputFields updated:', inputFields);
+      }, [inputFields]);
+      
     useEffect(() => {
         const fetchEstimateData = async () => {
             if (!estimateId) return;
@@ -135,11 +143,24 @@ const useDynamicTable = (apiUrl, estimateId, selectedString, setSelectedString )
     const toggleEdit = () => setIsEditing(!isEditing);
 
     useEffect(() => {
-        if (selectedString) {
+        if (selectedString && Array.isArray(selectedString) && selectedString.length > 0) {
+          setInputFields((prevFields) => {
+            if (prevFields.includes(selectedString[0])) {
+              console.log('Duplicate query detected. Skipping:', selectedString[0]);
+              return prevFields; // Avoid duplicates
+            }
+            console.log('Adding first query from selectedString:', selectedString[0]);
+            return [...prevFields, selectedString[0]];
+          });
+          setSelectedString('');
+        } else if (typeof selectedString === 'string' && selectedString.trim() !== '') {
           setInputFields((prevFields) => [...prevFields, selectedString]);
           setSelectedString('');
+        } else {
+          console.log('Invalid or empty selectedString. Skipping:', selectedString);
         }
-      }, [selectedString, inputFields, setSelectedString]);
+      }, [selectedString, setSelectedString]);
+      
 
     const handleInputChange = (index, value) => {
         const updatedFields = [...inputFields];
@@ -182,7 +203,6 @@ const useDynamicTable = (apiUrl, estimateId, selectedString, setSelectedString )
             const result = await response.json();
             console.log('API Response:', result);
     
-            // Add saved tasks (with task numbers) to the dynamic table
             const savedTasks = result.tasks.map(task => ({
                 task_number: task.task_number,
                 task_description: task.task_description,
@@ -218,7 +238,7 @@ const useDynamicTable = (apiUrl, estimateId, selectedString, setSelectedString )
                 },
                 body: JSON.stringify({
                     estimate_id: estimateId,
-                    tasks: [customTask], // Send as an array with a single custom task
+                    tasks: [customTask], 
                 }),
             });
     
@@ -229,7 +249,6 @@ const useDynamicTable = (apiUrl, estimateId, selectedString, setSelectedString )
             const result = await response.json();
             console.log('API Response for Custom Task:', result);
     
-            // Extract the saved task from the API response
             const savedTask = result.tasks[0]; 
             setTableData((prevTableData) => [...prevTableData, savedTask]);
         } catch (error) {

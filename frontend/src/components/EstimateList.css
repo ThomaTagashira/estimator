@@ -1,0 +1,41 @@
+/* Slide-Out Panel Styling */
+.slide-out-panel {
+    position: absolute;
+    top: 0;
+    right: 0; /* Align to the right of the table */
+    width: 300px;
+    height: 100%; /* Full height */
+    background: #fff;
+    border-left: 1px solid #ddd;
+    box-shadow: -2px 0 5px rgba(0, 0, 0, 0.2);
+    padding: 20px;
+    z-index: 1000;
+    transition: transform 0.3s ease-in-out;
+    transform: translateX(0); /* Fully visible */
+  }
+  
+  .slide-out-panel p {
+    margin-bottom: 20px;
+  }
+  
+  .slide-out-panel button {
+    margin-right: 10px;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  .slide-out-panel button:first-child {
+    background-color: #f44336; /* Red for delete */
+    color: white;
+  }
+  
+  .slide-out-panel button:last-child {
+    background-color: #ccc; /* Gray for cancel */
+  }
+  
+  .slide-out-panel button:hover {
+    opacity: 0.8;
+  }
+  

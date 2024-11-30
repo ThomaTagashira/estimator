@@ -45,8 +45,4 @@ class SaveEstimateItemsTestCase(APITestCase):
                 task_description=task_description
             )
 
-        saved_items = EstimateItems.objects.filter(estimate=self.estimate)
-        for item in saved_items:
-            print(f"Saved Task Number: {item.task_number}, Task Description: {item.task_description}")
-            print(saved_items)
 

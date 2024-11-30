@@ -76,19 +76,26 @@ const SearchPage = ({ apiUrl }) => {
   } = usePhotoUpload();  
 
 
-const handleTabSwitch = (tab) => {
-  setActiveTab(tab);
-
-
-  if (tab === 'table') {
-    const savedStrings = JSON.parse(localStorage.getItem('selectedStrings')) || [];
-    setInputFields(savedStrings);  
-
-    if (tableData.length === 0) {
-      fetchTableData();  
+  const handleTabSwitch = (tab) => {
+    console.log('Switching to tab:', tab);
+    setActiveTab(tab);
+  
+    if (tab === 'table') {
+      const savedStrings = JSON.parse(localStorage.getItem('selectedStrings')) || [];
+      const sanitizedStrings = savedStrings.filter((str) => str.trim() !== '');
+      console.log('Before sanitization:', savedStrings);
+      console.log('After sanitization:', sanitizedStrings);
+      setInputFields((prev) => {
+        console.log('Previous inputFields:', prev);
+        console.log('New inputFields:', sanitizedStrings);
+        return sanitizedStrings;
+      });
+  
+      if (tableData.length === 0) {
+        fetchTableData();
+      }
     }
-  }
-};
+  };
 
 const fetchTableData = async () => {
     try {
