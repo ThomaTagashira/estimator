@@ -44,7 +44,9 @@ urlpatterns = [
     path('api/get-user-token-count/', get_user_token_count, name='get_user_token_count'),
     path('api/deduct-tokens/', deduct_tokens, name='deduct_tokens'),
     path('api/get-user-subscription-tier/', get_user_subscription_tier, name='get_user_subscription_tier'),
-
+    path('api/save-search-responses/<str:estimate_id>/', SaveSearchResponseView.as_view(), name='save_search_responses'),
+    path('api/get-search-responses/<str:estimate_id>/', RetrieveSearchResponseView.as_view(), name='get_search_responses'),
+    path('api/delete-search-response/<str:estimate_id>/<int:saved_response_id>/', DeleteSearchResponseView.as_view(), name='delete_search_response'),
 
 
 

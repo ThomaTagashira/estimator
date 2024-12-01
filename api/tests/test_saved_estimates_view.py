@@ -1,13 +1,3 @@
-# @api_view(['GET'])
-# @permission_classes([IsAuthenticated])
-# def get_saved_estimate(request, estimate_id):
-#     try:
-#         estimate = UserEstimates.objects.prefetch_related('client_data', 'project_data').get(estimate_id=estimate_id, user=request.user)
-#         serializer = UserEstimatesSerializer(estimate)
-#         return Response(serializer.data)
-#     except UserEstimates.DoesNotExist:
-#         return Response({'error': 'Estimate not found'}, status=404)
-
 from rest_framework.test import APITestCase
 from django.urls import reverse
 from rest_framework import status

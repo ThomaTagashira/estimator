@@ -29,10 +29,9 @@ const EstimateList = ({ estimates: initialEstimates, loading, error, apiUrl }) =
       if (response.ok) {
         console.log('Estimate deleted successfully.');
 
-        // Update local state to remove the deleted estimate
         setEstimates((prev) => prev.filter((est) => est.estimate_id !== deletingEstimate.estimate_id));
 
-        setDeletingEstimate(null); // Close the confirmation panel
+        setDeletingEstimate(null); 
       } else {
         console.error('Failed to delete estimate:', response.statusText);
       }

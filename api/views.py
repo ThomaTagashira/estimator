@@ -30,6 +30,8 @@ from django.core.validators import validate_email
 from django.contrib.auth.password_validation import validate_password
 from django.core.mail import send_mail
 from django.conf import settings
+from django.db.models import Q
+from django.core.paginator import Paginator
 
 load_dotenv()
 logger = logging.getLogger('django')
@@ -987,8 +989,7 @@ def create_estimate(request):
 
 
 
-from django.db.models import Q
-from django.core.paginator import Paginator
+
 
 
 @api_view(['GET'])
@@ -1028,13 +1029,13 @@ def get_user_estimates(request):
 @permission_classes([IsAuthenticated])
 def delete_user_estimate(request, estimate_id):
     try:
-        print(f"Received DELETE request for estimate_id: {estimate_id}")  # Log each request
+        print(f"Received DELETE request for estimate_id: {estimate_id}")
         estimate = UserEstimates.objects.get(estimate_id=estimate_id, user=request.user)
         estimate.delete()
         print(f"Successfully deleted estimate_id: {estimate_id}")
         return Response(status=status.HTTP_204_NO_CONTENT)
     except UserEstimates.DoesNotExist:
-        print(f"Estimate_id {estimate_id} not found or already deleted.")  # Log if it no longer exists
+        print(f"Estimate_id {estimate_id} not found or already deleted.")
         return Response({'error': 'Estimate not found or unauthorized'}, status=status.HTTP_404_NOT_FOUND)
 
 
@@ -1277,3 +1278,95 @@ def get_user_subscription_tier(request):
     except Subscription.DoesNotExist:
         return Response({'error': 'User subscription not found'}, status=404)
     
+
+
+
+class SaveSearchResponseView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, estimate_id):
+        user = request.user
+        search_responses = request.data.get('search_responses', [])
+
+        try:
+            estimate = UserEstimates.objects.get(estimate_id=estimate_id, user=user)
+        except UserEstimates.DoesNotExist:
+            return Response({'error': 'Estimate not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        current_max_saved_response_id = SearchResponseData.objects.filter(estimate=estimate).aggregate(
+            max_saved_response_id=Max('saved_response_id')
+        )['max_saved_response_id'] or 0
+
+        saved_responses = [] 
+
+        for response in search_responses:
+            current_max_saved_response_id += 1
+            task_text = response.get('task')
+
+            if not task_text:
+                return Response({'error': 'Each response must contain a "task" field'}, status=status.HTTP_400_BAD_REQUEST)
+
+            search_response = SearchResponseData.objects.create(
+                user=user,
+                estimate=estimate,
+                task=task_text,
+                saved_response_id=current_max_saved_response_id
+            )
+
+            saved_responses.append({
+                'saved_response_id': search_response.saved_response_id,
+                'task': search_response.task,
+                'created_at': search_response.created_at,
+            })
+
+        return Response({'message': 'Search responses saved successfully', 'responses': saved_responses}, status=status.HTTP_201_CREATED)
+
+
+
+
+
+
+
+class RetrieveSearchResponseView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, estimate_id):
+        user = request.user
+        search_responses = SearchResponseData.objects.filter(user=user, estimate_reference_id=estimate_id)
+
+        tasks = [
+            {"saved_response_id": response.saved_response_id, "task": response.task}
+            for response in search_responses
+        ]
+        
+        return Response({"tasks": tasks}, status=status.HTTP_200_OK)
+
+    
+
+
+class DeleteSearchResponseView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, estimate_id, saved_response_id):
+        try:
+            print(f"Delete request: estimate_id={estimate_id}, saved_response_id={saved_response_id}")
+            user = request.user
+            response = SearchResponseData.objects.filter(
+                estimate_reference_id=estimate_id,
+                saved_response_id=saved_response_id,
+                user=user,
+            ).first()
+
+            if not response:
+                print(f"No matching record found for estimate_id={estimate_id}, saved_response_id={saved_response_id}, user={user}")
+                return Response(
+                    {"error": "Task not found"}, status=status.HTTP_404_NOT_FOUND
+                )
+
+            response.delete()
+            print(f"Task deleted: estimate_id={estimate_id}, saved_response_id={saved_response_id}")
+            return Response({"message": "Task removed"}, status=status.HTTP_200_OK)
+        except Exception as e:
+            print(f"Error in DeleteSearchResponseView: {e}")
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+

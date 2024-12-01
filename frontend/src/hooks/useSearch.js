@@ -1,8 +1,7 @@
-
 import { useState } from 'react';
 import axios from 'axios';
 
-const useSearch = (apiUrl, tokenApiUrl) => {
+const useSearch = (apiUrl) => {
     const [textResults, setTextResults] = useState({});
     const [scopeResults, setScopeResults] = useState(null);
     const [handymanScopeResults, setHandymanScopeResults] = useState(null);
@@ -34,6 +33,35 @@ const useSearch = (apiUrl, tokenApiUrl) => {
         }
     };
 
+    const saveSearchResponse = async (task, estimateId) => {
+        console.log('estimateID:', estimateId)
+        try {
+            const payload = {
+                search_responses: [{ task }], 
+            };
+            console.log('Payload being sent:', payload);
+    
+            const accessToken = localStorage.getItem('access_token');
+            const response = await fetch(`${apiUrl}/api/save-search-responses/${estimateId}/`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            });
+    
+            if (!response.ok) {
+                throw new Error('Failed to save search response');
+            }
+    
+            console.log('Search response saved successfully');
+        } catch (error) {
+            console.error('Error saving search response:', error);
+        }
+    };
+    
+    
     const fetchTextData = async (inputText) => {
         setLoading(true);
         setError(null);
@@ -45,12 +73,14 @@ const useSearch = (apiUrl, tokenApiUrl) => {
                 return;
             }
 
-            const response = await axios.post(`${apiUrl}/api/index/`, { input_text: inputText })
+            const response = await axios.post(`${apiUrl}/api/index/`, { input_text: inputText });
             setTextResults(response.data);
             setScopeResults(null);
             setHandymanScopeResults(null);
 
-            await deductTokens(1); // number of tokens to deduct here (1)
+            await saveSearchResponse([response.data]);
+
+            await deductTokens(1); 
         } catch (error) {
             setError('Error fetching text data: ' + error.message);
         } finally {
@@ -58,22 +88,21 @@ const useSearch = (apiUrl, tokenApiUrl) => {
         }
     };
 
-    const fetchScopeData = async (jobScope) => {
+    const handleSearch = async (query, estimateId) => {
         setLoading(true);
         setError(null);
-
+    
         try {
             const tokenBalance = await fetchTokenBalance();
             if (tokenBalance < 1) {
                 setError('Insufficient tokens to perform this search.');
                 return;
             }
-
-            const response = await axios.post(`${apiUrl}/api/scope/`, { job_scope: jobScope });
-            setScopeResults(response.data);
-            setTextResults({});
-            setHandymanScopeResults(null);
-
+    
+            const response = await axios.post(`${apiUrl}/api/line/`, { Line: query });
+    
+            await deductTokens(1);
+    
             const context = response.data.response;
             const startIndex = context.indexOf(':') + 1;
             let endIndex = context.indexOf('Total Cost:');
@@ -81,70 +110,29 @@ const useSearch = (apiUrl, tokenApiUrl) => {
                 endIndex = context.length;
             }
             const newSelectedString = context.substring(startIndex, endIndex).trim();
-
-            setSelectedString((prev) => [...prev, newSelectedString]);
-
-            await deductTokens(1); // number of tokens to deduct here (1)
+    
+            await saveSearchResponse(newSelectedString, estimateId);
+    
+            setSearchResult(response.data);
         } catch (error) {
-            setError('Error fetching scope data: ' + error.message);
+            setError('Error performing search: ' + error.message);
         } finally {
             setLoading(false);
         }
     };
-
-    const handleSearch = async (query) => {
-      setLoading(true);
-      setError(null);
-  
-      try {
-          const tokenBalance = await fetchTokenBalance();
-  
-          const tokensRequiredPerSearch = 1; // number of tokens to deduct here (1)
-          if (tokenBalance < tokensRequiredPerSearch) {
-              setError('Insufficient tokens to perform this search.');
-              return;
-          }
-  
-          const response = await axios.post(`${apiUrl}/api/line/`, { Line: query });
-  
-          await deductTokens(tokensRequiredPerSearch);
-  
-          const context = response.data.response;
-          const startIndex = context.indexOf(':') + 1;
-          let endIndex = context.indexOf('Total Cost:');
-          if (endIndex === -1) {
-              endIndex = context.length;
-          }
-          const newSelectedString = context.substring(startIndex, endIndex).trim();
-  
-          setSelectedString((prev) => {
-              const updatedStrings = [...prev, newSelectedString];
-  
-              localStorage.setItem('selectedStrings', JSON.stringify(updatedStrings));
-  
-              return updatedStrings;
-          });
-  
-          setSearchResult(response.data);
-      } catch (error) {
-          setError('Error performing search: ' + error.message);
-      } finally {
-          setLoading(false);
-      }
-  };
+    
 
     return {
-      textResults,
-      scopeResults,
-      handymanScopeResults,
-      loading,
-      error,
-      selectedString,
-      setSelectedString,
-      searchResult,
-      fetchTextData,
-      fetchScopeData,
-      handleSearch,
+        textResults,
+        scopeResults,
+        handymanScopeResults,
+        loading,
+        error,
+        selectedString,
+        setSelectedString,
+        searchResult,
+        fetchTextData,
+        handleSearch,
     };
 };
 

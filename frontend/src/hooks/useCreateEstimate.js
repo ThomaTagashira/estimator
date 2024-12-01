@@ -45,12 +45,12 @@ const useCreateEstimate = (apiUrl) => {
   const handleSubmit = async () => {
     localStorage.setItem('clientInfo', JSON.stringify(clientInfo));
     localStorage.setItem('projectInfo', JSON.stringify(projectInfo));
-
+  
     if (!accessToken) {
       console.error('No authentication token found');
       return;
     }
-
+  
     const estimateData = {
       client: {
         clientName: clientInfo.clientName,
@@ -61,11 +61,11 @@ const useCreateEstimate = (apiUrl) => {
       project: {
         projectName: projectInfo.projectName,
         projectLocation: projectInfo.projectLocation,
-        startDate: projectInfo.startDate,
-        endDate: projectInfo.endDate,
+        startDate: projectInfo.startDate || null,
+        endDate: projectInfo.endDate || null,
       },
     };
-
+  
     try {
       let response = await fetch(`${apiUrl}/api/estimates/`, {
         method: 'POST',
@@ -75,13 +75,13 @@ const useCreateEstimate = (apiUrl) => {
         },
         body: JSON.stringify(estimateData),
       });
-
+  
       if (response.status === 401) {
         console.log('Access token expired, trying to refresh...');
         console.log(estimateData);
-
+  
         const newAccessToken = await refreshAccessToken(apiUrl);
-
+  
         if (newAccessToken) {
           response = await fetch(`${apiUrl}/api/estimates/`, {
             method: 'POST',
@@ -96,14 +96,14 @@ const useCreateEstimate = (apiUrl) => {
           return;
         }
       }
-
+  
       const responseData = await response.json();
       setEstimateId(responseData.estimateId);
-
+  
       if (response.ok) {
         console.log('Estimate created successfully', responseData);
         navigate(`/search?estimateId=${responseData.estimate_id}`);
-    } else {
+      } else {
         console.error('Failed to create estimate', responseData);
         setError('Failed to create estimate');
       }
@@ -112,6 +112,7 @@ const useCreateEstimate = (apiUrl) => {
       setError('Failed to save the estimate details');
     }
   };
+  
 
   return {
     step,

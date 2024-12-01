@@ -71,7 +71,6 @@ const useDynamicTable = (apiUrl, estimateId, selectedString, setSelectedString )
         fetchEstimateData();
     }, [estimateId, apiUrl]);
 
-    // Save the updated client and project data
     const saveEstimateData = async () => {
         const accessToken = localStorage.getItem('access_token');
 
@@ -147,7 +146,7 @@ const useDynamicTable = (apiUrl, estimateId, selectedString, setSelectedString )
           setInputFields((prevFields) => {
             if (prevFields.includes(selectedString[0])) {
               console.log('Duplicate query detected. Skipping:', selectedString[0]);
-              return prevFields; // Avoid duplicates
+              return prevFields; 
             }
             console.log('Adding first query from selectedString:', selectedString[0]);
             return [...prevFields, selectedString[0]];
@@ -168,23 +167,21 @@ const useDynamicTable = (apiUrl, estimateId, selectedString, setSelectedString )
         setInputFields(updatedFields);
     };
 
+
     const handleAddAllRows = async () => {
-        console.log('input:', inputFields);
+        console.log('Input fields before processing:', inputFields);
     
-        // Flatten the array and filter only strings, then trim them
         const newTasks = inputFields
-            .flat() // Flattens any nested arrays
-            .filter(value => typeof value === 'string' && value.trim() !== '');
+            .filter((field) => field.task && typeof field.task === 'string' && field.task.trim() !== '');
+        console.log('Filtered tasks to save:', newTasks);
     
-        const tasksToSave = newTasks.map(task => splitTaskIntoColumns(task));
-        console.log('Estimate ID:', estimateId);
-        console.log('Tasks to Save:', tasksToSave);
-        console.log(localStorage.getItem('access_token'));
-        console.log('API URL:', apiUrl);
+        const tasksToSave = newTasks.map((field) => splitTaskIntoColumns(field.task));
+        console.log('Tasks to save after splitting into columns:', tasksToSave);
     
         try {
             const accessToken = localStorage.getItem('access_token');
-            const response = await fetch(`${apiUrl}/api/save-estimate-items/`, {
+    
+            const saveResponse = await fetch(`${apiUrl}/api/save-estimate-items/`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${accessToken}`,
@@ -192,32 +189,46 @@ const useDynamicTable = (apiUrl, estimateId, selectedString, setSelectedString )
                 },
                 body: JSON.stringify({
                     estimate_id: estimateId,
-                    tasks: tasksToSave
+                    tasks: tasksToSave,
                 }),
             });
     
-            if (!response.ok) {
+            if (!saveResponse.ok) {
                 throw new Error('Failed to save tasks');
             }
     
-            const result = await response.json();
-            console.log('API Response:', result);
+            const result = await saveResponse.json();
+            console.log('API response for saving tasks:', result);
     
-            const savedTasks = result.tasks.map(task => ({
+            const savedTasks = result.tasks.map((task) => ({
                 task_number: task.task_number,
                 task_description: task.task_description,
             }));
     
             setTableData((prevTableData) => [...prevTableData, ...savedTasks]);
+    
+            for (const field of newTasks) {
+                const { saved_response_id } = field;
+                if (saved_response_id) {
+                    await fetch(`${apiUrl}/api/delete-search-response/${estimateId}/${saved_response_id}/`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Authorization': `Bearer ${accessToken}`,
+                            'Content-Type': 'application/json',
+                        },
+                    });
+                    console.log(`Task with saved_response_id ${saved_response_id} deleted.`);
+                }
+            }
+    
             setInputFields([]);
     
-            console.log('Tasks saved to database and updated in table');
+            console.log('Tasks added to the dynamic table and removed from SearchResponseData.');
         } catch (error) {
-            console.error('Error saving tasks:', error);
+            console.error('Error adding tasks to table and removing from SearchResponseData:', error.message);
         }
-    
-        localStorage.removeItem('selectedStrings');
     };
+    
     
 
 
@@ -256,10 +267,26 @@ const useDynamicTable = (apiUrl, estimateId, selectedString, setSelectedString )
         }
     };
     
-    const handleRemoveField = (index) => {
-        const updatedFields = inputFields.filter((_, i) => i !== index);
-        setInputFields(updatedFields);
-        localStorage.removeItem('selectedStrings');
+    const handleRemoveField = async (savedResponseId) => {
+        console.log("API URL:", `${apiUrl}/api/delete-search-response/${estimateId}/${savedResponseId}/`);
+        console.log("Estimate ID:", estimateId);
+        console.log("Saved Response ID:", savedResponseId);
+    
+        try {
+            const accessToken = localStorage.getItem('access_token');
+
+            await axios.delete(`${apiUrl}/api/delete-search-response/${estimateId}/${savedResponseId}/`, {
+                headers: { Authorization: `Bearer ${accessToken}` },
+            });
+    
+            setInputFields((prevFields) =>
+                prevFields.filter((field) => field.saved_response_id !== savedResponseId)
+            );
+    
+            console.log(`Task with ID ${savedResponseId} removed.`);
+        } catch (error) {
+            console.error('Failed to remove task:', error.message);
+        }
     };
 
 

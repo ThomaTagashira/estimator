@@ -125,17 +125,25 @@ class ProjectDataSerializer(serializers.ModelSerializer):
         model = ProjectData
         fields = ['project_name', 'project_location', 'start_date', 'end_date']
 
+    def validate_start_date(self, value):
+        if not value:
+            return None
+        return value
+
+    def validate_end_date(self, value):
+        if not value:
+            return None
+        return value
+
 class EstimateItemsSerializer(serializers.ModelSerializer):
     class Meta:
         model = EstimateItems
         fields = ['task_description', 'task_number']
 
-# Main serializer for UserEstimates
 class UserEstimatesSerializer(serializers.ModelSerializer):
-    # Add related fields using the nested serializers
-    client_data = ClientDataSerializer(many=True, read_only=True)  # 'many=True' because it's related_name='client_data'
-    project_data = ProjectDataSerializer(many=True, read_only=True)  # 'many=True' because it's related_name='project_data'
-    estimate_items = EstimateItemsSerializer(many=True, read_only=True)  # 'many=True' because it's related_name='estimate_items'
+    client_data = ClientDataSerializer(many=True, read_only=True) 
+    project_data = ProjectDataSerializer(many=True, read_only=True) 
+    estimate_items = EstimateItemsSerializer(many=True, read_only=True) 
 
     class Meta:
         model = UserEstimates
@@ -146,3 +154,12 @@ class BusinessInfoSerializer(serializers.ModelSerializer):
     class Meta:
         model = BusinessInfo
         fields = ['business_name', 'business_address', 'business_phone', 'business_email']
+
+
+
+class SearchResponseSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SearchResponseData
+        fields = ['user', 'estimate', 'task', 'estimate_reference_id', 'saved_response_id']
+        read_only_fields = ['saved_response_id']
+

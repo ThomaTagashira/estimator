@@ -3,6 +3,7 @@ import '../components/DynamicTable/DynamicTable.css';
 import useDynamicTable from '../hooks/useDynamicTable';
 import axios from 'axios';
 
+
 const DynamicTablePage = ({ apiUrl, estimateId, selectedString, setSelectedString }) => {
     const {
         // textResults,
@@ -34,7 +35,6 @@ const DynamicTablePage = ({ apiUrl, estimateId, selectedString, setSelectedStrin
         handleMarginChange,
         toggleDiscount,
         toggleMargin,
-        handleInputChange,
         handleRemoveField,
         handleDeleteRow,
         handleEditClick,
@@ -169,16 +169,27 @@ const DynamicTablePage = ({ apiUrl, estimateId, selectedString, setSelectedStrin
 }, [apiUrl, estimateId, setTableData]);
 
 
-//   console.log("DynamicTablePage - selectedString:", selectedString);
+useEffect(() => {
+  const fetchSavedSearchResponses = async () => {
+      try {
+          const response = await axios.get(`${apiUrl}/api/get-search-responses/${estimateId}/`, {
+              headers: { Authorization: `Bearer ${localStorage.getItem('access_token')}` },
+          });
 
-//   console.log("DynamicTablePage - inputFields:", inputFields);
+          if (response.status === 200) {
+              console.log('Retrieved search responses:', response.data);
+              setInputFields(response.data.tasks); 
+          }
+      } catch (error) {
+          console.error('Failed to fetch search responses:', error.message);
+      }
+  };
 
-  useEffect(() => {
-    const savedStrings = JSON.parse(localStorage.getItem('selectedStrings')) || [];
-    if (savedStrings.length > 0) {
-      setInputFields(savedStrings);
-    }
-  }, [setInputFields]);
+  if (estimateId) {
+      fetchSavedSearchResponses();
+  }
+}, [estimateId, apiUrl, setInputFields]); 
+
 
 
   const handleSave = async () => {
@@ -227,25 +238,29 @@ const DynamicTablePage = ({ apiUrl, estimateId, selectedString, setSelectedStrin
     }
   };
 
-  React.useEffect(() => {
-    const initialFields = localStorage.getItem('selectedStrings');
-    console.log('LocalStorage selectedStrings:', initialFields);
-  }, []);
 
   
   return (
     <div>
       {/* Dynamic Input Fields */}
-        {inputFields.map((value, index) => (
-        <div key={index}>
+        {inputFields.map((field, index) => (
+          <div key={index}>
             <input
-            type="text"
-            value={value}
-            onChange={(e) => handleInputChange(index, e.target.value)}
-            placeholder="Enter a task"
-            />
-            <button onClick={() => handleRemoveField(index)}>Remove Line</button>
-        </div>
+              type="text"
+              value={field.task}
+              onChange={(e) =>
+                setInputFields((prev) =>
+                  prev.map((f) =>
+                    f.saved_response_id === field.saved_response_id
+                      ? { ...f, task: e.target.value }
+                      : f
+                  )
+                )
+              }
+              placeholder={`Task ${field.saved_response_id}`}
+              />
+            <button onClick={() => handleRemoveField(field.saved_response_id)}>Remove</button>
+          </div>
         ))}
 
       <button onClick={handleAddAllRows}>Add All Tasks to Estimate</button>

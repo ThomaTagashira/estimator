@@ -136,8 +136,8 @@ class UserEstimates(models.Model):
 
 
 
-from django.utils import timezone
 from dateutil import parser
+from django.utils import timezone
 
 class ProjectData(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='projects')
@@ -149,9 +149,16 @@ class ProjectData(models.Model):
 
     def save(self, *args, **kwargs):
         if isinstance(self.start_date, str):
-            self.start_date = parser.parse(self.start_date)
+            try:
+                self.start_date = parser.parse(self.start_date)
+            except (ValueError, TypeError):
+                self.start_date = None 
+
         if isinstance(self.end_date, str):
-            self.end_date = parser.parse(self.end_date)
+            try:
+                self.end_date = parser.parse(self.end_date)
+            except (ValueError, TypeError):
+                self.end_date = None 
 
         if self.start_date and timezone.is_naive(self.start_date):
             self.start_date = timezone.make_aware(self.start_date)
@@ -176,6 +183,7 @@ class ProjectData(models.Model):
                 estimate.save()
             except UserEstimates.DoesNotExist:
                 print("Linked UserEstimates instance does not exist for estimate_id:", self.estimate_id)
+
 
 
 
@@ -216,3 +224,23 @@ class BusinessInfo(models.Model):
     business_address = models.CharField(max_length=255, unique=False, null=True, blank=True)
     business_phone = models.CharField(max_length=255, unique=False, null=True, blank=True)
     business_email = models.CharField(max_length=255, unique=False, null=True, blank=True)
+
+
+
+
+class SearchResponseData(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    estimate = models.ForeignKey(UserEstimates, on_delete=models.CASCADE, related_name='search_responses')
+    task = models.TextField() 
+    created_at = models.DateTimeField(auto_now_add=True)
+    estimate_reference_id = models.CharField(max_length=20)  
+    saved_response_id = models.PositiveIntegerField(null=True, blank=True)
+
+
+    def save(self, *args, **kwargs):
+        if self.estimate and not self.estimate_reference_id:
+            self.estimate_reference_id = self.estimate.estimate_id
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"SearchResponseData(user={self.user}, task={self.task}, estimate_reference_id={self.estimate_reference_id})"
