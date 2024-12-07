@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import '../components/DynamicTable/DynamicTable.css';
+import './pages_css/DynamicTable.css';
 import useDynamicTable from '../hooks/useDynamicTable';
 import axios from 'axios';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faTrash, faEdit } from '@fortawesome/free-solid-svg-icons';
 
 
-const DynamicTablePage = ({ apiUrl, estimateId, selectedString, setSelectedString }) => {
+const DynamicTablePage = ({ apiUrl, estimateId, selectedString, setSelectedString, refreshKey  }) => {
     const {
         // textResults,
         // scopeResults,
@@ -63,6 +65,9 @@ const DynamicTablePage = ({ apiUrl, estimateId, selectedString, setSelectedStrin
   const [originalClientInfo, setOriginalClientInfo] = useState({});
   const [originalProjectInfo, setOriginalProjectInfo] = useState({});
 
+  useEffect(() => {
+    console.log('DynamicTablePage Refresh Key:', refreshKey);
+}, [refreshKey]);
 
   useEffect(() => {
     const fetchEstimateData = async () => {
@@ -178,7 +183,7 @@ useEffect(() => {
 
           if (response.status === 200) {
               console.log('Retrieved search responses:', response.data);
-              setInputFields(response.data.tasks); 
+              setInputFields(response.data.tasks);
           }
       } catch (error) {
           console.error('Failed to fetch search responses:', error.message);
@@ -188,7 +193,7 @@ useEffect(() => {
   if (estimateId) {
       fetchSavedSearchResponses();
   }
-}, [estimateId, apiUrl, setInputFields]); 
+}, [estimateId, apiUrl, setInputFields, refreshKey]); 
 
 
 
@@ -241,122 +246,124 @@ useEffect(() => {
 
   
   return (
-    <div>
-      {/* Dynamic Input Fields */}
-        {inputFields.map((field, index) => (
-          <div key={index}>
+<div className="DT-container">
+  <h2>Estimate ID: {estimateId}</h2>
+    <div className="DT-task-fields">
+      {inputFields.map((field, index) => (
+        <div key={field.saved_response_id || index} className="DT-task-row">
+          <input
+            type="text"
+            value={field.task}
+            onChange={(e) =>
+              setInputFields((prevFields) =>
+                prevFields.map((f) =>
+                  f.saved_response_id === field.saved_response_id
+                    ? { ...f, task: e.target.value }
+                    : f
+                )
+              )
+            }
+            placeholder={`Task ${field.saved_response_id}`}
+          />
+          <button onClick={() => handleRemoveField(field.saved_response_id)}>
+            <FontAwesomeIcon icon={faTrash} style={{ color: 'red', cursor: 'pointer' }} />
+          </button>
+        </div>
+      ))}
+        <button onClick={handleAddAllRows} className='DT-btn'>Add All Tasks to Estimate</button>
+        </div>
+          
+          <div>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleLogoUpload}
+            />
+          </div>
+      <div className='info-section-container'>
+
+        <div className="info-section">
+          <h3>Client Information</h3>
+          <div>
             <input
               type="text"
-              value={field.task}
-              onChange={(e) =>
-                setInputFields((prev) =>
-                  prev.map((f) =>
-                    f.saved_response_id === field.saved_response_id
-                      ? { ...f, task: e.target.value }
-                      : f
-                  )
-                )
-              }
-              placeholder={`Task ${field.saved_response_id}`}
-              />
-            <button onClick={() => handleRemoveField(field.saved_response_id)}>Remove</button>
+              value={clientName}
+              onChange={(e) => setClientName(e.target.value)}
+              disabled={!isEditable}
+              placeholder="Client Name"
+            />
           </div>
-        ))}
+          <div>
+            <input
+              type="text"
+              value={clientAddress}
+              onChange={(e) => setClientAddress(e.target.value)}
+              disabled={!isEditable}
+              placeholder="Client Address"
+            />
+          </div>
+          <div>
+            <input
+              type="text"
+              value={clientPhone}
+              onChange={(e) => setClientPhone(e.target.value)}
+              disabled={!isEditable}
+              placeholder="Client Phone"
+            />
+          </div>
+          <div>
+            <input
+              type="text"
+              value={clientEmail}
+              onChange={(e) => setClientEmail(e.target.value)}
+              disabled={!isEditable}
+              placeholder="Client Email"
+            />
+          </div>
+        </div>
 
-      <button onClick={handleAddAllRows}>Add All Tasks to Estimate</button>
-
-        <div className="dynamic-table-page">
-      <h2>Estimate ID: {estimateId}</h2>
-
-      <div>
-        <input
-          type="file"
-          accept="image/*"
-          onChange={handleLogoUpload}
-        />
-      </div>
-
-      <div className="info-section">
-        <h3>Client Information</h3>
-        <div>
-          <input
-            type="text"
-            value={clientName}
-            onChange={(e) => setClientName(e.target.value)}
-            disabled={!isEditable}
-            placeholder="Client Name"
-          />
-        </div>
-        <div>
-          <input
-            type="text"
-            value={clientAddress}
-            onChange={(e) => setClientAddress(e.target.value)}
-            disabled={!isEditable}
-            placeholder="Client Address"
-          />
-        </div>
-        <div>
-          <input
-            type="text"
-            value={clientPhone}
-            onChange={(e) => setClientPhone(e.target.value)}
-            disabled={!isEditable}
-            placeholder="Client Phone"
-          />
-        </div>
-        <div>
-          <input
-            type="text"
-            value={clientEmail}
-            onChange={(e) => setClientEmail(e.target.value)}
-            disabled={!isEditable}
-            placeholder="Client Email"
-          />
-        </div>
-      </div>
-
-      <div className="info-section">
-        <h3>Project Information</h3>
-        <div>
-          <input
-            type="text"
-            value={projectName}
-            onChange={(e) => setProjectName(e.target.value)}
-            disabled={!isEditable}
-            placeholder="Project Name"
-          />
-        </div>
-        <div>
-          <input
-            type="text"
-            value={projectLocation}
-            onChange={(e) => setProjectLocation(e.target.value)}
-            disabled={!isEditable}
-            placeholder="Project Location"
-          />
-        </div>
-        <div>
-          <input
-            type="date"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-            disabled={!isEditable}
-            placeholder="Start Date"
-          />
-        </div>
-        <div>
-          <input
-            type="date"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-            disabled={!isEditable}
-            placeholder="End Date"
-          />
+        <div className="info-section">
+          <h3>Project Information</h3>
+          <div>
+            <input
+              type="text"
+              value={projectName}
+              onChange={(e) => setProjectName(e.target.value)}
+              disabled={!isEditable}
+              placeholder="Project Name"
+            />
+          </div>
+          <div>
+            <input
+              type="text"
+              value={projectLocation}
+              onChange={(e) => setProjectLocation(e.target.value)}
+              disabled={!isEditable}
+              placeholder="Project Location"
+            />
+          </div>
+          <div>
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              disabled={!isEditable}
+              placeholder="Start Date"
+            />
+          </div>
+          <div>
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              disabled={!isEditable}
+              placeholder="End Date"
+            />
+          </div>
         </div>
       </div>
 
-      <div className="edit-buttons">
+      <div className='edit'>
         {!isEditable ? (
           <button onClick={() => setIsEditable(true)}>Edit Client and Project Info</button>
         ) : (
@@ -364,9 +371,8 @@ useEffect(() => {
         )}
       </div>
 
-      <div className="info-section">
+      <div className="dynamic-table">
         <button onClick={handleAddCustomRow}>Add New Line</button>
-      </div>
               {/* Dynamic Table */}
               <div ref={tableRef}>
                 <table>
@@ -404,7 +410,7 @@ useEffect(() => {
                               job
                             )}
                           </td>
-                          <td>
+                          <td className='costs'>
                             {editIndex === index ? (
                               <input
                                 type="text"
@@ -417,7 +423,7 @@ useEffect(() => {
                               `$${adjustedLaborCost}`
                             )}
                           </td>
-                          <td>
+                          <td className='costs'>
                             {editIndex === index ? (
                               <input
                                 type="text"
@@ -430,13 +436,17 @@ useEffect(() => {
                               `$${materialCost}`
                             )}
                           </td>
-                          <td>
+                          <td className='action-buttons'>
                             {editIndex === index ? (
                               <button onClick={() => handleUpdateClick(index)}>Update</button>
                             ) : (
                               <>
-                                <button onClick={() => handleEditClick(index)}>Edit</button>
-                                <button onClick={() => handleDeleteRow(index)}>Delete</button>
+                                <button onClick={() => handleEditClick(index)}>
+                                 <FontAwesomeIcon icon={faEdit} style={{ color: 'blue', cursor: 'pointer' }} />
+                                  </button>
+                                <button onClick={() => handleDeleteRow(index)}>
+                                  <FontAwesomeIcon icon={faTrash} style={{ color: 'red', cursor: 'pointer' }} />
+                                  </button>
                               </>
                             )}
                           </td>
@@ -447,13 +457,13 @@ useEffect(() => {
                     {/* Totals */}
                     <tr>
                       <td colSpan="2"><strong>Total Labor</strong></td>
-                      <td><strong>${totalLaborCost}</strong></td>
-                      <td><strong>${totalMaterialCost}</strong></td>
+                      <td className='costs'><strong>${totalLaborCost}</strong></td>
+                      <td className='costs'><strong>${totalMaterialCost}</strong></td>
                       <td></td>
                     </tr>
                     <tr>
                       <td colSpan="3"><strong>Subtotal</strong></td>
-                      <td><strong>${combinedTotal}</strong></td>
+                      <td className='costs'><strong>${combinedTotal}</strong></td>
                       <td></td>
                     </tr>
 
@@ -461,7 +471,7 @@ useEffect(() => {
                     {applyDiscount && (
                       <tr>
                         <td colSpan="2"><strong>Discount</strong></td>
-                        <td>
+                        <td className='costs'>
                           <input
                             type="number"
                             value={discountPercent}
@@ -470,13 +480,13 @@ useEffect(() => {
                             placeholder="0"
                           />
                         </td>
-                        <td><strong>${totalDiscount}</strong></td>
+                        <td className='costs'><strong>${totalDiscount}</strong></td>
                         <td></td>
                       </tr>
                     )}
                     <tr>
                       <td colSpan="2"><strong>Tax</strong></td>
-                      <td>
+                      <td className='costs'>
                         <input
                           type="number"
                           value={salesTaxPercent}
@@ -485,12 +495,12 @@ useEffect(() => {
                           placeholder="0"
                         />
                       </td>
-                      <td><strong>${totalSalesTax}</strong></td>
+                      <td className='costs'><strong>${totalSalesTax}</strong></td>
                       <td></td>
                     </tr>
                     <tr>
                       <td colSpan="3"><strong>Total</strong></td>
-                      <td><strong>${grandTotal}</strong></td>
+                      <td className='costs'><strong>${grandTotal}</strong></td>
                       <td></td>
                     </tr>
                   </tbody>
@@ -541,7 +551,7 @@ useEffect(() => {
                 Generate Estimate
               </button>
             </div>
-    </div>
+        </div>
   );
 };
 

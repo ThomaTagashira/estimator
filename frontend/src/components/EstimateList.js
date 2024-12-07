@@ -1,10 +1,17 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate  } from 'react-router-dom';
+import './components_css/EstimateList.css';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faTrash } from '@fortawesome/free-solid-svg-icons';
 
 const EstimateList = ({ estimates: initialEstimates, loading, error, apiUrl }) => {
   const [estimates, setEstimates] = useState(initialEstimates);
   const [deletingEstimate, setDeletingEstimate] = useState(null);
+  const navigate = useNavigate(); 
 
+  const navigateToEstimate = (estimateId) => {
+    navigate(`/search?estimateId=${estimateId}`); 
+  };
   const confirmDelete = (estimate) => {
     setDeletingEstimate(estimate); 
   };
@@ -53,38 +60,44 @@ const EstimateList = ({ estimates: initialEstimates, loading, error, apiUrl }) =
   }
 
   return (
-    <div className="estimate-list-container" style={{ position: 'relative' }}>
-      <table>
+    <div>
+      <table className="estimate-list-table">
         <thead>
-          <tr>
+          <tr className="estimate-list-header">
             <th>Project Name</th>
             <th>Estimate Number</th>
             <th>Date Created</th>
             <th>Last Modified</th>
-            <th>Actions</th>
+            <th></th>
           </tr>
         </thead>
         <tbody>
           {estimates.map((estimate) => (
-            <tr key={estimate.estimate_id}>
-              <td>
-                <Link to={`/search?estimateId=${estimate.estimate_id}`}>
-                  {estimate.project_name || 'Unnamed Project'}
-                </Link>
-              </td>
+            <tr
+              key={estimate.estimate_id}
+              className="estimate-list-row"
+              onClick={() => navigateToEstimate(estimate.estimate_id)} 
+            >
+              <td>{estimate.project_name || 'Unnamed Project'}</td>
               <td>{estimate.estimate_id}</td>
               <td>{new Date(estimate.date_created).toLocaleDateString()}</td>
               <td>{new Date(estimate.last_modified).toLocaleDateString()}</td>
               <td>
-                <button onClick={() => confirmDelete(estimate)}>
-                  Delete Estimate
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation(); 
+                    confirmDelete(estimate);
+                  }}
+                  className="delete-button"
+                >
+                  <FontAwesomeIcon icon={faTrash} style={{ color: 'red', cursor: 'pointer' }} />
                 </button>
               </td>
             </tr>
           ))}
         </tbody>
       </table>
-
+  
       {/* Slide-Out Panel */}
       {deletingEstimate && (
         <div className="slide-out-panel">
@@ -93,14 +106,13 @@ const EstimateList = ({ estimates: initialEstimates, loading, error, apiUrl }) =
           <p>By selecting confirm, you will no longer have access to any records you have saved in:</p>
           <p>Project: <strong>{deletingEstimate.project_name || 'Unnamed Project'}</strong></p>
           <p>Estimate Number: <strong>{deletingEstimate.estimate_id}</strong></p>
-
-
-          <button onClick={handleDelete}>Confirm</button>
-          <button onClick={cancelDelete}>Cancel</button>
+  
+          <button onClick={handleDelete} className="confirm-button">Confirm</button>
+          <button onClick={cancelDelete} className="cancel-button">Cancel</button>
         </div>
       )}
     </div>
-  );
+  );  
 };
 
 export default EstimateList;

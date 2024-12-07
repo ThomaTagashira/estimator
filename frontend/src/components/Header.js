@@ -1,82 +1,78 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
+import './components_css/Header.css';
 
 const Header = ({ handleLogout, hasActiveSubscription, tokenCount, userSubscriptionTier }) => {
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const dropdownRef = useRef(null); 
+
+    const toggleMenu = () => {
+        setIsMenuOpen(!isMenuOpen);
+    };
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                setIsMenuOpen(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
+
     return (
-        <header style={headerStyle}>
-            <div style={logoStyle}>
+        <header className="header">
+            <div className="logo">
                 <h1>MyApp</h1>
             </div>
             {hasActiveSubscription && (
-                <>
-                    <div style={{ fontSize: '18px', fontWeight: 'bold' }}>
-                        Tokens: {tokenCount}
-                    </div>
-                    
-                    <div style={{ fontSize: '18px', fontWeight: 'bold' }}>
-                        Current Subscription: {userSubscriptionTier}
-                    </div>
-                </>
+                <div className="subscription-info">
+                    <div>Tokens: {tokenCount}</div>
+                    <div>Current Subscription: {userSubscriptionTier}</div>
+                </div>
             )}
-            <nav style={navStyle}>
-                <ul style={ulStyle}>
+            <nav className="nav">
+                <ul>
                     {hasActiveSubscription ? (
                         <>
-                            <li style={liStyle}><Link to="/">Home</Link></li>
-                            {/* <li style={liStyle}><Link to="/saved-estimates">Saved Estimates</Link></li> */}
-                            <li style={liStyle}><Link to="/buy-tokens">Buy Tokens</Link></li>
+                            <li><Link to="/">Home</Link></li>
+                            <li><Link to="/buy-tokens">Buy Tokens</Link></li>
                         </>
                     ) : (
-                        <>
-                            <li style={liStyle}><Link to="/">Sign Up</Link></li>
-                        </>
+                        <li><Link to="/">Sign Up</Link></li>
                     )}
-                    <li style={liStyle}><Link to="/about">About</Link></li>
+                    <li><Link to="/about">About</Link></li>
                 </ul>
             </nav>
-            <button style={logoutButtonStyle} onClick={handleLogout}>Logout</button>
+            {/* Hamburger Menu */}
+            <div className="hamburger-container" ref={dropdownRef}>
+                <div className="hamburger" onClick={toggleMenu}>
+                    <div className="line"></div>
+                    <div className="line"></div>
+                    <div className="line"></div>
+                </div>
+                {isMenuOpen && (
+                    <div className="dropdown-menu">
+                        <Link to="/save-business-info" className="dropdown-link" onClick={() => setIsMenuOpen(false)}>
+                            <button className="dropdown-button">Update Business Information</button>
+                        </Link>
+                        <Link to="/change-subscription-tier" className="dropdown-link" onClick={() => setIsMenuOpen(false)}>
+                            <button className="dropdown-button">Change Subscription Tier</button>
+                        </Link>
+                        <Link to="/cancel-subscription" className="dropdown-link" onClick={() => setIsMenuOpen(false)}>
+                            <button className="dropdown-button">Cancel Subscription</button>
+                        </Link>
+                        <button className="dropdown-button" onClick={() => { handleLogout(); setIsMenuOpen(false); }}>
+                            Logout
+                        </button>
+                    </div>
+                )}
+            </div>
         </header>
     );
-};
-
-const headerStyle = {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: '10px 20px',
-    backgroundColor: '#333',
-    color: '#fff'
-};
-
-const logoStyle = {
-    fontSize: '24px',
-    fontWeight: 'bold'
-};
-
-const navStyle = {
-    flex: '1',
-    textAlign: 'center'
-};
-
-const ulStyle = {
-    listStyle: 'none',
-    margin: '0',
-    padding: '0',
-    display: 'inline-flex',
-    gap: '15px'
-};
-
-const liStyle = {
-    fontSize: '18px'
-};
-
-const logoutButtonStyle = {
-    padding: '5px 10px',
-    backgroundColor: '#f00',
-    color: '#fff',
-    border: 'none',
-    cursor: 'pointer',
-    fontSize: '18px'
 };
 
 export default Header;

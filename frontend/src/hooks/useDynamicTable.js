@@ -9,8 +9,9 @@ const useDynamicTable = (apiUrl, estimateId, selectedString, setSelectedString )
     const [inputFields, setInputFields] = React.useState(() => {
         const storedFields = JSON.parse(localStorage.getItem('selectedStrings')) || [];
         return Array.isArray(storedFields) ? storedFields : [];
-      });    const [tableData, setTableData] = useState([]);
-
+      });    
+    
+    const [tableData, setTableData] = useState([]);
     const [editIndex, setEditIndex] = useState(null);
     const [editValues, setEditValues] = useState({ job: '', laborCost: '', materialCost: '' });
     const [salesTaxPercent, setSalesTaxPercent] = useState(0);

@@ -4,7 +4,7 @@ import { GoogleOAuthProvider } from '@react-oauth/google';
 import { getCookie } from '../utils/getCookies';
 
 const googleID = process.env.REACT_APP_GOOGLE_CLIENT_ID;
-const githubID = process.env.REACT_APP_GITHUB_CLIENT_ID;
+// const githubID = process.env.REACT_APP_GITHUB_CLIENT_ID;
 const redirUrl = process.env.REACT_APP_REDIR_URL;
 
 const LoginForm = ({ onSubmit, error }) => {
@@ -43,15 +43,15 @@ const LoginForm = ({ onSubmit, error }) => {
         window.location.href = authUrl;
     };
 
-    const handleGitHubLogin = () => {
-        const authUrl = constructOAuthUrl(
-            'https://github.com/login/oauth/authorize',
-            githubID,
-            `${redirUrl}/github-callback`,
-            'read:user'
-        );
-        window.location.href = authUrl;
-    };
+    // const handleGitHubLogin = () => {
+    //     const authUrl = constructOAuthUrl(
+    //         'https://github.com/login/oauth/authorize',
+    //         githubID,
+    //         `${redirUrl}/github-callback`,
+    //         'read:user'
+    //     );
+    //     window.location.href = authUrl;
+    // };
 
     return (
         <div>
@@ -80,7 +80,7 @@ const LoginForm = ({ onSubmit, error }) => {
                 <button onClick={handleGoogleLogin}>Login with Google</button>
             </GoogleOAuthProvider>
 
-            <button onClick={handleGitHubLogin}>Login with GitHub</button>
+
         </div>
     );
 };

@@ -1,25 +1,24 @@
-// SearchForm.js
-
 import React, { useState } from 'react';
+import '../components_css/ComponentsFormFields.css';
 
-function SearchForm({ onTextSubmit, onScopeSubmit, onHandymanScopeSubmit }) {
-  const [textInput, setTextInput] = useState('');
+function SearchForm({ onScopeSubmit }) {
+  // const [textInput, setTextInput] = useState('');
   const [scopeInput, setScopeInput] = useState('');
-  const [handymanScopeInput, setHandymanScopeInput] = useState('');
-  const [textError, setTextError] = useState('');
+  // const [handymanScopeInput, setHandymanScopeInput] = useState('');
+  // const [textError, setTextError] = useState('');
   const [scopeError, setScopeError] = useState('');
-  const [handymanScopeError, setHandymanScopeError] = useState('');
+  // const [handymanScopeError, setHandymanScopeError] = useState('');
 
-  const handleTextSubmit = (e) => {
-    e.preventDefault();
-    if (textInput.trim() !== '') {
-      onTextSubmit(textInput);
-      setTextInput('');
-      setTextError('');
-    } else {
-      setTextError('Text input cannot be empty');
-    }
-  };
+  // const handleTextSubmit = (e) => {
+  //   e.preventDefault();
+  //   if (textInput.trim() !== '') {
+  //     onTextSubmit(textInput);
+  //     setTextInput('');
+  //     setTextError('');
+  //   } else {
+  //     setTextError('Text input cannot be empty');
+  //   }
+  // };
 
 
   const handleScopeSubmit = (e) => {
@@ -33,21 +32,21 @@ function SearchForm({ onTextSubmit, onScopeSubmit, onHandymanScopeSubmit }) {
     }
   };
 
-  const handleHandymanScopeSubmit = (e) => {
-    e.preventDefault();
-    if (handymanScopeInput.trim() !== '') {
-      onHandymanScopeSubmit(handymanScopeInput);
-      setHandymanScopeInput('');
-      setHandymanScopeError('');
-    } else {
-      setHandymanScopeError('Handyman Job scope input cannot be empty');
-    }
-  };
+  // const handleHandymanScopeSubmit = (e) => {
+  //   e.preventDefault();
+  //   if (handymanScopeInput.trim() !== '') {
+  //     onHandymanScopeSubmit(handymanScopeInput);
+  //     setHandymanScopeInput('');
+  //     setHandymanScopeError('');
+  //   } else {
+  //     setHandymanScopeError('Handyman Job scope input cannot be empty');
+  //   }
+  // };
 
 
   return (
-    <div>
-      <form onSubmit={handleTextSubmit}>
+    <div className="uploaded-lines-container">
+      {/* <form onSubmit={handleTextSubmit}>
         <label htmlFor="input-text">Enter text:</label>
         <input
           type="text"
@@ -61,27 +60,31 @@ function SearchForm({ onTextSubmit, onScopeSubmit, onHandymanScopeSubmit }) {
         <span id="text-error" style={{ color: 'red' }}>{textError}</span>
         <br />
         <button type="submit" disabled={!textInput.trim()}>Submit Text</button>
-      </form>
-
-
+      </form> */}
+      <div className="uploaded-lines">
       <form onSubmit={handleScopeSubmit}>
         <label htmlFor="job-scope">Enter job scope:</label>
-        <input
-          type="text"
-          id="job-scope"
-          value={scopeInput}
-          onChange={(e) => setScopeInput(e.target.value)}
-          aria-label="Enter job scope"
-          aria-describedby="scope-error"
-        />
-        <br />
+          <input
+            type="text"
+            id="job-scope"
+            value={scopeInput}
+            onChange={(e) => setScopeInput(e.target.value)}
+            aria-label="Enter job scope"
+            aria-describedby="scope-error"
+          />
         <span id="scope-error" style={{ color: 'red' }}>{scopeError}</span>
-        <br />
-        <button type="submit" disabled={!scopeInput.trim()}>Submit Job Scope</button>
       </form>
 
+      <button 
+        type="submit" 
+        disabled={!scopeInput.trim()}
+        className="upload-btn"
+      >
+        Search Task
+      </button>
 
-      <form onSubmit={handleHandymanScopeSubmit}>
+
+      {/* <form onSubmit={handleHandymanScopeSubmit}>
         <label htmlFor="handyman-job-scope">Enter job scope if using a Handyman:</label>
         <input
           type="text"
@@ -95,7 +98,8 @@ function SearchForm({ onTextSubmit, onScopeSubmit, onHandymanScopeSubmit }) {
         <span id="handyman-scope-error" style={{ color: 'red' }}>{handymanScopeError}</span>
         <br />
         <button type="submit" disabled={!handymanScopeInput.trim()}>Submit Handyman Job Scope</button>
-      </form>
+      </form> */}
+      </div>
     </div>
   );
 }

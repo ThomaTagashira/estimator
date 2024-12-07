@@ -1,28 +1,119 @@
 import React from 'react';
+import '../components_css/ComponentsFormFields.css';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faTrash } from '@fortawesome/free-solid-svg-icons';
 
-const PhotoUploadForm = ({ onSearch, selectedFile, data, error, handleFileChange, handleSubmit, handleLineChange, handleAllSearches, handleRemoveLine }) => {
+const PhotoUploadForm = ({
+    onSearch,
+    selectedFile,
+    data,
+    error,
+    isUploading,
+    handleFileChange,
+    handleRemovePhoto,
+    handleSubmit,
+    handleLineChange,
+    handleAllSearches,
+    handleRemoveLine,
+}) => {
     return (
-        <div>
-            <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
-                <input type="file" onChange={(e) => handleFileChange(e.target.files[0])} />
-                <button type="submit">Upload Photo</button>
-            </form>
+        <div className="photo-upload-container">
+            {/* Photo Upload  */}
+            <div className="photo-upload-form">
+                <h3>Photo Upload Form</h3>
+                <div
+                    className="drop-zone"
+                    onDrop={(e) => {
+                        e.preventDefault();
+                        const file = e.dataTransfer.files[0];
+                        if (file) {
+                            handleFileChange(file);
+                        }
+                    }}
+                    onDragOver={(e) => e.preventDefault()}
+                >
+                    {selectedFile ? (
+                        <>
+                            {isUploading ? (
+                                <p className="loading-message">
+                                    Converting photo to text, please wait...
+                                </p>
+                            ) : (
+                                <>
+                                    <img
+                                        src={URL.createObjectURL(selectedFile)}
+                                        alt="Preview"
+                                        className="preview-image"
+                                    />
+                                    <button
+                                        className="remove-photo-btn"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleRemovePhoto();
+                                        }}
+                                    >
+                                        X
+                                    </button>
+                                </>
+                            )}
+                        </>
+                    ) : (
+                        <p>Drop your image here, or click the button below to browse</p>
+                    )}
+                </div>
+                <form
+                    onSubmit={(e) => {
+                        e.preventDefault();
+                        handleSubmit();
+                    }}
+                >
+                    <input
+                        id="file-upload"
+                        type="file"
+                        style={{ display: 'none' }}
+                        onChange={(e) => handleFileChange(e.target.files[0])}
+                    />
+                    <label htmlFor="file-upload" className='upload-btn-label'>
+                        <button type="submit" className="upload-btn">
+                            {selectedFile
+                                ? isUploading
+                                    ? 'Uploading...'
+                                    : 'Upload Photo'
+                                : 'Browse'}
+                        </button>
+                    </label>
+                </form>
+            </div>
 
-            <h1>Uploaded Lines</h1>
-            {error && <p>Error: {error}</p>}
-            <ul>
-                {Object.keys(data).map((key) => (
-                    <li key={key}>
-                        <textarea
-                            style={{ width: '100%', height: `${Math.max(data[key].split('\n').length * 1.5 + 0.5, 2)}em` }}
-                            value={data[key]}
-                            onChange={(e) => handleLineChange(key, e.target.value)}
-                        />
-                        <button onClick={() => handleRemoveLine(key)}>Remove Line</button>
-                    </li>
-                ))}
-            </ul>
-            <button onClick={() => handleAllSearches(onSearch)}>Search All</button>
+            {/* Uploaded Lines */}
+        <div className="uploaded-lines-container">
+            <div className="uploaded-lines">
+                <h3>Uploaded Lines</h3>
+                {error && <p className="error-message">{error}</p>}
+                <ul>
+                    {Object.keys(data).map((key) => (
+                        <li key={key}>
+                            <textarea
+                                value={data[key]}
+                                onChange={(e) => handleLineChange(key, e.target.value)}
+                                onInput={(e) => {
+                                    e.target.style.height = 'auto';
+                                    e.target.style.height = `${e.target.scrollHeight}px`; 
+                                }}
+                            />
+                            <button onClick={() => handleRemoveLine(key)} >
+                                <FontAwesomeIcon icon={faTrash} style={{ color: 'red', cursor: 'pointer' }} />
+                            </button>
+                        </li>
+                    ))}
+                </ul>
+                <div>
+                    <button onClick={() => handleAllSearches(onSearch)} className="upload-btn">
+                        Search All
+                    </button>
+                </div>
+            </div>
+        </div>
         </div>
     );
 };

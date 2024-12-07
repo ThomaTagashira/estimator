@@ -6,12 +6,13 @@ import PhotoUploadForm from '../components/Form/PhotoUploadForm';
 import useSearch from '../hooks/useSearch';
 import usePhotoUpload from '../hooks/usePhotoUpload';
 import DynamicTablePage from '../pages/DynamicTablePage';
+import './pages_css/SearchPage.css';
 
 const SearchPage = ({ apiUrl }) => {
   const [activeTab, setActiveTab] = useState('search');
   const [tableData, setTableData] = useState([]);
   const [searchParams] = useSearchParams();
-  const [inputFields, setInputFields] = useState([]);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const estimateId = searchParams.get('estimateId');
 
@@ -54,7 +55,6 @@ const SearchPage = ({ apiUrl }) => {
   const {
     selectedString,
     setSelectedString,
-    fetchTextData,
     fetchScopeData,
     handleSearch,
   } = useSearch(apiUrl, estimateId);
@@ -68,22 +68,16 @@ const SearchPage = ({ apiUrl }) => {
     handleLineChange,
     handleRemoveLine,
     handleAllSearches,
+    handleRemovePhoto,
+    isUploading
   } = usePhotoUpload();
 
-  const handleTabSwitch = async (tab) => {
-    console.log('Switching to tab:', tab);
+const handleTabSwitch = async (tab) => {
     setActiveTab(tab);
-
-    if (tab === 'table') {
-      const savedStrings = JSON.parse(localStorage.getItem('selectedStrings')) || [];
-      const sanitizedStrings = savedStrings.filter((str) => str.trim() !== '');
-      setInputFields(sanitizedStrings);
-
-      if (tableData.length === 0) {
-        fetchTableData();
-      }
+    if (tableData.length === 0) {
+            fetchTableData();
     }
-  };
+};
 
   const fetchTableData = async () => {
     try {
@@ -104,46 +98,54 @@ const SearchPage = ({ apiUrl }) => {
 
 
   return (
-    <div className="App">
-      <div className="tab-buttons">
-        <button onClick={() => handleTabSwitch('search')}>Search Tasks</button>
-        <button onClick={() => handleTabSwitch('table')}>Estimate</button>
-      </div>
+<div className="search-page-container">
+  <div className="tab-container">
+    <button
+      className={`tab-button ${activeTab === 'search' ? 'active' : ''}`}
+      onClick={() => handleTabSwitch('search')}
+    >
+      Search Tasks
+    </button>
+    <button
+      className={`tab-button ${activeTab === 'table' ? 'active' : ''}`}
+      onClick={() => handleTabSwitch('table')}
+    >
+      Estimate
+    </button>
+  </div>
 
-      {activeTab === 'search' && (
-        <div className="search-tab">
-          <SearchForm onTextSubmit={fetchTextData} onScopeSubmit={fetchScopeData} />
-          <h1>Photo Upload Form</h1>
-          <PhotoUploadForm
-            onSearch={(query) => handleSearch(query, estimateId)} 
-            selectedFile={selectedFile}
-            data={data}
-            error={uploadError}
-            handleFileChange={handleFileChange}
-            handleSubmit={handleSubmit}
-            handleLineChange={handleLineChange}
-            handleAllSearches={(queries) => handleAllSearches(queries, estimateId)}
-            handleRemoveLine={handleRemoveLine}
-          />
-        </div>
-      )}
-
-      {activeTab === 'table' && (
-        <div className="table-tab">
-          {inputFields.length > 0 && (
-            <div style={{ display: 'none' }}>
-              {JSON.stringify(inputFields)}
-            </div>
-          )}
-          <DynamicTablePage
-            selectedString={selectedString}
-            setSelectedString={setSelectedString}
-            apiUrl={apiUrl}
-            estimateId={estimateId}
-          />
-        </div>
-      )}
+  {activeTab === 'search' && (
+    <div className="search-tab">
+      <SearchForm onScopeSubmit={fetchScopeData} />
+      <PhotoUploadForm
+        onSearch={(query) => handleSearch(query, estimateId, setRefreshKey)}
+        selectedFile={selectedFile}
+        data={data}
+        error={uploadError}
+        isUploading={isUploading} 
+        handleFileChange={handleFileChange}
+        handleRemovePhoto={handleRemovePhoto} 
+        handleSubmit={handleSubmit}
+        handleLineChange={handleLineChange}
+        handleAllSearches={(queries) => handleAllSearches(queries, estimateId)}
+        handleRemoveLine={handleRemoveLine}
+      />
     </div>
+  )}
+
+  {activeTab === 'table' && (
+    <div className="table-tab">
+      <DynamicTablePage
+        selectedString={selectedString}
+        setSelectedString={setSelectedString}
+        apiUrl={apiUrl}
+        estimateId={estimateId}
+        refreshKey={refreshKey}
+      />
+    </div>
+  )}
+</div>
+
   );
 };
 

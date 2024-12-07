@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import axios from 'axios';
 
+
 const useSearch = (apiUrl) => {
     const [textResults, setTextResults] = useState({});
     const [scopeResults, setScopeResults] = useState(null);
@@ -33,11 +34,11 @@ const useSearch = (apiUrl) => {
         }
     };
 
-    const saveSearchResponse = async (task, estimateId) => {
-        console.log('estimateID:', estimateId)
+    const saveSearchResponse = async (task, estimateId, setRefreshKey) => {
+        console.log('estimateID:', estimateId);
         try {
             const payload = {
-                search_responses: [{ task }], 
+                search_responses: [{ task }],
             };
             console.log('Payload being sent:', payload);
     
@@ -56,6 +57,8 @@ const useSearch = (apiUrl) => {
             }
     
             console.log('Search response saved successfully');
+            
+            setRefreshKey((prevKey) => prevKey + 1);
         } catch (error) {
             console.error('Error saving search response:', error);
         }
@@ -88,7 +91,7 @@ const useSearch = (apiUrl) => {
         }
     };
 
-    const handleSearch = async (query, estimateId) => {
+    const handleSearch = async (query, estimateId, setRefreshKey) => {
         setLoading(true);
         setError(null);
     
@@ -109,11 +112,12 @@ const useSearch = (apiUrl) => {
             if (endIndex === -1) {
                 endIndex = context.length;
             }
+    
             const newSelectedString = context.substring(startIndex, endIndex).trim();
     
-            await saveSearchResponse(newSelectedString, estimateId);
+            await saveSearchResponse(newSelectedString, estimateId, setRefreshKey);
     
-            setSearchResult(response.data);
+            setSearchResult([{ task: newSelectedString, saved_response_id: response.data.saved_response_id }]);
         } catch (error) {
             setError('Error performing search: ' + error.message);
         } finally {

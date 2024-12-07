@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import {SubscriptionCheckoutButton} from '../components/StripeCheckoutButton'; 
+import { SubscriptionCheckoutButton } from '../components/StripeCheckoutButton';
 
-const ChangeSubscriptionPage = (userSubscriptionTier) => {
+const ChangeSubscriptionPage = ({ userSubscriptionTier }) => {
     const [tier, setNewTier] = useState(''); 
 
     const handleSelectNewTier = (tier) => {
@@ -9,29 +9,55 @@ const ChangeSubscriptionPage = (userSubscriptionTier) => {
     };
 
     return (
-        <div>
-            <h1>Which Tier Would You Like to Change Your Current Subscription To?</h1>
-            <p>Your Current Subscription: {userSubscriptionTier} </p>
+        <div class="purchase-container">
 
-            <div>
+            <div class="purchase-header">
+                <h1>Which Tier Would You Like to Change Your Current Subscription To?</h1>
+                <h3>Your Current Subscription: {userSubscriptionTier}</h3>
                 <h2>Select Your Plan:</h2>
-                <ul>
-                    <li>
-                        <button onClick={() => handleSelectNewTier('Basic')}>
-                            Basic - $24.99/month
-                        </button>
-                    </li>
-                    <li>
-                        <button onClick={() => handleSelectNewTier('Premium')}>
-                            Premium - $49.99/month
-                        </button>
-                    </li>
-                    <li>
-                        <button onClick={() => handleSelectNewTier('Enterprise')}>
-                            Enterprise - $99.99/month
-                        </button>
-                    </li>
-                </ul>
+            </div>
+
+            <div class="cards">
+                <div class="card">                
+                    <h3>Basic</h3>
+                    <p class="price">$24.99/month</p>
+                    <ul>
+                        <li>Add Things Here</li>
+                        <li>Add Things Here</li>
+                        <li>Add Things Here</li>
+                    </ul>
+                    <button onClick={() => handleSelectNewTier('Basic')}>
+                        Basic - $24.99/month
+                    </button>
+                </div>
+
+
+                <div class="card">
+                    <h3>Premium</h3>
+                    <p class="price">$49.99/month</p>
+                    <ul>
+                        <li>Add Things Here</li>
+                        <li>Add Things Here</li>
+                        <li>Add Things Here</li>
+                    </ul>
+                    <button onClick={() => handleSelectNewTier('Premium')}>
+                        Premium - $49.99/month
+                    </button>
+                </div>
+
+
+                <div class="card">
+                    <h3>Enterprise</h3>
+                    <p class="price">$99.99</p>
+                    <ul>
+                        <li>Add Things Here</li>
+                        <li>Add Things Here</li>
+                        <li>Add Things Here</li>
+                    </ul>
+                    <button onClick={() => handleSelectNewTier('Enterprise')}>
+                        Enterprise - $99.99/month
+                    </button>
+                </div>
             </div>
 
             {tier && (

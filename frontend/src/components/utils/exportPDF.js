@@ -60,17 +60,18 @@ function generateHTMLContent({
           .header {
             background-color: #1d2a5d;
             color: white;
-            padding: 10px;
+            padding: 30px;
             margin-bottom: 20px;
             text-align: center;
             position: relative;
             box-sizing: border-box;
           }
           .header img {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            width: 80px;
+            max-height: 25px; 
+            max-width: 25px; 
+            object-fit: contain; 
+            margin-right: 10px; 
+            vertical-align: middle; 
           }
           .header h1 {
             margin: 0;

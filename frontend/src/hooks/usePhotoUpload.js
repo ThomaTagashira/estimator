@@ -10,29 +10,42 @@ const usePhotoUpload = () => {
         return savedData ? JSON.parse(savedData) : {};
     });
     const [error, setError] = useState(null);
+    const [isUploading, setIsUploading] = useState(false); 
 
     useEffect(() => {
         localStorage.setItem('photoUploadData', JSON.stringify(data));
     }, [data]);
 
     const handleFileChange = (file) => {
+        if (!file) {
+            setSelectedFile(null);
+            setError(null);
+            return;
+        }
+    
         const validFormats = ['image/png', 'image/jpeg', 'image/gif', 'image/webp'];
         const maxSize = 20 * 1024 * 1024;
-
+    
         if (!validFormats.includes(file.type)) {
             setError("Unsupported image format. Please upload a PNG, JPEG, GIF, or WebP image.");
             setSelectedFile(null);
             return;
         }
-
+    
         if (file.size > maxSize) {
             setError("Image size exceeds the 20 MB limit. Please upload a smaller image.");
             setSelectedFile(null);
             return;
         }
-
+    
         setSelectedFile(file);
         setError(null);
+    };
+
+    const handleRemovePhoto = () => {
+        setSelectedFile(null);
+        setError(null);
+        console.log("Photo removed");
     };
 
     const handleSubmit = async () => {
@@ -40,23 +53,27 @@ const usePhotoUpload = () => {
             setError("No file selected or the file is invalid.");
             return;
         }
-
+    
         const formData = new FormData();
         formData.append('photo', selectedFile);
-
+    
+        setIsUploading(true);
+    
         try {
             const response = await axios.post(`${apiUrl}/api/photo/`, formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },
             });
-
+    
             const jsonResponse = JSON.parse(response.data);
             const strings = jsonResponse.strings || {};
             setData(strings);
         } catch (e) {
             const errorMessage = e.response?.data?.error?.message || 'Error uploading photo';
             setError(errorMessage);
+        } finally {
+            setIsUploading(false);
         }
     };
 
@@ -96,7 +113,9 @@ const usePhotoUpload = () => {
         selectedFile,
         data,
         error,
+        isUploading,
         handleFileChange,
+        handleRemovePhoto,
         handleSubmit,
         handleLineChange,
         handleAllSearches,

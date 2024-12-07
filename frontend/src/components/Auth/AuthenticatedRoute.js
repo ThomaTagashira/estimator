@@ -6,7 +6,7 @@ const AuthenticatedRoute = ({ children, isAuthenticated, hasActiveSubscription }
   }
 
   if (!hasActiveSubscription) {
-    return <Navigate to="/subscribe" />; // Redirect if no active subscription
+    return <Navigate to="/subscribe" />;
   }
 
   return children;

@@ -1,0 +1,194 @@
+
+
+
+table {
+    border-collapse: collapse;
+    width: 100%;
+  }
+
+  th, td {
+    border: 1px solid black;
+    padding: 8px;
+  }
+
+  th {
+    background-color: #f2f2f2;
+  }
+
+.hidden {
+    display: none !important;
+  }
+
+
+  .no-border {
+    border: none !important;
+  }
+
+.info-section-container {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    align-items: center; 
+    justify-content: center; 
+    text-align: center;
+  }
+
+  .info-section {
+    flex: 1;
+  }
+
+  .info-section div {
+    margin-bottom: 10px;
+  }
+
+  input, textarea {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .sales-tax-container {
+    display: flex;
+    align-items: center;
+  }
+
+  .sales-tax-container input {
+    width: auto;
+    margin-right: 5px;
+  }
+
+  .DT-container {
+    display: flex;
+    flex-direction: column;  
+  }
+
+  .DT-task-fields {
+    padding: 20px;
+    background-color: #e9f5ff; 
+    border: 1px solid #cce7ff;
+    border-radius: 8px;
+    text-align: center;
+
+  }
+
+  .DT-task-row {
+    display: flex; 
+    align-items: center; 
+    gap: 10px; 
+    margin-bottom: 10px; 
+    justify-content: center; 
+    text-align: center;
+
+  }
+
+  .DT-task-row input {
+    flex: 1; 
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+    
+  }
+
+  .DT-task-row input {
+    flex: 1; 
+    max-width: 80%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+  }
+  
+  .DT-btn {
+    background-color: #919191;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 10px 20px;
+    font-family: Arial, sans-serif;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+
+  }
+
+  .DT-btn:hover {
+      background-color: #76aef7;
+  }
+
+  .DT-btn:disabled {
+    background-color: #cccccc;
+    color: #666666;
+    cursor: not-allowed;
+  }
+
+  .DT-btn-label {
+    width: 100%;
+  }
+ 
+  .edit {
+    justify-content: center; 
+    text-align: center;
+  }
+  .edit button {
+    background-color: #919191;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 10px 20px;
+    font-family: Arial, sans-serif;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  
+  }
+
+  .edit button:hover {
+    background-color: #76aef7;
+  }
+
+  .dynamic-table {
+    border-collapse: collapse;
+    width: 100%;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+  }
+
+  .dynamic-table td {
+    padding: 12px 15px;
+    border: none; 
+  }
+
+  
+  .dynamic-table th {
+    font-weight: bold;
+    color: #5A5A5A;
+    padding: 12px 15px;
+    text-align: center;
+    border: none; 
+  }
+
+  .dynamic-table tr:nth-child(even) {
+    background-color: #ecf0f583;
+  }
+
+  .dynamic-table tr:nth-child(odd) {
+    background-color: white; 
+  }
+
+  .dynamic-table tr:hover {
+    background-color: #dfdfdfea;
+    cursor: pointer; 
+  }
+
+  .action-buttons {
+    display: flex;
+    align-items: center; 
+    justify-content: center; 
+    text-align: center;
+    gap: 5px;
+  }
+
+  .costs {
+    text-align: center;
+  }
+
+  

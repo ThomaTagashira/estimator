@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import useFetchEstimates from '../hooks/useFetchEstimates';
 import EstimateList from '../components/EstimateList';
 import { Link } from 'react-router-dom';
-import './EstimatesPage.css';
+import './pages_css/EstimatesPage.css';
 
 const apiUrl = process.env.REACT_APP_API_URL;
 
@@ -31,38 +31,49 @@ const EstimatesPage = () => {
   if (loading) return <p>Loading...</p>;
   if (error) return <p>{error}</p>;
 
+
+
+
+
   return (
-    <div className="estimates-page">
-      <Link to="/create-estimate">
-        <button>Create New Estimate</button>
-      </Link>
+    <div className="page">
+      <div className="header">
+        <div className="search-container">
+          <form onSubmit={handleSearch}>
+            <div className="estimates-search">
+              <input
+                type="text"
+                placeholder="Search by Estimate ID or Project Name"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              <button type="submit" className="search-btn">
+                🔍
+              </button>
+            </div>
+          </form>
+        </div>
+        <div className='create-btn'>
+        <Link to="/create-estimate">
+          <button className="create-btn">+ Create New Estimate</button>
+        </Link>
+        </div>
+      </div>
 
-      <h2>My Estimates</h2>
-      <form onSubmit={handleSearch}>
-        <input
-          type="text"
-          placeholder="Search by Estimate ID or Project Name"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
-        <button type="submit">Search</button>
-      </form>
-
-      <EstimateList 
-        estimates={estimates}
-        apiUrl={apiUrl}
-      />
-
-      <div className="pagination">
-        {[...Array(totalPages)].map((_, index) => (
-          <button
-            key={index}
-            disabled={currentPage === index + 1}
-            onClick={() => handlePageChange(index + 1)}
-          >
-            {index + 1}
-          </button>
-        ))}
+      <div className="estimate-list-container">
+        <EstimateList estimates={estimates} apiUrl={apiUrl} />
+        <div className="pagination">
+          {[...Array(totalPages)].map((_, index) => (
+            <button
+              key={index}
+              className={currentPage === index + 1 ? 'active' : ''}
+              disabled={currentPage === index + 1}
+              onClick={() => handlePageChange(index + 1)}
+            >
+              {index + 1}
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );

@@ -1,0 +1,108 @@
+
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f9fafc;
+    color: #333;
+  }
+
+
+  .tab-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #f9fafc; 
+    border-bottom: 1px solid #ddd;
+    padding: 10px 0;
+    margin-bottom: 20px; 
+  }
+  
+  .tab-button {
+    flex: 1; 
+    text-align: center;
+    padding: 10px 20px;
+    background: none;
+    border: none;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: #555; 
+    border-bottom: 2px solid transparent; 
+  }
+  
+  .tab-button:hover {
+    background: #f1f1f1; 
+    color: #333; 
+  }
+  
+  .tab-button.active {
+    color: #555; 
+    border-bottom: 2px solid #76aef7; 
+    background: #fff; 
+  }
+  
+  .search-page-container {
+    position: relative; 
+    margin: 0 auto; 
+    padding: 40px; 
+    max-width: 2000px; 
+    overflow: visible; 
+  }
+  
+  
+  
+  table {
+      border-collapse: collapse;
+      width: 100%;
+    }
+  
+    th, td {
+      border: 1px solid black;
+      padding: 8px;
+    }
+  
+    th {
+      background-color: #f2f2f2;
+    }
+  
+  .hidden {
+      display: none !important;
+    }
+  
+  
+    .no-border {
+      border: none !important;
+    }
+  
+  .info-container {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+    }
+  
+    .info-section {
+      flex: 1;
+    }
+  
+    .info-section div {
+      margin-bottom: 10px;
+    }
+  
+    input, textarea {
+      display: block;
+      width: 100%;
+      box-sizing: border-box;
+    }
+  
+    .sales-tax-container {
+      display: flex;
+      align-items: center;
+    }
+  
+    .sales-tax-container input {
+      width: auto;
+      margin-right: 5px;
+    }
+  

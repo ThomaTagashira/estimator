@@ -1,0 +1,254 @@
+
+  .form-container h3 {
+    font-size: 1.5rem;
+    color: #333;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+  
+  form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .form-group {
+    display: flex;
+    align-items: center; 
+    justify-content: space-between; 
+    gap: 10px; 
+    margin-bottom: 15px;
+  }
+  
+
+  label {
+    display: flex;
+    align-items: center; 
+    font-size: 0.9rem;
+    color: #555;
+    font-weight: bold;
+    width: 30%; 
+  }
+
+
+  .form-icon {
+    font-size: 1.2rem;
+    margin-right: 8px; 
+  }
+  
+  input {
+    flex: 1; 
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 10px;
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-color 0.3s ease;
+  }
+  
+  input:focus {
+    border-color: #6a0dad;
+    box-shadow: 0 0 5px rgba(106, 13, 173, 0.3);
+  }
+  
+  .next-btn {
+    margin-top: 20px;
+    background: #6a0dad;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 12px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.3s ease;
+  }
+  
+  .next-btn:hover {
+    background: #531482; 
+  }
+  
+  .button-group {
+    display: flex;
+    justify-content: space-between; 
+  }
+  
+  .button-group .next-btn {
+    width: 48%; 
+  }
+
+  .photo-upload-container {
+    display: flex;
+    flex-direction: column;
+
+}
+  .photo-upload-form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: #f8fbff;
+    padding: 20px;
+    width: 400px;
+    margin: auto;
+    text-align: center;
+}
+
+.drop-zone {
+    width: 150px;
+    height: 200px;
+    border: 2px dashed #cdd8ef;
+    border-radius: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    background-color: #f0f7ff;
+    margin-bottom: 20px;
+    transition: background-color 0.3s ease;
+    position: relative;
+}
+
+.drop-zone:hover {
+    background-color: #e0ebff;
+}
+
+.preview-image {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: cover;
+    border-radius: 10px;
+}
+
+.remove-photo-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background-color: red;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: background-color 0.3s ease;
+}
+
+.remove-photo-btn:hover {
+    background-color: darkred;
+}
+
+.loading-message {
+  font-size: 16px;
+  font-weight: bold;
+  color: #4a5e8a;
+  text-align: center;
+  margin: 10px 0;
+}
+
+.upload-btn {
+    background-color: #919191;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 10px 20px;
+    font-family: Arial, sans-serif;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+
+}
+
+.upload-btn:hover {
+    background-color: #76aef7;
+}
+
+.upload-btn:disabled {
+  background-color: #cccccc;
+  color: #666666;
+  cursor: not-allowed;
+}
+
+.upload-btn-label{
+  width: 100%;
+}
+
+.error-message {
+    color: red;
+    font-size: 14px;
+    margin-top: 10px;
+}
+
+.uploaded-lines-container {
+  display: flex;
+  flex-direction: column;
+  text-align: center;
+
+}
+
+.uploaded-lines {
+  padding: 20px;
+  background-color: #e9f5ff; 
+  border: 1px solid #cce7ff;
+  border-radius: 8px;
+  
+}
+
+.uploaded-lines h3 {
+  margin-top: 0;
+  color: #0056b3; 
+}
+
+.uploaded-lines textarea {
+  border: 1px solid #cce7ff;
+  padding: 10px;
+  border-radius: 4px;
+  font-size: 14px;
+  flex: 1; 
+  margin-right: 10px; 
+  max-width: 70%; 
+
+}
+
+.uploaded-lines .button-group button {
+  background-color: #0056b3;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  cursor: pointer;
+}
+
+.uploaded-lines .button-group button:hover {
+  background-color: #003f7f;
+}
+
+.uploaded-lines li {
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  gap: 10px; 
+  margin-bottom: 10px; 
+}
+
+.uploaded-lines ul {
+  display: flex;
+  flex-direction: column;
+  text-align: center;
+
+}
+
+.single-btn button {
+  background-color: #fcfcfc; 
+  margin-top: 20px;
+  background: #6a0dad;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}

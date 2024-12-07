@@ -142,11 +142,6 @@ function App() {
               <CreateEstimatePage apiUrl={apiUrl} />
             </AuthenticatedRoute>
         }/>
-                {/* <Route path="/saved-estimates" element={
-            <AuthenticatedRoute isAuthenticated={isAuthenticated} hasActiveSubscription={hasActiveSubscription}>
-              <EstimatesPage apiUrl={apiUrl} />
-            </AuthenticatedRoute>
-        }/> */}
                 <Route path="/saved-estimate/:estimateId" element={
             <AuthenticatedRoute isAuthenticated={isAuthenticated} hasActiveSubscription={hasActiveSubscription}>
               <EstimateDetailPage apiUrl={apiUrl} />
