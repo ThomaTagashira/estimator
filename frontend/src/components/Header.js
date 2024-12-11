@@ -39,7 +39,6 @@ const Header = ({ handleLogout, hasActiveSubscription, tokenCount, userSubscript
                     {hasActiveSubscription ? (
                         <>
                             <li><Link to="/">Home</Link></li>
-                            <li><Link to="/buy-tokens">Buy Tokens</Link></li>
                         </>
                     ) : (
                         <li><Link to="/">Sign Up</Link></li>
@@ -54,22 +53,23 @@ const Header = ({ handleLogout, hasActiveSubscription, tokenCount, userSubscript
                     <div className="line"></div>
                     <div className="line"></div>
                 </div>
-                {isMenuOpen && (
-                    <div className="dropdown-menu">
-                        <Link to="/save-business-info" className="dropdown-link" onClick={() => setIsMenuOpen(false)}>
-                            <button className="dropdown-button">Update Business Information</button>
-                        </Link>
-                        <Link to="/change-subscription-tier" className="dropdown-link" onClick={() => setIsMenuOpen(false)}>
-                            <button className="dropdown-button">Change Subscription Tier</button>
-                        </Link>
-                        <Link to="/cancel-subscription" className="dropdown-link" onClick={() => setIsMenuOpen(false)}>
-                            <button className="dropdown-button">Cancel Subscription</button>
-                        </Link>
-                        <button className="dropdown-button" onClick={() => { handleLogout(); setIsMenuOpen(false); }}>
-                            Logout
-                        </button>
+                <div className={`dropdown-menu ${isMenuOpen ? 'open' : ''}`}>
+                    <Link to="/save-business-info" className="dropdown-link" onClick={() => setIsMenuOpen(false)}>
+                        <button className="dropdown-button">Business Info</button>
+                    </Link>
+                    <Link to="/buy-tokens" className='dropdown-link' onClick={() => setIsMenuOpen(false)}>
+                        <button className='dropdown-button'>Purchase Tokens</button>
+                    </Link>
+                    <Link to="/change-subscription-tier" className="dropdown-link" onClick={() => setIsMenuOpen(false)}>
+                        <button className="dropdown-button">Change Subscription</button>
+                    </Link>
+                    <Link to="/cancel-subscription" className="dropdown-link" onClick={() => setIsMenuOpen(false)}>
+                        <button className="dropdown-button">Cancel Subscription</button>
+                    </Link>
+                    <div className="dropdown-link" onClick={() => { handleLogout(); setIsMenuOpen(false); }}>
+                        <button className="dropdown-button">Logout</button>
                     </div>
-                )}
+                </div>
             </div>
         </header>
     );

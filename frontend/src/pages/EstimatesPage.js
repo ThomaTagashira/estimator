@@ -61,7 +61,7 @@ const EstimatesPage = () => {
       </div>
 
       <div className="estimate-list-container">
-        <EstimateList estimates={estimates} apiUrl={apiUrl} />
+        <EstimateList estimates={estimates} apiUrl={apiUrl} fetchEstimates={fetchEstimates} />
         <div className="pagination">
           {[...Array(totalPages)].map((_, index) => (
             <button

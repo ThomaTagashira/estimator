@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './pages_css/DynamicTable.css';
 import useDynamicTable from '../hooks/useDynamicTable';
 import axios from 'axios';
@@ -32,8 +32,12 @@ const DynamicTablePage = ({ apiUrl, estimateId, selectedString, setSelectedStrin
         setInputFields,
         handleAddAllRows,
         handleAddCustomRow,
-        handleSalesTaxChange,
         handleDiscountChange,
+        handleDiscountBlur,
+        handleDiscountFocus,
+        handleSalesTaxChange,
+        handleSalesTaxBlur,
+        handleSalesTaxFocus,
         handleMarginChange,
         toggleDiscount,
         toggleMargin,
@@ -61,13 +65,33 @@ const DynamicTablePage = ({ apiUrl, estimateId, selectedString, setSelectedStrin
   const [projectLocation, setProjectLocation] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [isEditable, setIsEditable] = useState(false);
-  const [originalClientInfo, setOriginalClientInfo] = useState({});
-  const [originalProjectInfo, setOriginalProjectInfo] = useState({});
+  const [originalClientInfo, setOriginalClientInfo] = useState(null);
+  const [originalProjectInfo, setOriginalProjectInfo] = useState(null);
+  const [isClientEditable, setIsClientEditable] = useState(false);
+  const [isProjectEditable, setIsProjectEditable] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  const dropdownRef = useRef(null);
+
+  const toggleMenu = () => {
+    setIsMenuOpen(!isMenuOpen);
+  };
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+        if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+            setIsMenuOpen(false);
+        }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   useEffect(() => {
     console.log('DynamicTablePage Refresh Key:', refreshKey);
-}, [refreshKey]);
+  }, [refreshKey]);
 
   useEffect(() => {
     const fetchEstimateData = async () => {
@@ -196,8 +220,7 @@ useEffect(() => {
 }, [estimateId, apiUrl, setInputFields, refreshKey]); 
 
 
-
-  const handleSave = async () => {
+const handleClientSave = async () => {
     const accessToken = localStorage.getItem('access_token');
     const updatedClientInfo = {
       client_name: clientName,
@@ -205,17 +228,8 @@ useEffect(() => {
       client_phone: clientPhone,
       client_email: clientEmail,
     };
-    const updatedProjectInfo = {
-      project_name: projectName,
-      project_location: projectLocation,
-      start_date: startDate,
-      end_date: endDate,
-    };
 
-    const clientInfoChanged = JSON.stringify(updatedClientInfo) !== JSON.stringify(originalClientInfo);
-    const projectInfoChanged = JSON.stringify(updatedProjectInfo) !== JSON.stringify(originalProjectInfo);
-
-    if (clientInfoChanged || projectInfoChanged) {
+    if (JSON.stringify(updatedClientInfo) !== JSON.stringify(originalClientInfo)) {
       try {
         const response = await fetch(`${apiUrl}/api/update-estimate/${estimateId}/`, {
           method: 'PATCH',
@@ -223,23 +237,58 @@ useEffect(() => {
             Authorization: `Bearer ${accessToken}`,
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            client_data: updatedClientInfo,
-            project_data: updatedProjectInfo,
-          }),
+          body: JSON.stringify({ client_data: updatedClientInfo }),
         });
 
         if (response.ok) {
-          console.log('Estimate updated successfully');
+          console.log('Client info updated successfully');
           setOriginalClientInfo(updatedClientInfo);
-          setOriginalProjectInfo(updatedProjectInfo);
-          setIsEditable(false);
+          setIsClientEditable(false);
         } else {
-          console.error('Failed to update estimate');
+          console.error('Failed to update client info');
         }
       } catch (error) {
-        console.error('Failed to save updated data:', error);
+        console.error('Error saving client info:', error);
       }
+    } else {
+      console.log('No changes made to client info');
+      setIsClientEditable(false);
+    }
+  };
+
+  const handleProjectSave = async () => {
+    const accessToken = localStorage.getItem('access_token');
+    const updatedProjectInfo = {
+      project_name: projectName,
+      project_location: projectLocation,
+      start_date: startDate,
+      end_date: endDate,
+    };
+
+    if (JSON.stringify(updatedProjectInfo) !== JSON.stringify(originalProjectInfo)) {
+      try {
+        const response = await fetch(`${apiUrl}/api/update-estimate/${estimateId}/`, {
+          method: 'PATCH',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ project_data: updatedProjectInfo }),
+        });
+
+        if (response.ok) {
+          console.log('Project info updated successfully');
+          setOriginalProjectInfo(updatedProjectInfo);
+          setIsProjectEditable(false);
+        } else {
+          console.error('Failed to update project info');
+        }
+      } catch (error) {
+        console.error('Error saving project info:', error);
+      }
+    } else {
+      console.log('No changes made to project info');
+      setIsProjectEditable(false);
     }
   };
 
@@ -289,7 +338,7 @@ useEffect(() => {
               type="text"
               value={clientName}
               onChange={(e) => setClientName(e.target.value)}
-              disabled={!isEditable}
+              disabled={!isClientEditable}
               placeholder="Client Name"
             />
           </div>
@@ -298,7 +347,7 @@ useEffect(() => {
               type="text"
               value={clientAddress}
               onChange={(e) => setClientAddress(e.target.value)}
-              disabled={!isEditable}
+              disabled={!isClientEditable}
               placeholder="Client Address"
             />
           </div>
@@ -307,7 +356,7 @@ useEffect(() => {
               type="text"
               value={clientPhone}
               onChange={(e) => setClientPhone(e.target.value)}
-              disabled={!isEditable}
+              disabled={!isClientEditable}
               placeholder="Client Phone"
             />
           </div>
@@ -316,10 +365,17 @@ useEffect(() => {
               type="text"
               value={clientEmail}
               onChange={(e) => setClientEmail(e.target.value)}
-              disabled={!isEditable}
+              disabled={!isClientEditable}
               placeholder="Client Email"
             />
           </div>
+            <div className='edit'>
+                {!isClientEditable ? (
+                <button onClick={() => setIsClientEditable(true)}>Update Client Info</button>
+                ) : (
+                <button onClick={handleClientSave}>Save Client Info</button>
+                )}
+            </div>
         </div>
 
         <div className="info-section">
@@ -329,7 +385,7 @@ useEffect(() => {
               type="text"
               value={projectName}
               onChange={(e) => setProjectName(e.target.value)}
-              disabled={!isEditable}
+              disabled={!isProjectEditable}
               placeholder="Project Name"
             />
           </div>
@@ -338,7 +394,7 @@ useEffect(() => {
               type="text"
               value={projectLocation}
               onChange={(e) => setProjectLocation(e.target.value)}
-              disabled={!isEditable}
+              disabled={!isProjectEditable}
               placeholder="Project Location"
             />
           </div>
@@ -347,7 +403,7 @@ useEffect(() => {
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              disabled={!isEditable}
+              disabled={!isProjectEditable}
               placeholder="Start Date"
             />
           </div>
@@ -356,32 +412,54 @@ useEffect(() => {
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              disabled={!isEditable}
+              disabled={!isProjectEditable}
               placeholder="End Date"
             />
           </div>
+            <div className='edit'>
+                {!isProjectEditable ? (
+                <button onClick={() => setIsProjectEditable(true)}>Update Project Info</button>
+                ) : (
+                <button onClick={handleProjectSave}>Save Project Info</button>
+                )}
+            </div>
+          </div>
         </div>
-      </div>
 
-      <div className='edit'>
-        {!isEditable ? (
-          <button onClick={() => setIsEditable(true)}>Edit Client and Project Info</button>
-        ) : (
-          <button onClick={handleSave}>Save</button>
-        )}
-      </div>
+                <div className="DT-margins">
+                    <button onClick={handleAddCustomRow}>
+                        Add New Task
+                    </button>
+                    <button onClick={toggleDiscount}>
+                        {applyDiscount ? 'Remove Discount' : 'Apply Discount'}
+                    </button>
+                    <button onClick={toggleMargin}>
+                        {applyMargin ? 'Remove Margin' : 'Add Margin %'}
+                    </button>
+                        {applyMargin && (
+                            <div>
+                                <span>Enter Margin Percentage</span>
+                                <input
+                                type="number"
+                                value={marginPercent}
+                                onChange={handleMarginChange}
+                                style={{ width: '50px' }}
+                                placeholder="0"
+                                />
+                            </div>
+                        )}
+                </div>
 
       <div className="dynamic-table">
-        <button onClick={handleAddCustomRow}>Add New Line</button>
-              {/* Dynamic Table */}
               <div ref={tableRef}>
                 <table>
                   <thead>
                     <tr>
                       <th></th>
                       <th>Job</th>
-                      <th>Labor Cost</th>
-                      <th>Material Cost</th>
+                      <th></th>
+                      <th>Labor</th>
+                      <th>Material</th>
                       <th></th>
                     </tr>
                   </thead>
@@ -397,7 +475,7 @@ useEffect(() => {
                       return (
                         <tr key={index}>
                           <td>{index + 1}</td>
-                          <td>
+                          <td colSpan={2}>
                             {editIndex === index ? (
                               <textarea
                                 name="job"
@@ -410,7 +488,7 @@ useEffect(() => {
                               job
                             )}
                           </td>
-                          <td className='costs'>
+                          <td>
                             {editIndex === index ? (
                               <input
                                 type="text"
@@ -423,7 +501,7 @@ useEffect(() => {
                               `$${adjustedLaborCost}`
                             )}
                           </td>
-                          <td className='costs'>
+                          <td>
                             {editIndex === index ? (
                               <input
                                 type="text"
@@ -436,7 +514,7 @@ useEffect(() => {
                               `$${materialCost}`
                             )}
                           </td>
-                          <td className='action-buttons'>
+                          <td>
                             {editIndex === index ? (
                               <button onClick={() => handleUpdateClick(index)}>Update</button>
                             ) : (
@@ -454,104 +532,87 @@ useEffect(() => {
                       );
                     })}
 
-                    {/* Totals */}
                     <tr>
-                      <td colSpan="2"><strong>Total Labor</strong></td>
-                      <td className='costs'><strong>${totalLaborCost}</strong></td>
-                      <td className='costs'><strong>${totalMaterialCost}</strong></td>
+                      <td colSpan={2}><strong>Total Labor and Material</strong></td>
                       <td></td>
-                    </tr>
-                    <tr>
-                      <td colSpan="3"><strong>Subtotal</strong></td>
-                      <td className='costs'><strong>${combinedTotal}</strong></td>
+                      <td><strong>${totalLaborCost}</strong></td>
+                      <td><strong>${totalMaterialCost}</strong></td>
                       <td></td>
                     </tr>
 
-                    {/* Discount & Sales Tax */}
+                    <tr>
+                      <td colSpan={3}><strong>Subtotal</strong></td>
+                      <td></td>
+                      <td><strong>${combinedTotal}</strong></td>
+                      <td></td>
+                    </tr>
+
                     {applyDiscount && (
                       <tr>
-                        <td colSpan="2"><strong>Discount</strong></td>
-                        <td className='costs'>
-                          <input
+                        <td colSpan={3}><strong>Discount</strong></td>
+                        <td className="center-input">
+                        <input
                             type="number"
                             value={discountPercent}
+                            onFocus={handleDiscountFocus}
+                            onBlur={handleDiscountBlur}
                             onChange={handleDiscountChange}
-                            style={{ width: '50px' }}
-                            placeholder="0"
-                          />
+                            placeholder="0%"
+                            />
                         </td>
-                        <td className='costs'><strong>${totalDiscount}</strong></td>
+                        <td><strong>${totalDiscount}</strong></td>
                         <td></td>
                       </tr>
                     )}
                     <tr>
-                      <td colSpan="2"><strong>Tax</strong></td>
-                      <td className='costs'>
-                        <input
-                          type="number"
-                          value={salesTaxPercent}
-                          onChange={handleSalesTaxChange}
-                          style={{ width: '50px' }}
-                          placeholder="0"
+                      <td colSpan={3}><strong>Tax</strong></td>
+                      <td className="center-input">
+                      <input
+                        type="number"
+                        value={salesTaxPercent}
+                        onFocus={handleSalesTaxFocus}
+                        onBlur={handleSalesTaxBlur}
+                        onChange={handleSalesTaxChange}
+                        placeholder="0%"
                         />
                       </td>
-                      <td className='costs'><strong>${totalSalesTax}</strong></td>
+                      <td><strong>${totalSalesTax}</strong></td>
                       <td></td>
                     </tr>
                     <tr>
-                      <td colSpan="3"><strong>Total</strong></td>
-                      <td className='costs'><strong>${grandTotal}</strong></td>
+                      <td colSpan={3}><strong>Total</strong></td>
+                      <td></td>
+                      <td><strong>${grandTotal}</strong></td>
                       <td></td>
                     </tr>
                   </tbody>
                 </table>
               </div>
-              {/* Discount & Margin */}
-              <div>
-                <button onClick={toggleDiscount}>
-                  {applyDiscount ? 'Remove Discount' : 'Apply Discount'}
+
+              <div className='export-to-pdf'>
+                <button
+                    onClick={() =>
+                        exportTablePDF({
+                            companyName,
+                            address,
+                            phone,
+                            estimateId,
+                            clientName,
+                            clientAddress,
+                            clientPhone,
+                            clientEmail,
+                            projectName,
+                            projectLocation,
+                            startDate,
+                            endDate,
+                        })
+                    }
+                    >
+                    Generate Estimate
                 </button>
               </div>
-              <div>
-                <button onClick={toggleMargin}>
-                  {applyMargin ? 'Remove Margin' : 'Add Margin %'}
-                </button>
-                {applyMargin && (
-                  <div>
-                    <span>Enter Margin Percentage</span>
-                    <input
-                      type="number"
-                      value={marginPercent}
-                      onChange={handleMarginChange}
-                      style={{ width: '50px' }}
-                      placeholder="0"
-                    />
-                  </div>
-                )}
-              </div>
-              {/* Export to PDF */}
-              <button
-                onClick={() =>
-                    exportTablePDF({
-                        companyName,
-                        address,
-                        phone,
-                        estimateId,
-                        clientName,
-                        clientAddress,
-                        clientPhone,
-                        clientEmail,
-                        projectName,
-                        projectLocation,
-                        startDate,
-                        endDate,
-                    })
-                }
-            >
-                Generate Estimate
-              </button>
-            </div>
         </div>
+    </div>
   );
 };
 

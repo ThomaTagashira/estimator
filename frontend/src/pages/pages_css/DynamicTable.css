@@ -28,9 +28,9 @@ table {
     display: flex;
     justify-content: space-between;
     gap: 20px;
-    align-items: center; 
+    align-items: center;
     justify-content: center; 
-    text-align: center;
+    margin-bottom: 30px;
   }
 
   .info-section {
@@ -39,6 +39,8 @@ table {
 
   .info-section div {
     margin-bottom: 10px;
+    max-width: 75%;
+
   }
 
   input, textarea {
@@ -150,20 +152,13 @@ table {
     width: 100%;
     font-family: Arial, sans-serif;
     font-size: 14px;
+    table-layout: fixed;
   }
 
+  .dynamic-table th,
   .dynamic-table td {
     padding: 12px 15px;
-    border: none; 
-  }
-
-  
-  .dynamic-table th {
-    font-weight: bold;
-    color: #5A5A5A;
-    padding: 12px 15px;
-    text-align: center;
-    border: none; 
+    border: none;
   }
 
   .dynamic-table tr:nth-child(even) {
@@ -171,24 +166,83 @@ table {
   }
 
   .dynamic-table tr:nth-child(odd) {
-    background-color: white; 
+    background-color: white;
   }
 
   .dynamic-table tr:hover {
     background-color: #dfdfdfea;
-    cursor: pointer; 
+    cursor: default;
   }
 
-  .action-buttons {
-    display: flex;
-    align-items: center; 
-    justify-content: center; 
+  .dynamic-table th:nth-child(3),
+  .dynamic-table td:nth-child(3),
+  .dynamic-table th:nth-child(4),
+  .dynamic-table th:nth-child(5),
+  .dynamic-table td:nth-child(4),
+  .dynamic-table td:nth-child(5),
+  .dynamic-table th:nth-child(6),
+  .dynamic-table td:nth-child(6)  {
+    width: 15%;
     text-align: center;
-    gap: 5px;
   }
 
-  .costs {
-    text-align: center;
+
+  .dynamic-table th:nth-child(2),
+  .dynamic-table td:nth-child(2) {
+    width: 75%;
+    text-align: left;
   }
 
-  
+
+.action-buttons {
+  display: flex;
+  align-items: left;
+  justify-content: center;
+  gap: 5px;
+  width: 100%;
+}
+
+td.center-input {
+  text-align: center;
+  vertical-align: middle;
+}
+
+td.center-input input {
+  margin: 0 auto;
+  display: block;
+  width: 60px;
+}
+
+.center-input input[type="number"]::-webkit-inner-spin-button,
+.center-input input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+  .DT-margins button {
+    align-self: flex-end;
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+
+  .DT-margins button:hover {
+    background-color: #0056b3;
+  }
+
+.export-to-pdf button {
+    align-self: flex-start;
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.export-to-pdf button:hover {
+    background-color: #0056b3;
+}

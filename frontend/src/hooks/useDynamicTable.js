@@ -32,8 +32,11 @@ const useDynamicTable = (apiUrl, estimateId, selectedString, setSelectedString )
     const [endDate, setEndDate] = useState('');
     const [originalClientData, setOriginalClientData] = useState(null);
     const [originalProjectData, setOriginalProjectData] = useState(null);
-    // const [logo, setLogo] = useState(null);
+
     const tableRef = useRef();
+
+    // const [logo, setLogo] = useState(null);
+
 
     useEffect(() => {
         console.log('inputFields updated:', inputFields);
@@ -383,8 +386,37 @@ const useDynamicTable = (apiUrl, estimateId, selectedString, setSelectedString )
     };
 
 
-    const handleSalesTaxChange = (event) => setSalesTaxPercent(parseFloat(event.target.value) || 0);
-    const handleDiscountChange = (event) => setDiscountPercent(parseFloat(event.target.value) || 0);
+    const handleSalesTaxFocus = () => {
+        if (salesTaxPercent === 0) {
+          setSalesTaxPercent('');
+        }
+      };
+
+      const handleSalesTaxBlur = () => {
+        if (salesTaxPercent === '' || salesTaxPercent === null) {
+          setSalesTaxPercent(0);
+        }
+      };
+
+      const handleSalesTaxChange = (event) => {
+        setSalesTaxPercent(event.target.value);
+      };
+
+      const handleDiscountFocus = () => {
+        if (discountPercent === 0) {
+          setDiscountPercent('');
+        }
+      };
+
+      const handleDiscountBlur = () => {
+        if (discountPercent === '' || discountPercent === null) {
+          setDiscountPercent(0);
+        }
+      };
+
+      const handleDiscountChange = (event) => {
+        setDiscountPercent(event.target.value);
+      };
 
     const toggleDiscount = () => setApplyDiscount(!applyDiscount);
     const toggleMargin = () => setApplyMargin(!applyMargin);
@@ -522,7 +554,11 @@ const useDynamicTable = (apiUrl, estimateId, selectedString, setSelectedString )
 
     return {
         handleDiscountChange,
+        handleDiscountBlur,
+        handleDiscountFocus,
         handleSalesTaxChange,
+        handleSalesTaxBlur,
+        handleSalesTaxFocus,
         totalLaborCost,
         totalMaterialCost,
         combinedTotal,

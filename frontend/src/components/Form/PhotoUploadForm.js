@@ -21,69 +21,78 @@ const PhotoUploadForm = ({
             {/* Photo Upload  */}
             <div className="photo-upload-form">
                 <h3>Photo Upload Form</h3>
-                <div
-                    className="drop-zone"
-                    onDrop={(e) => {
-                        e.preventDefault();
-                        const file = e.dataTransfer.files[0];
-                        if (file) {
-                            handleFileChange(file);
-                        }
-                    }}
-                    onDragOver={(e) => e.preventDefault()}
-                >
-                    {selectedFile ? (
-                        <>
-                            {isUploading ? (
-                                <p className="loading-message">
-                                    Converting photo to text, please wait...
-                                </p>
-                            ) : (
-                                <>
-                                    <img
-                                        src={URL.createObjectURL(selectedFile)}
-                                        alt="Preview"
-                                        className="preview-image"
-                                    />
-                                    <button
-                                        className="remove-photo-btn"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleRemovePhoto();
-                                        }}
-                                    >
-                                        X
-                                    </button>
-                                </>
-                            )}
-                        </>
-                    ) : (
-                        <p>Drop your image here, or click the button below to browse</p>
-                    )}
-                </div>
-                <form
-                    onSubmit={(e) => {
-                        e.preventDefault();
-                        handleSubmit();
-                    }}
-                >
-                    <input
-                        id="file-upload"
-                        type="file"
-                        style={{ display: 'none' }}
-                        onChange={(e) => handleFileChange(e.target.files[0])}
-                    />
-                    <label htmlFor="file-upload" className='upload-btn-label'>
-                        <button type="submit" className="upload-btn">
+                    <div
+                        className="drop-zone"
+                        onDrop={(e) => {
+                            e.preventDefault();
+                            const file = e.dataTransfer.files[0];
+                            if (file) {
+                                handleFileChange(file);
+                            }
+                        }}
+                        onDragOver={(e) => e.preventDefault()}
+                    >
+                        {selectedFile ? (
+                            <>
+                                {isUploading ? (
+                                    <p className="loading-message">
+                                        Converting photo to text, please wait...
+                                    </p>
+                                ) : (
+                                    <>
+                                        <img
+                                            src={URL.createObjectURL(selectedFile)}
+                                            alt="Preview"
+                                            className="preview-image"
+                                        />
+                                        <button
+                                            className="remove-photo-btn"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleRemovePhoto();
+                                            }}
+                                        >
+                                            X
+                                        </button>
+                                    </>
+                                )}
+                            </>
+                        ) : (
+                            <p>Drop your image here, or click the button below to browse</p>
+                        )}
+                    </div>
+                    <form
+                        onSubmit={(e) => {
+                            e.preventDefault();
+                            handleSubmit();
+                        }}
+                    >
+                        <input
+                            id="file-upload"
+                            type="file"
+                            accept="image/*"
+                            style={{ display: 'none' }}
+                            onChange={(e) => handleFileChange(e.target.files[0])}
+                        />
+                        <button
+                            type={selectedFile ? "submit" : "button"}
+                            className="upload-btn"
+                            onClick={() => {
+                                if (!selectedFile) {
+                                    document.getElementById('file-upload').click();
+                                }
+                            }}
+                            disabled={isUploading}
+                        >
                             {selectedFile
                                 ? isUploading
                                     ? 'Uploading...'
                                     : 'Upload Photo'
                                 : 'Browse'}
                         </button>
-                    </label>
-                </form>
-            </div>
+                    </form>
+                </div>
+
 
             {/* Uploaded Lines */}
         <div className="uploaded-lines-container">

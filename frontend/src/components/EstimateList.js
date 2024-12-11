@@ -4,7 +4,7 @@ import './components_css/EstimateList.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
 
-const EstimateList = ({ estimates: initialEstimates, loading, error, apiUrl }) => {
+const EstimateList = ({ estimates: initialEstimates, loading, error, apiUrl, fetchEstimates }) => {
   const [estimates, setEstimates] = useState(initialEstimates);
   const [deletingEstimate, setDeletingEstimate] = useState(null);
   const navigate = useNavigate(); 
@@ -37,7 +37,7 @@ const EstimateList = ({ estimates: initialEstimates, loading, error, apiUrl }) =
         console.log('Estimate deleted successfully.');
 
         setEstimates((prev) => prev.filter((est) => est.estimate_id !== deletingEstimate.estimate_id));
-
+        fetchEstimates();
         setDeletingEstimate(null); 
       } else {
         console.error('Failed to delete estimate:', response.statusText);
