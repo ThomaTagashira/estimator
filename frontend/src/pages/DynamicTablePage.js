@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
-import './pages_css/DynamicTable.css';
+import React, { useState, useEffect } from 'react';
+import './pages_css/Pages.css';
 import useDynamicTable from '../hooks/useDynamicTable';
 import axios from 'axios';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTrash, faEdit } from '@fortawesome/free-solid-svg-icons';
+import { faEdit, faXmark, faCheck, faTrash } from '@fortawesome/free-solid-svg-icons';
 
 
 const DynamicTablePage = ({ apiUrl, estimateId, selectedString, setSelectedString, refreshKey  }) => {
@@ -39,10 +39,12 @@ const DynamicTablePage = ({ apiUrl, estimateId, selectedString, setSelectedStrin
         handleSalesTaxBlur,
         handleSalesTaxFocus,
         handleMarginChange,
+        handleMarginFocus,
+        handleMarginBlur,
         toggleDiscount,
         toggleMargin,
         handleRemoveField,
-        handleDeleteRow,
+        handleDeleteTask,
         handleEditClick,
         handleEditChange,
         handleUpdateClick,
@@ -50,8 +52,15 @@ const DynamicTablePage = ({ apiUrl, estimateId, selectedString, setSelectedStrin
         applyMarginToLaborCost,
         exportTablePDF,
         setTableData,
+        handleCancelClick,
+        isProjectEditable,
+        setIsProjectEditable,
         tableRef,
         tableData,
+        handleClientCancel,
+        handleProjectCancel,
+        isClientEditable,
+        setIsClientEditable,
     } = useDynamicTable(apiUrl, estimateId, selectedString, setSelectedString);
 
   const [companyName, setCompanyName] = useState('');
@@ -67,27 +76,9 @@ const DynamicTablePage = ({ apiUrl, estimateId, selectedString, setSelectedStrin
   const [endDate, setEndDate] = useState('');
   const [originalClientInfo, setOriginalClientInfo] = useState(null);
   const [originalProjectInfo, setOriginalProjectInfo] = useState(null);
-  const [isClientEditable, setIsClientEditable] = useState(false);
-  const [isProjectEditable, setIsProjectEditable] = useState(false);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  
 
-  const dropdownRef = useRef(null);
 
-  const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen);
-  };
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-        if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-            setIsMenuOpen(false);
-        }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-        document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
 
   useEffect(() => {
     console.log('DynamicTablePage Refresh Key:', refreshKey);
@@ -319,7 +310,9 @@ const handleClientSave = async () => {
           </button>
         </div>
       ))}
-        <button onClick={handleAddAllRows} className='DT-btn'>Add All Tasks to Estimate</button>
+        <div className='buttons'>
+          <button onClick={handleAddAllRows}>Add All Tasks to Estimate</button>
+          </div>
         </div>
           
           <div>
@@ -371,9 +364,12 @@ const handleClientSave = async () => {
           </div>
             <div className='edit'>
                 {!isClientEditable ? (
-                <button onClick={() => setIsClientEditable(true)}>Update Client Info</button>
+                <button onClick={() => setIsClientEditable(true)}>Edit Client Info</button>
                 ) : (
-                <button onClick={handleClientSave}>Save Client Info</button>
+                  <>  
+                    <button onClick={handleClientSave}>Save</button>
+                    <button onClick={handleClientCancel}>Cancel</button>
+                  </>
                 )}
             </div>
         </div>
@@ -418,37 +414,21 @@ const handleClientSave = async () => {
           </div>
             <div className='edit'>
                 {!isProjectEditable ? (
-                <button onClick={() => setIsProjectEditable(true)}>Update Project Info</button>
+                <button onClick={() => setIsProjectEditable(true)}>Edit Project Info</button>
                 ) : (
-                <button onClick={handleProjectSave}>Save Project Info</button>
+                <>  
+                  <button onClick={handleProjectSave}>Save</button>
+                  <button onClick={handleProjectCancel}>Cancel</button>
+                </>
                 )}
             </div>
           </div>
         </div>
-
-                <div className="DT-margins">
+                  <div className='buttons'>
                     <button onClick={handleAddCustomRow}>
                         Add New Task
-                    </button>
-                    <button onClick={toggleDiscount}>
-                        {applyDiscount ? 'Remove Discount' : 'Apply Discount'}
-                    </button>
-                    <button onClick={toggleMargin}>
-                        {applyMargin ? 'Remove Margin' : 'Add Margin %'}
-                    </button>
-                        {applyMargin && (
-                            <div>
-                                <span>Enter Margin Percentage</span>
-                                <input
-                                type="number"
-                                value={marginPercent}
-                                onChange={handleMarginChange}
-                                style={{ width: '50px' }}
-                                placeholder="0"
-                                />
-                            </div>
-                        )}
-                </div>
+                    </button>  
+                  </div>
 
       <div className="dynamic-table">
               <div ref={tableRef}>
@@ -514,15 +494,23 @@ const handleClientSave = async () => {
                               `$${materialCost}`
                             )}
                           </td>
-                          <td>
+                          <td className='DT-btn-group'>
                             {editIndex === index ? (
-                              <button onClick={() => handleUpdateClick(index)}>Update</button>
+                              <>
+                                <button onClick={() => handleUpdateClick(index)}>
+                                  <FontAwesomeIcon icon={faCheck} style={{ color: 'green', cursor: 'pointer' }} />
+                                </button>
+
+                                <button onClick={() => handleCancelClick(index)}>
+                                < FontAwesomeIcon icon={faXmark} style={{ color: "red", cursor: "pointer" }} />
+                                </button>
+                              </>
                             ) : (
                               <>
                                 <button onClick={() => handleEditClick(index)}>
                                  <FontAwesomeIcon icon={faEdit} style={{ color: 'blue', cursor: 'pointer' }} />
                                   </button>
-                                <button onClick={() => handleDeleteRow(index)}>
+                                <button onClick={() => handleDeleteTask(index)}>
                                   <FontAwesomeIcon icon={faTrash} style={{ color: 'red', cursor: 'pointer' }} />
                                   </button>
                               </>
@@ -589,7 +577,29 @@ const handleClientSave = async () => {
                 </table>
               </div>
 
-              <div className='export-to-pdf'>
+            <div className='DT-margins-container'>
+              <div className='buttons'>
+                    <button onClick={toggleMargin}>
+                        {applyMargin ? 'Remove Margin' : 'Add Margin %'}
+                    </button>        
+                    <button onClick={toggleDiscount}>
+                        {applyDiscount ? 'Remove Discount' : 'Apply Discount'}
+                    </button>        
+                        {applyMargin && (
+                            <div className='margin-input'>
+                                <span>Enter Margin</span>
+                                <input
+                                type="number"
+                                value={marginPercent}
+                                onFocus={handleMarginFocus}
+                                onBlur={handleMarginBlur}
+                                onChange={handleMarginChange}
+                                placeholder="0%"
+                                />
+                            </div>
+                        )}
+                  </div>
+              <div className='buttons'>
                 <button
                     onClick={() =>
                         exportTablePDF({
@@ -611,6 +621,7 @@ const handleClientSave = async () => {
                     Generate Estimate
                 </button>
               </div>
+          </div>
         </div>
     </div>
   );

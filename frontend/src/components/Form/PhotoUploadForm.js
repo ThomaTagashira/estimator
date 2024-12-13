@@ -1,7 +1,7 @@
 import React from 'react';
-import '../components_css/ComponentsFormFields.css';
+import '../components_css/Components.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faXmark } from '@fortawesome/free-solid-svg-icons';
 
 const PhotoUploadForm = ({
     onSearch,
@@ -111,7 +111,7 @@ const PhotoUploadForm = ({
                                 }}
                             />
                             <button onClick={() => handleRemoveLine(key)} >
-                                <FontAwesomeIcon icon={faTrash} style={{ color: 'red', cursor: 'pointer' }} />
+                                <FontAwesomeIcon icon={faXmark} style={{ color: 'red', cursor: 'pointer' }} />
                             </button>
                         </li>
                     ))}

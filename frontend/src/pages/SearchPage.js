@@ -6,7 +6,7 @@ import PhotoUploadForm from '../components/Form/PhotoUploadForm';
 import useSearch from '../hooks/useSearch';
 import usePhotoUpload from '../hooks/usePhotoUpload';
 import DynamicTablePage from '../pages/DynamicTablePage';
-import './pages_css/SearchPage.css';
+import './pages_css/Pages.css';
 
 const SearchPage = ({ apiUrl }) => {
   const [activeTab, setActiveTab] = useState('search');

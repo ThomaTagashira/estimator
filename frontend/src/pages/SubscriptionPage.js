@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import {SubscriptionCheckoutButton} from '../components/StripeCheckoutButton'; 
-import './pages_css/PurchasePages.css';
+import './pages_css/Pages.css';
 
 const SubscriptionPage = () => {
     const [selectedTier, setSelectedTier] = useState(''); 

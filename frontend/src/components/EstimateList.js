@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate  } from 'react-router-dom';
-import './components_css/EstimateList.css';
+import './components_css/Components.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
 
@@ -60,10 +60,10 @@ const EstimateList = ({ estimates: initialEstimates, loading, error, apiUrl, fet
   }
 
   return (
-    <div>
-      <table className="estimate-list-table">
+    <div className="estimate-list-table">
+      <table>
         <thead>
-          <tr className="estimate-list-header">
+          <tr>
             <th>Project Name</th>
             <th>Estimate Number</th>
             <th>Date Created</th>

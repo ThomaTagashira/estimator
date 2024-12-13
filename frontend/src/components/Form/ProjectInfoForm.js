@@ -1,5 +1,5 @@
 import React from 'react';
-import '../components_css/ComponentsFormFields.css';
+import '../components_css/Components.css';
 
 const ProjectInfoForm = ({
   projectInfo,

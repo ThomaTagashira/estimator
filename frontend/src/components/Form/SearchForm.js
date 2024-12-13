@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import '../components_css/ComponentsFormFields.css';
+import '../components_css/Components.css';
 
 function SearchForm({ onScopeSubmit }) {
   // const [textInput, setTextInput] = useState('');

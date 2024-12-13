@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { GoogleOAuthProvider } from '@react-oauth/google';
 import { getCookie } from '../utils/getCookies';
+import GoogleLoginButton from '../GoogleLoginButton';
 
 const googleID = process.env.REACT_APP_GOOGLE_CLIENT_ID;
 // const githubID = process.env.REACT_APP_GITHUB_CLIENT_ID;
@@ -14,7 +14,7 @@ const LoginForm = ({ onSubmit, error }) => {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        setFormError(''); // Clear previous errors
+        setFormError(''); 
 
         if (!email) {
             setFormError('Email is required.');
@@ -55,7 +55,6 @@ const LoginForm = ({ onSubmit, error }) => {
 
     return (
         <div>
-            <h2>Greetings Humans(?)</h2>
             <form onSubmit={handleSubmit}>
                 <input
                     type="text"
@@ -69,18 +68,20 @@ const LoginForm = ({ onSubmit, error }) => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                 />
-                <button type="submit">Login</button>
+                <button type="submit" className="login-btn">Login</button>
             </form>
             {formError && <p style={{ color: 'red' }}>{formError}</p>}
             {error && <p style={{ color: 'red' }}>{error}</p>}
 
-            <p>Don't have an account? <Link to="/register">Register</Link></p>
+            <Link to="/register">
+                <button className="create-new-account-btn">Create New Account</button>
+            </Link>
 
-            <GoogleOAuthProvider clientId={googleID}>
-                <button onClick={handleGoogleLogin}>Login with Google</button>
-            </GoogleOAuthProvider>
+            <hr className="divider" />
 
-
+            <div style={{ display: "flex", justifyContent: "center" }}>
+                <   GoogleLoginButton googleID={googleID} handleGoogleLogin={handleGoogleLogin} />
+            </div>
         </div>
     );
 };

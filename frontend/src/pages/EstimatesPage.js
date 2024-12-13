@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import useFetchEstimates from '../hooks/useFetchEstimates';
 import EstimateList from '../components/EstimateList';
 import { Link } from 'react-router-dom';
-import './pages_css/EstimatesPage.css';
+import './pages_css/Pages.css';
 
 const apiUrl = process.env.REACT_APP_API_URL;
 

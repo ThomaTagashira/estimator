@@ -13,7 +13,7 @@ const BusinessInfoPage = () => {
     } = useCreateBusinessInfo(apiUrl);
 
     const [isEditable, setIsEditable] = useState(false);
-    const [originalData, setOriginalData] = useState({}); // To store the original data
+    const [originalData, setOriginalData] = useState({}); 
 
     useEffect(() => {
         const fetchBusinessData = async () => {
@@ -37,7 +37,7 @@ const BusinessInfoPage = () => {
                     businessEmail: data[0].business_email || '',
                 };
                 setBusinessInfo(businessData);
-                setOriginalData(businessData); // Store the original data
+                setOriginalData(businessData); 
             } else {
                 console.error('Business data not found');
             }
@@ -47,12 +47,12 @@ const BusinessInfoPage = () => {
     }, [setBusinessInfo]);
 
     const handleCancel = () => {
-        setBusinessInfo(originalData); // Revert changes to the original data
-        setIsEditable(false); // Disable editing
+        setBusinessInfo(originalData);
+        setIsEditable(false);
     };
 
     return (
-        <div className="form-container">
+        <div className="create-estimate-container">
             <h3>Business Information</h3>
             <form>
                 <div className="form-group">

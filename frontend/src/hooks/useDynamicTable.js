@@ -4,7 +4,6 @@ import { exportPDF } from '../components/utils/exportPDF';
 import axios from 'axios';
 
 const useDynamicTable = (apiUrl, estimateId, selectedString, setSelectedString ) => {
-    const [isEditing, setIsEditing] = useState(false);
 
     const [inputFields, setInputFields] = React.useState(() => {
         const storedFields = JSON.parse(localStorage.getItem('selectedStrings')) || [];
@@ -32,6 +31,9 @@ const useDynamicTable = (apiUrl, estimateId, selectedString, setSelectedString )
     const [endDate, setEndDate] = useState('');
     const [originalClientData, setOriginalClientData] = useState(null);
     const [originalProjectData, setOriginalProjectData] = useState(null);
+    const [originalValues] = useState(null);
+    const [isProjectEditable, setIsProjectEditable] = useState(false);
+    const [isClientEditable, setIsClientEditable] = useState(false);
 
     const tableRef = useRef();
 
@@ -142,8 +144,6 @@ const useDynamicTable = (apiUrl, estimateId, selectedString, setSelectedString )
             console.error('Error saving estimate data:', error);
         }
     };
-
-    const toggleEdit = () => setIsEditing(!isEditing);
 
     useEffect(() => {
         if (selectedString && Array.isArray(selectedString) && selectedString.length > 0) {
@@ -295,7 +295,7 @@ const useDynamicTable = (apiUrl, estimateId, selectedString, setSelectedString )
 
 
 
-    const handleDeleteRow = async (index) => {
+    const handleDeleteTask = async (index) => {
         try {
             const taskNumber = tableData[index].task_number;
             console.log('Task number for deletion:', taskNumber);
@@ -323,13 +323,27 @@ const useDynamicTable = (apiUrl, estimateId, selectedString, setSelectedString )
             console.error('Error deleting task:', error);
         }
     };
+    
 
+    const handleCancelClick = () => {
+        if (originalValues) {
+            setEditValues(originalValues);
+        }
+        setEditIndex(null);
+    };
 
+    const handleClientCancel = () => {
+        setIsClientEditable(false); 
+    };
 
+    const handleProjectCancel = () => {
+        setIsProjectEditable(false); 
+    };
 
     const handleEditClick = (index) => {
         setEditIndex(index);
         const { job, laborCost, materialCost } = splitTaskIntoColumns(tableData[index]);
+
         setEditValues({
             job,
             laborCost: laborCost.replace('$', ''),
@@ -417,6 +431,19 @@ const useDynamicTable = (apiUrl, estimateId, selectedString, setSelectedString )
       const handleDiscountChange = (event) => {
         setDiscountPercent(event.target.value);
       };
+
+      const handleMarginFocus = () => {
+        if (marginPercent === 0) {
+          setMarginPercent('');
+        }
+      };
+
+      const handleMarginBlur = () => {
+        if (marginPercent === '' || marginPercent === null) {
+            setMarginPercent(0);
+        }
+      };
+
 
     const toggleDiscount = () => setApplyDiscount(!applyDiscount);
     const toggleMargin = () => setApplyMargin(!applyMargin);
@@ -601,22 +628,28 @@ const useDynamicTable = (apiUrl, estimateId, selectedString, setSelectedString )
         handleAddAllRows,
         handleAddCustomRow,
         handleRemoveField,
-        handleDeleteRow,
+        handleDeleteTask,
         handleEditClick,
         handleEditChange,
         handleUpdateClick,
         handleInputChange,
         toggleDiscount,
         handleMarginChange,
+        handleMarginFocus,
+        handleMarginBlur,
         toggleMargin,
         splitTaskIntoColumns,
         applyMarginToLaborCost,
         setTableData,
         tableRef,
-        isEditing,
-        toggleEdit,
         setInputFields,
-
+        handleCancelClick,
+        handleProjectCancel,
+        isProjectEditable,
+        setIsProjectEditable,
+        handleClientCancel,
+        isClientEditable,
+        setIsClientEditable,
     };
 };
 

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { TokenCheckoutButton } from '../components/StripeCheckoutButton';
-import './pages_css/PurchasePages.css';
+import './pages_css/Pages.css';
 
 const TokenPurchasePage = () => {
     const [selectedToken, setSelectedToken] = useState('');
