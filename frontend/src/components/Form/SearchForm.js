@@ -61,7 +61,7 @@ function SearchForm({ onScopeSubmit }) {
         <br />
         <button type="submit" disabled={!textInput.trim()}>Submit Text</button>
       </form> */}
-      <div className="uploaded-lines">
+      <div>
       <form onSubmit={handleScopeSubmit}>
         <label htmlFor="job-scope">Enter job scope:</label>
           <input
@@ -99,6 +99,7 @@ function SearchForm({ onScopeSubmit }) {
         <br />
         <button type="submit" disabled={!handymanScopeInput.trim()}>Submit Handyman Job Scope</button>
       </form> */}
+      <hr className="divider" />
       </div>
     </div>
   );

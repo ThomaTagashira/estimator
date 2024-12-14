@@ -16,6 +16,7 @@ const CreateEstimatePage = () => {
     handleNext,
     handlePrevious,
     handleSubmit,
+    handleCancel
   } = useCreateEstimate(apiUrl);
 
   return (
@@ -32,6 +33,7 @@ const CreateEstimatePage = () => {
               clientInfo={clientInfo}
               handleClientInfoChange={handleClientInfoChange}
               handleNext={handleNext}
+              handleCancel={handleCancel}
             />
           )}
           {step === 2 && (

@@ -111,32 +111,34 @@ const BusinessInfoPage = () => {
                         placeholder="Enter Your Business Email"
                     />
                 </div>
-                <div className="button-group">
+                <div className='single-button'>
                     {!isEditable ? (
                         <button
                             type="button"
-                            className="next-btn"
+                            className="save-btn"
                             onClick={() => setIsEditable(true)}
                         >
-                            Update
+                            Edit Business Info
                         </button>
                     ) : (
-                        <>
-                            <button
-                                type="button"
-                                className="next-btn save-button"
-                                onClick={handleBusinessSubmit}
-                            >
-                                Save
-                            </button>
-                            <button
-                                type="button"
-                                className="next-btn cancel-button"
-                                onClick={handleCancel}
-                            >
-                                Cancel
-                            </button>
-                        </>
+                        <div className="button-group">
+                            <>
+                                <button
+                                    type="button"
+                                    className="next-btn save-button"
+                                    onClick={handleBusinessSubmit}
+                                >
+                                    Save
+                                </button>
+                                <button
+                                    type="button"
+                                    className="next-btn cancel-button"
+                                    onClick={handleCancel}
+                                >
+                                    Cancel
+                                </button>
+                            </>
+                        </div>
                     )}
                 </div>
             </form>

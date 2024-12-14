@@ -5,6 +5,7 @@ const ClientInfoForm = ({
   clientInfo,
   handleClientInfoChange,
   handleNext,
+  handleCancel,
 }) => {
   return (
     <div>
@@ -64,6 +65,9 @@ const ClientInfoForm = ({
         <div className="button-group">
           <button type="button" className="next-btn" onClick={handleNext}>
             Next
+          </button>
+          <button type='button' className='next-btn' onClick={handleCancel}>
+            Cancel
           </button>
         </div>
       </form>

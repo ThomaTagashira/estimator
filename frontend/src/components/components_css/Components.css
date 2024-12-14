@@ -1,6 +1,7 @@
 .button-group {
   display: flex;
   justify-content: space-between; 
+  width: 48%;
 }
   
 .button-group .next-btn {
@@ -25,13 +26,13 @@
 
 .divider {
   border: 0;
-  border-top: 1px solid #666666; 
+  border-top: 2px solid #666666; 
   margin: 20px 0; 
   width: 100%;
 }
 
 .dropdown-button {
-  display: inline-block;
+  display: inline-block; 
   padding: 10px 20px;
   background-color: #007bff;
   color: white;
@@ -347,7 +348,7 @@ label {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background-color: #f8fbff;
+  /* background-color: #f8fbff; */
   padding: 20px;
   width: 400px;
   margin: auto;
@@ -480,11 +481,19 @@ label {
   width: 100%;
 }
 
+.uploaded-lines-container {
+  display: flex;
+  flex-direction: column;
+  text-align: center;
+
+}
 .uploaded-lines {
   padding: 20px;
-  background-color: #e9f5ff; 
-  border: 1px solid #cce7ff;
-  border-radius: 8px;
+  align-items: center; 
+  gap: 10px; 
+  margin-bottom: 10px; 
+  justify-content: center; 
+  text-align: center;  
 }
 
 .uploaded-lines .button-group button {
@@ -500,37 +509,23 @@ label {
   background-color: #003f7f;
 }
 
-.uploaded-lines-container {
-  display: flex;
-  flex-direction: column;
-  text-align: center;
-}
-
-.uploaded-lines h3 {
-  margin-top: 0;
-  color: #0056b3; 
-}
-
 .uploaded-lines li {
   display: flex; 
   align-items: center; 
   justify-content: center; 
   gap: 10px; 
   margin-bottom: 10px; 
+
 }
 
 .uploaded-lines textarea {
-  border: 1px solid #cce7ff;
-  padding: 10px;
-  border-radius: 4px;
-  font-size: 14px;
   flex: 1; 
-  margin-right: 10px; 
-  max-width: 70%; 
+  max-width: 100%;
+  border-radius: 4px;
 }
 
-.uploaded-lines ul {
-  display: flex;
-  flex-direction: column;
-  text-align: center;
+.uploaded-lines li:focus {
+  border-color: #007bff; 
+  box-shadow: 0 0 5px rgba(106, 13, 173, 0.3);
 }
+

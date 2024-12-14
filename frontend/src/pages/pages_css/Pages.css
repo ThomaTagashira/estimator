@@ -6,6 +6,21 @@
   width: 100%;
 }
 
+.buttons button {
+  align-self: flex-end;
+  padding: 10px 20px;
+  margin: 5px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+  
+.buttons button:hover {
+  background-color: #0056b3;
+}
 
 .cards {
   display: flex;
@@ -73,7 +88,8 @@
 
 .create-estimate-container {
   max-width: 500px; 
-  margin: auto; 
+  margin: auto;
+  margin-top: 50px; 
   background: #fff; 
   border-radius: 12px; 
   padding: 20px; 
@@ -115,6 +131,9 @@
 .DT-container {
   display: flex;
   flex-direction: column;  
+  border-radius: 8px;
+  background-color: #fff;
+  padding: 20px;
 }
 
 .DT-margins-container {
@@ -123,35 +142,87 @@
 
 }
 
-.buttons button {
-  align-self: flex-end;
-  padding: 10px 20px;
-  margin: 5px;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-  
-.buttons button:hover {
-  background-color: #0056b3;
-}
-
 .DT-btn-group {
   display: flex;
   gap: 5px;
 }
 
+.DT-slide-out-panel {
+  position: fixed; 
+  top: 50%; 
+  left: 50%; 
+  transform: translate(-50%, -50%); 
+  background-color: white; 
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); 
+  padding: 20px; 
+  border: 1px solid #ddd;
+  border-radius: 8px; 
+  z-index: 1000; 
+  max-width: 300px; 
+  text-align: center; 
+  animation: slideIn 0.3s ease forwards;
+
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -60%);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+}
+
+.DT-slide-out-panel p {
+  margin-bottom: 15px;
+  font-size: 1rem;
+  color: #333;
+  text-align: center;
+}
+
+.DT-slide-out-panel button {
+  margin: 10px;
+  padding: 10px 15px;
+  border: none;
+  border-radius: 5px;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.DT-slide-out-panel button:first-of-type {
+  background-color: #ff6666; 
+  color: white;
+}
+
+.DT-slide-out-panel button:first-of-type:hover {
+  background-color: #ff4c4c; 
+}
+
+.DT-slide-out-panel button:last-of-type {
+  background-color: #bdbdbd; 
+  color: black;
+}
+
+.DT-slide-out-panel button:last-of-type:hover {
+  background-color: #a9a9a9; 
+}
+
 .DT-task-fields {
-  padding: 20px;
-  background-color: #e9f5ff; 
-  border: 1px solid #cce7ff;
+  padding: 10px;
+  padding-top: 20px;
+  /* background-color: #e9f5ff; 
+  border: 1px solid #cce7ff; */
   border-radius: 8px;
   text-align: center;  
 }
-  
+
+.DT-task-fields input:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 5px rgba(106, 13, 173, 0.3);
+}
+
 .DT-task-row {
   display: flex; 
   align-items: center; 
@@ -347,10 +418,11 @@ input, textarea {
 
 .page {
   position: relative; 
-  margin: 0 auto; 
   padding: 40px; 
   max-width: 1600px; 
   overflow: visible; 
+  margin: auto;
+  margin-top: 25px; 
 }
 
 .pagination {
@@ -452,6 +524,22 @@ input, textarea {
   margin-right: 5px;
 }
 
+.save-btn {
+  margin-top: 20px;
+  background: #6a0dad;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.save-btn:hover {
+  background: #531482; 
+}
+
 .search-btn {
   background: none;
   border: none;
@@ -473,70 +561,21 @@ input, textarea {
   overflow: visible; 
 }
 
+.search-tab {
+  border-radius: 8px;
+  background-color: #fff;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  padding: 40px;
+}
+
 .selected-row {
   background-color: #dce6f8;
 }
 
-.DT-slide-out-panel {
-  position: fixed; 
-  top: 50%; 
-  left: 50%; 
-  transform: translate(-50%, -50%); 
-  background-color: white; 
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); 
-  padding: 20px; 
-  border: 1px solid #ddd;
-  border-radius: 8px; 
-  z-index: 1000; 
-  max-width: 300px; 
-  text-align: center; 
-  animation: slideIn 0.3s ease forwards;
-
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translate(-50%, -60%);
-  }
-  to {
-    opacity: 1;
-    transform: translate(-50%, -50%);
-  }
-}
-
-.DT-slide-out-panel p {
-  margin-bottom: 15px;
-  font-size: 1rem;
-  color: #333;
-  text-align: center;
-}
-
-.DT-slide-out-panel button {
-  margin: 10px;
-  padding: 10px 15px;
-  border: none;
-  border-radius: 5px;
-  font-size: 0.9rem;
-  cursor: pointer;
-}
-
-.DT-slide-out-panel button:first-of-type {
-  background-color: #ff6666; 
-  color: white;
-}
-
-.DT-slide-out-panel button:first-of-type:hover {
-  background-color: #ff4c4c; 
-}
-
-.DT-slide-out-panel button:last-of-type {
-  background-color: #bdbdbd; 
-  color: black;
-}
-
-.DT-slide-out-panel button:last-of-type:hover {
-  background-color: #a9a9a9; 
+.single-button {
+  display: flex;
+  justify-content: space-between; 
+  justify-content: center;
 }
 
 table {
@@ -559,6 +598,13 @@ table td {
 table thead {
   background-color: #f9fafc;
   text-align: left;
+}
+
+.table-tab {
+  border-radius: 8px;
+  background-color: #fff;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  padding: 20px;
 }
 
 .tab {
@@ -593,12 +639,12 @@ table thead {
 
 .tab-button.active {
   color: #555; 
-  border-bottom: 2px solid #76aef7; 
-  background: #fff; 
+  border-bottom: 3px solid #76aef7; 
+  background: #e4e4e4; 
 }
 
 .tab-button:hover {
-  background: #f1f1f1; 
+  background: #f7f7f7; 
   color: #333; 
 }
 
@@ -606,10 +652,8 @@ table thead {
   display: flex;
   justify-content: center;
   align-items: center;
-  background: #f9fafc; 
+  background: #c0c0c0; 
   border-bottom: 1px solid #ddd;
-  padding: 10px 0;
-  margin-bottom: 20px; 
 }
 
 .tab-navigation {
@@ -621,7 +665,7 @@ table thead {
   max-width: 500px; 
   margin: 0 auto; 
 }
-  
+
 td.center-input input {
   margin: 0 auto;
   display: block;

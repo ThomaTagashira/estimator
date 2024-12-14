@@ -50,7 +50,7 @@ const useCreateEstimate = (apiUrl) => {
       console.error('No authentication token found');
       return;
     }
-  
+
     const estimateData = {
       client: {
         clientName: clientInfo.clientName,
@@ -113,7 +113,13 @@ const useCreateEstimate = (apiUrl) => {
     }
   };
   
+  const handleCancel = () => {
+    localStorage.removeItem('clientInfo');
+    localStorage.removeItem('projectInfo');
 
+    navigate(`/`);
+  };
+  
   return {
     step,
     clientInfo,
@@ -125,6 +131,7 @@ const useCreateEstimate = (apiUrl) => {
     handleNext,
     handlePrevious,
     handleSubmit,
+    handleCancel
   };
 };
 

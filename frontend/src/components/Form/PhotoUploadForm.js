@@ -93,36 +93,33 @@ const PhotoUploadForm = ({
                     </form>
                 </div>
 
+                <hr className="divider" />
 
-            {/* Uploaded Lines */}
-        <div className="uploaded-lines-container">
-            <div className="uploaded-lines">
-                <h3>Uploaded Lines</h3>
-                {error && <p className="error-message">{error}</p>}
-                <ul>
-                    {Object.keys(data).map((key) => (
-                        <li key={key}>
-                            <textarea
-                                value={data[key]}
-                                onChange={(e) => handleLineChange(key, e.target.value)}
-                                onInput={(e) => {
-                                    e.target.style.height = 'auto';
-                                    e.target.style.height = `${e.target.scrollHeight}px`; 
-                                }}
-                            />
-                            <button onClick={() => handleRemoveLine(key)} >
-                                <FontAwesomeIcon icon={faXmark} style={{ color: 'red', cursor: 'pointer' }} />
-                            </button>
-                        </li>
-                    ))}
-                </ul>
-                <div>
-                    <button onClick={() => handleAllSearches(onSearch)} className="upload-btn">
-                        Search All
-                    </button>
+                {/* Uploaded Lines */}
+            <div className="uploaded-lines-container">
+                <div className="uploaded-lines">
+                    <h3>Uploaded Lines</h3>
+                    {error && <p className="error-message">{error}</p>}
+                    <ul>
+                        {Object.keys(data).map((key) => (
+                            <li key={key}>
+                                <textarea
+                                    value={data[key]}
+                                    onChange={(e) => handleLineChange(key, e.target.value)}
+                                />
+                                <button onClick={() => handleRemoveLine(key)} >
+                                    <FontAwesomeIcon icon={faXmark} style={{ color: 'red', cursor: 'pointer' }} />
+                                </button>
+                            </li>
+                        ))}
+                    </ul>
+                    <div>
+                        <button onClick={() => handleAllSearches(onSearch)} className="upload-btn">
+                            Search All
+                        </button>
+                    </div>
                 </div>
             </div>
-        </div>
         </div>
     );
 };

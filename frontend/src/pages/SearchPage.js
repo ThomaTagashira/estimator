@@ -98,7 +98,7 @@ const handleTabSwitch = async (tab) => {
 
 
   return (
-<div className="search-page-container">
+<div className="page">
   <div className="tab-container">
     <button
       className={`tab-button ${activeTab === 'search' ? 'active' : ''}`}

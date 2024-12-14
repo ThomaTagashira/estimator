@@ -288,6 +288,9 @@ const handleClientSave = async () => {
   return (
 <div className="DT-container">
   <h2>Estimate ID: {estimateId}</h2>
+  
+  <hr className="divider" />
+
     <div className="DT-task-fields">
       {inputFields.map((field, index) => (
         <div key={field.saved_response_id || index} className="DT-task-row">
@@ -314,121 +317,127 @@ const handleClientSave = async () => {
           <button onClick={handleAddAllRows}>Add All Tasks to Estimate</button>
           </div>
         </div>
-          
-          <div>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleLogoUpload}
-            />
-          </div>
-      <div className='info-section-container'>
 
-        <div className="info-section">
-          <h3>Client Information</h3>
-          <div>
-            <input
-              type="text"
-              value={clientName}
-              onChange={(e) => setClientName(e.target.value)}
-              disabled={!isClientEditable}
-              placeholder="Client Name"
-            />
-          </div>
-          <div>
-            <input
-              type="text"
-              value={clientAddress}
-              onChange={(e) => setClientAddress(e.target.value)}
-              disabled={!isClientEditable}
-              placeholder="Client Address"
-            />
-          </div>
-          <div>
-            <input
-              type="text"
-              value={clientPhone}
-              onChange={(e) => setClientPhone(e.target.value)}
-              disabled={!isClientEditable}
-              placeholder="Client Phone"
-            />
-          </div>
-          <div>
-            <input
-              type="text"
-              value={clientEmail}
-              onChange={(e) => setClientEmail(e.target.value)}
-              disabled={!isClientEditable}
-              placeholder="Client Email"
-            />
-          </div>
-            <div className='edit'>
-                {!isClientEditable ? (
-                <button onClick={() => setIsClientEditable(true)}>Edit Client Info</button>
-                ) : (
-                  <>  
-                    <button onClick={handleClientSave}>Save</button>
-                    <button onClick={handleClientCancel}>Cancel</button>
-                  </>
-                )}
-            </div>
+      {/* <div>
+        <input
+          type="file"
+          accept="image/*"
+          onChange={handleLogoUpload}
+        />
+      </div> */}
+
+  <hr className="divider" />
+    
+    <div className='info-section-container'>
+
+      <div className="info-section">
+        <h3>Client Information</h3>
+        <div>
+          <input
+            type="text"
+            value={clientName}
+            onChange={(e) => setClientName(e.target.value)}
+            disabled={!isClientEditable}
+            placeholder="Client Name"
+          />
         </div>
-
-        <div className="info-section">
-          <h3>Project Information</h3>
-          <div>
-            <input
-              type="text"
-              value={projectName}
-              onChange={(e) => setProjectName(e.target.value)}
-              disabled={!isProjectEditable}
-              placeholder="Project Name"
-            />
-          </div>
-          <div>
-            <input
-              type="text"
-              value={projectLocation}
-              onChange={(e) => setProjectLocation(e.target.value)}
-              disabled={!isProjectEditable}
-              placeholder="Project Location"
-            />
-          </div>
-          <div>
-            <input
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              disabled={!isProjectEditable}
-              placeholder="Start Date"
-            />
-          </div>
-          <div>
-            <input
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              disabled={!isProjectEditable}
-              placeholder="End Date"
-            />
-          </div>
-            <div className='edit'>
-                {!isProjectEditable ? (
-                <button onClick={() => setIsProjectEditable(true)}>Edit Project Info</button>
-                ) : (
+        <div>
+          <input
+            type="text"
+            value={clientAddress}
+            onChange={(e) => setClientAddress(e.target.value)}
+            disabled={!isClientEditable}
+            placeholder="Client Address"
+          />
+        </div>
+        <div>
+          <input
+            type="text"
+            value={clientPhone}
+            onChange={(e) => setClientPhone(e.target.value)}
+            disabled={!isClientEditable}
+            placeholder="Client Phone"
+          />
+        </div>
+        <div>
+          <input
+            type="text"
+            value={clientEmail}
+            onChange={(e) => setClientEmail(e.target.value)}
+            disabled={!isClientEditable}
+            placeholder="Client Email"
+          />
+        </div>
+          <div className='edit'>
+              {!isClientEditable ? (
+              <button onClick={() => setIsClientEditable(true)}>Edit Client Info</button>
+              ) : (
                 <>  
-                  <button onClick={handleProjectSave}>Save</button>
-                  <button onClick={handleProjectCancel}>Cancel</button>
+                  <button onClick={handleClientSave}>Save</button>
+                  <button onClick={handleClientCancel}>Cancel</button>
                 </>
-                )}
-            </div>
+              )}
+          </div>
+      </div>
+
+      <div className="info-section">
+        <h3>Project Information</h3>
+        <div>
+          <input
+            type="text"
+            value={projectName}
+            onChange={(e) => setProjectName(e.target.value)}
+            disabled={!isProjectEditable}
+            placeholder="Project Name"
+          />
+        </div>
+        <div>
+          <input
+            type="text"
+            value={projectLocation}
+            onChange={(e) => setProjectLocation(e.target.value)}
+            disabled={!isProjectEditable}
+            placeholder="Project Location"
+          />
+        </div>
+        <div>
+          <input
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            disabled={!isProjectEditable}
+            placeholder="Start Date"
+          />
+        </div>
+        <div>
+          <input
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            disabled={!isProjectEditable}
+            placeholder="End Date"
+          />
+        </div>
+          <div className='edit'>
+              {!isProjectEditable ? (
+              <button onClick={() => setIsProjectEditable(true)}>Edit Project Info</button>
+              ) : (
+              <>  
+                <button onClick={handleProjectSave}>Save</button>
+                <button onClick={handleProjectCancel}>Cancel</button>
+              </>
+              )}
           </div>
         </div>
-                  <div className='buttons'>
-                    <button onClick={handleAddCustomRow}>
-                        Add New Task
-                    </button>  
-                  </div>
+      </div>
+
+  <hr className="divider" />
+
+      <div className='buttons'>
+        <button onClick={handleAddCustomRow}>
+            Add New Task
+        </button>  
+      </div>
 
       <div className="dynamic-table">
               <div ref={tableRef}>
