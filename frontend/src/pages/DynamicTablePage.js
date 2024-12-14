@@ -22,7 +22,7 @@ const DynamicTablePage = ({ apiUrl, estimateId, selectedString, setSelectedStrin
         applyMargin,
         marginPercent,
         // logo,
-        handleLogoUpload,
+        // handleLogoUpload,
         totalLaborCost,
         totalMaterialCost,
         combinedTotal,
