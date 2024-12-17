@@ -9,18 +9,18 @@ const ChangeSubscriptionPage = ({ userSubscriptionTier }) => {
     };
 
     return (
-        <div class="purchase-container">
+        <div className="purchase-container">
 
-            <div class="purchase-header">
+            <div className="purchase-header">
                 <h1>Which Tier Would You Like to Change Your Current Subscription To?</h1>
                 <h3>Your Current Subscription: {userSubscriptionTier}</h3>
                 <h2>Select Your Plan:</h2>
             </div>
 
-            <div class="cards">
-                <div class="card">                
+            <div className="cards">
+                <div className="card">                
                     <h3>Basic</h3>
-                    <p class="price">$24.99/month</p>
+                    <p className="price">$24.99/month</p>
                     <ul>
                         <li>Add Things Here</li>
                         <li>Add Things Here</li>
@@ -32,9 +32,9 @@ const ChangeSubscriptionPage = ({ userSubscriptionTier }) => {
                 </div>
 
 
-                <div class="card">
+                <div className="card">
                     <h3>Premium</h3>
-                    <p class="price">$49.99/month</p>
+                    <p className="price">$49.99/month</p>
                     <ul>
                         <li>Add Things Here</li>
                         <li>Add Things Here</li>
@@ -46,9 +46,9 @@ const ChangeSubscriptionPage = ({ userSubscriptionTier }) => {
                 </div>
 
 
-                <div class="card">
+                <div className="card">
                     <h3>Enterprise</h3>
-                    <p class="price">$99.99</p>
+                    <p className="price">$99.99</p>
                     <ul>
                         <li>Add Things Here</li>
                         <li>Add Things Here</li>

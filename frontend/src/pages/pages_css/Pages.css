@@ -233,7 +233,7 @@
 }
 
 .DT-task-row input {
-  flex: 1; 
+  display: flex;  
   max-width: 80%;
   padding: 8px;
   border: 1px solid #ccc;
@@ -351,17 +351,14 @@
   color: #aaa;
 }
 
-.header {
+.estimates-page-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 10px 20px;
   color: #fff;
-}
-  
-.header h2 {
-  font-size: 1.5rem;
-  color: #333;
+  background-color: #0040b8d2;
+
 }
 
 .info-container {
@@ -371,21 +368,18 @@
 }
 
 .info-section {
-  flex: 1;
+  display: flex;
+  flex-direction: column;
+  width: 40%;
+  gap: 10px;
 }
 
 .info-section-container {
   display: flex;
-  justify-content: space-between;
+  justify-content: space-evenly;
   gap: 20px;
   align-items: center;
-  justify-content: center; 
   margin-bottom: 30px;
-}
-
-.info-section div {
-  margin-bottom: 10px;
-  max-width: 75%;
 }
 
 input, textarea {
@@ -404,6 +398,17 @@ input, textarea {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1); 
   font-family: Arial, sans-serif;
   text-align: center;
+}
+
+.login-page-container {
+  max-width: 500px; 
+  margin: auto;
+  margin-top: 50px; 
+  background: #fff; 
+  border-radius: 12px; 
+  padding: 20px; 
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1); 
+  font-family: Arial, sans-serif;
 }
 
 .margin-input {

@@ -4,7 +4,7 @@ import { BrowserRouter as Router, Route, Routes, redirect } from 'react-router-d
 import setupInterceptors from './components/setupInterceptor';
 import GoogleCallback from './components/GoogleCallback';
 // import GitHubCallback from './components/GitHubCallback';
-import { BusinessInfoUpdateSuccessPage, SuccessPage, SearchResults, CancelPage, SubscriptionPage, TokenPurchasePage, LoginPage, RegisterPage, CreateEstimatePage, EstimatesPage, EstimateDetailPage, BusinessInfoPage, CancelSubscriptionPage, ChangeSubscriptionPage }  from './pages';
+import { BusinessInfoUpdateSuccessPage, SuccessPage, SearchPage, CancelPage, SubscriptionPage, TokenPurchasePage, LoginPage, RegisterPage, CreateEstimatePage, EstimatesPage, EstimateDetailPage, BusinessInfoPage, CancelSubscriptionPage, ChangeSubscriptionPage }  from './pages';
 import Header from './components/Header';
 import AuthenticatedRoute from './components/Auth/AuthenticatedRoute';
 
@@ -14,8 +14,8 @@ const apiUrl = process.env.REACT_APP_API_URL;
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [hasActiveSubscription, setHasActiveSubscription] = useState(false);
-  const [tokenCount, setTokenCount] = useState(0);
   const [userSubscriptionTier, setUserSubscriptionTier] = useState('');
+  const [tokenCount, setTokenCount] = useState(0);
 
   const fetchTokenCount = async () => {
     const token = localStorage.getItem('access_token');
@@ -23,7 +23,7 @@ function App() {
         console.error('No access token found');
         return;
     }
-
+    console.log('called in app: ',tokenCount)
     try {
         const response = await fetch(`${apiUrl}/api/get-user-token-count/`, {
             method: 'GET',
@@ -34,7 +34,7 @@ function App() {
 
         if (response.ok) {
             const data = await response.json();
-            // console.log('Fetched token balance from API:', data.token_balance); 
+            console.log('Fetched token balance from API:', data.token_balance); 
             setTokenCount(data.token_balance); 
         } else {
             console.error('Failed to fetch token count:', await response.json());
@@ -44,15 +44,10 @@ function App() {
     }
 };
 
-    useEffect(() => {
-      fetchTokenCount();
-  
-      const interval = setInterval(() => {
-          fetchTokenCount(); 
-      }, 30000); // 30 second intervals
-  
-      return () => clearInterval(interval); 
-  }, []);
+  useEffect(() => {
+    fetchTokenCount(); 
+  }, [fetchTokenCount]); 
+
 
   useEffect(() => {
     const fetchSubscriptionTier = async () => {
@@ -129,14 +124,16 @@ function App() {
         <Route path="/cancel" element={<CancelPage />} />
         <Route path="/search" element={
             <AuthenticatedRoute isAuthenticated={isAuthenticated} hasActiveSubscription={hasActiveSubscription}>
-              <SearchResults apiUrl={apiUrl} />
+              <SearchPage 
+                apiUrl={apiUrl}                             
+                fetchTokenCount={fetchTokenCount}/>
             </AuthenticatedRoute>
         }/>
-        <Route path="/estimates" element={
+        {/* <Route path="/estimates" element={
             <AuthenticatedRoute isAuthenticated={isAuthenticated} hasActiveSubscription={hasActiveSubscription}>
-              <SearchResults apiUrl={apiUrl} />
+              <SearchResults apiUrl={apiUrl}/>
             </AuthenticatedRoute>
-        }/>
+        }/> */}
         <Route path="/create-estimate" element={
             <AuthenticatedRoute isAuthenticated={isAuthenticated} hasActiveSubscription={hasActiveSubscription}>
               <CreateEstimatePage apiUrl={apiUrl} />

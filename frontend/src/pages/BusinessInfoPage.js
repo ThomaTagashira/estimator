@@ -120,19 +120,20 @@ const BusinessInfoPage = () => {
                         >
                             Edit Business Info
                         </button>
+                
                     ) : (
                         <div className="button-group">
                             <>
                                 <button
                                     type="button"
-                                    className="next-btn save-button"
+                                    className="next-btn"
                                     onClick={handleBusinessSubmit}
                                 >
                                     Save
                                 </button>
                                 <button
                                     type="button"
-                                    className="next-btn cancel-button"
+                                    className="next-btn"
                                     onClick={handleCancel}
                                 >
                                     Cancel

@@ -25,30 +25,48 @@ const Header = ({ handleLogout, hasActiveSubscription, tokenCount, userSubscript
 
     return (
         <header className="header">
-            <div className="logo">
-                <h1>MyApp</h1>
+            <div className='logo-container'>
+                <div>
+                    <h2>MyApp</h2>
+                </div>
+
+                {hasActiveSubscription && (
+                    <div className="subscription-info">
+                        <div>Tokens: {tokenCount}</div>
+                        <div>Current Subscription: {userSubscriptionTier}</div>
+                    </div>
+                )}
             </div>
 
-            {hasActiveSubscription && (
-                <div className="subscription-info">
-                    <div>Tokens: {tokenCount}</div>
-                    <div>Current Subscription: {userSubscriptionTier}</div>
-                </div>
-            )}
-
-            <nav className="nav">
-                <ul>
-                    {hasActiveSubscription ? (
-                        <>
-                            <li><Link to="/">Home</Link></li>
-                        </>
-                    ) : (
-                        <li><Link to="/">Sign Up</Link></li>
-                    )}
-                    <li><Link to="/about">About</Link></li>
-                </ul>
-            </nav>
-
+            <div className='nav'>
+                <nav>
+                    <ul>
+                        {hasActiveSubscription ? (
+                            <>
+                                <li>
+                                    <Link to="/">
+                                        <button>Home</button>
+                                    </Link>
+                                </li>
+                            </>
+                        ) : (
+                            <>
+                                <li>
+                                    <Link to="/">
+                                        <button>Login</button>
+                                    </Link>
+                                </li>
+                                <li>
+                                    <Link to="/register" className='signup-btn'>
+                                        <button>Sign Up</button>
+                                    </Link>
+                                </li>
+                            </>
+                        )}
+                    </ul>
+                </nav>
+                
+            </div>
             {hasActiveSubscription && (
                 <div className="hamburger-container" ref={dropdownRef}>
                     <div className="hamburger" onClick={toggleMenu}>

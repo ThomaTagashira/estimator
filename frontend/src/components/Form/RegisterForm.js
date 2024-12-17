@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { getCookie } from '../utils/getCookies';
+import '../components_css/Components.css';
 
 const RegisterForm = ({ 
     userEmail,
@@ -8,6 +9,7 @@ const RegisterForm = ({
     setPassword,
     error,
     register,
+    handleCancel
 }) => {
     const handleSubmit = (e) => {
         e.preventDefault(); 
@@ -15,6 +17,7 @@ const RegisterForm = ({
     };
 
     const [passwordStrength, setPasswordStrength] = useState(0);
+    const [showStrength, setShowStrength] = useState(false);
 
     const calculatePasswordStrength = (password) => {
         let score = 0;
@@ -32,7 +35,6 @@ const RegisterForm = ({
         const strength = calculatePasswordStrength(newPassword);
         setPasswordStrength(strength);
     };
-
 
     const getStrengthLabel = () => {
         switch (passwordStrength) {
@@ -70,7 +72,7 @@ const RegisterForm = ({
 
     return (
         <div>
-            <h2>Register</h2>
+            <h2>Sign Up</h2>
             <form onSubmit={handleSubmit}>
                 <input
                     type="text"
@@ -79,18 +81,32 @@ const RegisterForm = ({
                     onChange={(e) => setUserEmail(e.target.value)}
                     placeholder="Email Address"
                 />
+
                 <input
                     type="password"
                     name="password"
                     value={password}
                     onChange={handlePasswordChange}
                     placeholder="Password"
-
+                    onFocus={() => setShowStrength(true)}
+                    onBlur={() => setShowStrength(false)}
                 />
-                <div style={{ color: getStrengthColor(), fontWeight: 'bold', margin: '5px 0' }}>
-                    Password Strength: {getStrengthLabel()}
+
+                {showStrength && (
+                    <div style={{ color: getStrengthColor(), fontWeight: 'bold', margin: '5px 0' }}>
+                        Password Strength: {getStrengthLabel()}
+                    </div>
+                )}
+
+                <div className="button-group">
+                    <button type="submit" className="next-btn">
+                        Register
+                    </button>
+
+                    <button type='button' className='next-btn' onClick={handleCancel}>
+                        Cancel
+                    </button>
                 </div>
-                <button type="submit">Register</button> 
             </form>
             {error && <p>{error}</p>}
         </div>

@@ -351,6 +351,7 @@ const useDynamicTable = (apiUrl, estimateId, selectedString, setSelectedString )
         });
     };
 
+    
     const handleEditChange = (event) => {
         const { name, value } = event.target;
         setEditValues({ ...editValues, [name]: value });

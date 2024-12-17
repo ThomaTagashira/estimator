@@ -1,5 +1,5 @@
 // Centralized export of pages
-export { default as SearchResults } from './SearchPage';
+export { default as SearchPage } from './SearchPage';
 export { default as SuccessPage } from './SuccessPage';
 export { default as CancelPage } from './CancelPage';
 export { default as SubscriptionPage } from './SubscriptionPage';

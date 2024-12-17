@@ -106,9 +106,11 @@ const EstimateList = ({ estimates: initialEstimates, loading, error, apiUrl, fet
           <p>By selecting confirm, you will no longer have access to any records you have saved in:</p>
           <p>Project: <strong>{deletingEstimate.project_name || 'Unnamed Project'}</strong></p>
           <p>Estimate Number: <strong>{deletingEstimate.estimate_id}</strong></p>
-  
-          <button onClick={handleDelete} className="confirm-button">Confirm</button>
-          <button onClick={cancelDelete} className="cancel-button">Cancel</button>
+          
+          <div className='slide-out-btn'>
+            <button onClick={handleDelete} className="confirm-button">Confirm</button>
+            <button onClick={cancelDelete} className="cancel-button">Cancel</button>
+          </div>
         </div>
       )}
     </div>

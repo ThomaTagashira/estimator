@@ -37,7 +37,7 @@ const EstimatesPage = () => {
 
   return (
     <div className="page">
-      <div className="header">
+      <div className="estimates-page-header">
         <div className="search-container">
           <form onSubmit={handleSearch}>
             <div className="estimates-search">

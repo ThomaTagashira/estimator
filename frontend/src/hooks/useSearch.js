@@ -23,6 +23,7 @@ const useSearch = (apiUrl) => {
         }
     };
 
+
     const deductTokens = async (tokensToDeduct) => {
         try {
             await axios.post(`${apiUrl}/api/deduct-tokens/`, 
@@ -59,6 +60,7 @@ const useSearch = (apiUrl) => {
             console.log('Search response saved successfully');
             
             setRefreshKey((prevKey) => prevKey + 1);
+
         } catch (error) {
             console.error('Error saving search response:', error);
         }
@@ -91,11 +93,12 @@ const useSearch = (apiUrl) => {
         }
     };
 
-    const handleSearch = async (query, estimateId, setRefreshKey) => {
+    const handleSearch = async (query, estimateId, setRefreshKey, fetchTokenCount) => {
         setLoading(true);
         setError(null);
     
         try {
+
             const tokenBalance = await fetchTokenBalance();
             if (tokenBalance < 1) {
                 setError('Insufficient tokens to perform this search.');
@@ -116,7 +119,9 @@ const useSearch = (apiUrl) => {
             const newSelectedString = context.substring(startIndex, endIndex).trim();
     
             await saveSearchResponse(newSelectedString, estimateId, setRefreshKey);
-    
+
+            await fetchTokenCount();
+
             setSearchResult([{ task: newSelectedString, saved_response_id: response.data.saved_response_id }]);
         } catch (error) {
             setError('Error performing search: ' + error.message);

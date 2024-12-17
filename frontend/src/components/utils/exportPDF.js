@@ -198,32 +198,32 @@ function generateHTMLContent({
         </script>
       </head>
       <body>
-        <div id="content" class="container">
-          <div class="header">
+        <div id="content" className="container">
+          <div className="header">
             <img src="${logo}" alt="Company Logo" width="80">
             <h1>Remodel Estimate</h1>
             <p>${companyName} | ${address} | ${phone}</p>
           </div>
-          <div class="sub-container">
-            <div class="info-container">
-              <div class="info-section">
+          <div className="sub-container">
+            <div className="info-container">
+              <div className="info-section">
                 <h3>Project Information</h3>
-                <div class="information">
+                <div className="information">
                   <p>Project Name: ${projectName}</p>
                   <p>Project Location: ${projectLocation}</p>
                   <p>Start Date: ${startDate}</p>
                   <p>End Date: ${endDate}</p>
                 </div>
               </div>
-              <div class="estimate-info">
+              <div className="estimate-info">
                 <p>Estimate Number: ${estimateId}</p>
                 <p>Date: ${todayDate}</p>
               </div>
             </div>
-            <div class="info-container">
-              <div class="info-section">
+            <div className="info-container">
+              <div className="info-section">
                 <h3>Client Information</h3>
-                <div class="information">
+                <div className="information">
                   <p>Full Name: ${clientName}</p>
                   <p>Address: ${clientAddress}</p>
                   <p>Phone: ${clientPhone}</p>
@@ -251,33 +251,33 @@ function generateHTMLContent({
                 `).join('')}
               </tbody>
             </table>
-            <div class="totals-container">
-                <table class="no-border">
+            <div className="totals-container">
+                <table className="no-border">
                     <tbody>
-                        <tr class="no-border total-row">
-                            <td class="no-border align-left"><strong>Subtotal</strong></td>
-                            <td class="no-border" colspan="2" class="align-right"><strong>$${combinedTotal}</strong></td>
+                        <tr className="no-border total-row">
+                            <td className="no-border align-left"><strong>Subtotal</strong></td>
+                            <td className="no-border" colspan="2" className="align-right"><strong>$${combinedTotal}</strong></td>
                         </tr>
                         ${applyDiscount ? `
-                        <tr class="no-border total-row">
-                            <td class="no-border align-left"><strong>Discount</strong></td>
-                            <td class="no-border align-center"><span>${discountPercent}%</span></td>
-                            <td class="no-border align-right"><strong>$${totalDiscount}</strong></td>
+                        <tr className="no-border total-row">
+                            <td className="no-border align-left"><strong>Discount</strong></td>
+                            <td className="no-border align-center"><span>${discountPercent}%</span></td>
+                            <td className="no-border align-right"><strong>$${totalDiscount}</strong></td>
                         </tr>
                         ` : ''}
-                        <tr class="no-border total-row">
-                            <td class="no-border align-left"><strong>Tax</strong></td>
-                            <td class="no-border align-center"><span>${salesTaxPercent}%</span></td>
-                            <td class="no-border align-right"><strong>$${totalSalesTax}</strong></td>
+                        <tr className="no-border total-row">
+                            <td className="no-border align-left"><strong>Tax</strong></td>
+                            <td className="no-border align-center"><span>${salesTaxPercent}%</span></td>
+                            <td className="no-border align-right"><strong>$${totalSalesTax}</strong></td>
                         </tr>
-                        <tr class="no-border total-row">
-                            <td class="no-border align-left"><strong>Total</strong></td>
-                            <td class="no-border" colspan="2" class="align-right"><strong>$${grandTotal}</strong></td>
+                        <tr className="no-border total-row">
+                            <td className="no-border align-left"><strong>Total</strong></td>
+                            <td className="no-border" colspan="2" className="align-right"><strong>$${grandTotal}</strong></td>
                         </tr>
                     </tbody>
                 </table>
             </div>
-            <button class="export-btn" onclick="exportToPDF()">Export to PDF</button>
+            <button className="export-btn" onclick="exportToPDF()">Export to PDF</button>
           </div>
         </div>
       </body>

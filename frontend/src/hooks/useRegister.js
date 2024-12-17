@@ -11,6 +11,10 @@ const useRegister = () => {
     const [error, setError] = useState('');
     const navigate = useNavigate();
 
+    const handleCancel = () => {
+        navigate(`/`);
+    };
+
 const register = async (email, password, csrftoken) => {
     try {
         const response = await axios.post(`${apiUrl}/api/register/`, {
@@ -46,6 +50,7 @@ const register = async (email, password, csrftoken) => {
         setPassword,
         error,
         register,
+        handleCancel
     };
 };
 

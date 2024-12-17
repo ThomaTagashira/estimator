@@ -558,7 +558,6 @@ def handle_invoice_payment_succeeded(invoice):
             logger.info(f"Updating subscription ID for user: {user.username}")
             subscription.stripe_subscription_id = subscription_id
 
-        # Check for idempotency
         if subscription.last_processed_invoice_id == invoice_id:
             logger.info(f"Invoice {invoice_id} already processed for user: {user.username}. Skipping.")
             return

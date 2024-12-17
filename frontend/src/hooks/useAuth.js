@@ -83,7 +83,7 @@ const useAuth = ({ setIsAuthenticated, setHasActiveSubscription }) => {
         } catch (err) {
             if (err.response?.status === 403) {
                 setError('Subscription required. Please subscribe.');
-                // navigate('/subscribe');
+                navigate('/subscribe');
             } else {
                 setError('Invalid credentials. Please try again.');
             }

@@ -10,18 +10,18 @@ const SubscriptionPage = () => {
     };
 
     return (
-        <div class="purchase-container">
+        <div className="purchase-container">
 
-            <div class="purchase-header">
+            <div className="purchase-header">
                 <h1>Subscribe to Our Service</h1>
                 <p>Please choose a subscription tier to access our features.</p>
                 <h2>Select Your Plan:</h2>
             </div>
 
-            <div class="cards">
-                <div class="card">
+            <div className="cards">
+                <div className="card">
                     <h3>Basic</h3>
-                    <p class="price">$24.99/month</p>
+                    <p className="price">$24.99/month</p>
                     <ul>
                         <li>Add Things Here</li>
                         <li>Add Things Here</li>
@@ -33,9 +33,9 @@ const SubscriptionPage = () => {
                 </div>
 
 
-                <div class="card">
+                <div className="card">
                     <h3>Premium</h3>
-                    <p class="price">$49.99/month</p>
+                    <p className="price">$49.99/month</p>
                     <ul>
                         <li>Add Things Here</li>
                         <li>Add Things Here</li>
@@ -47,9 +47,9 @@ const SubscriptionPage = () => {
                 </div>
 
 
-                <div class="card">
+                <div className="card">
                     <h3>Enterprise</h3>
-                    <p class="price">$99.99</p>
+                    <p className="price">$99.99</p>
                     <ul>
                         <li>Add Things Here</li>
                         <li>Add Things Here</li>

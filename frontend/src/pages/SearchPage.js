@@ -8,7 +8,7 @@ import usePhotoUpload from '../hooks/usePhotoUpload';
 import DynamicTablePage from '../pages/DynamicTablePage';
 import './pages_css/Pages.css';
 
-const SearchPage = ({ apiUrl }) => {
+const SearchPage = ({ apiUrl, fetchTokenCount }) => {
   const [activeTab, setActiveTab] = useState('search');
   const [tableData, setTableData] = useState([]);
   const [searchParams] = useSearchParams();
@@ -116,9 +116,9 @@ const handleTabSwitch = async (tab) => {
 
   {activeTab === 'search' && (
     <div className="search-tab">
-      <SearchForm onScopeSubmit={fetchScopeData} />
+      <SearchForm onScopeSubmit={fetchScopeData}/>
       <PhotoUploadForm
-        onSearch={(query) => handleSearch(query, estimateId, setRefreshKey)}
+        onSearch={(query) => handleSearch(query, estimateId, setRefreshKey, fetchTokenCount)}
         selectedFile={selectedFile}
         data={data}
         error={uploadError}

@@ -10,16 +10,16 @@ const TokenPurchasePage = () => {
     };
 
     return (
-        <div class="purchase-container">
+        <div className="purchase-container">
 
-            <div class="purchase-header">
+            <div className="purchase-header">
                 <h2>Select Tokens to Purchase</h2>
             </div>
 
-            <div class="cards">
-                <div class="card">
+            <div className="cards">
+                <div className="card">
                     <h3>50 Tokens</h3>
-                    <p class="price">$19.99</p>
+                    <p className="price">$19.99</p>
                     <ul>
                         <li>One-Time Purchase of 50 tokens</li>
                     </ul>
@@ -29,9 +29,9 @@ const TokenPurchasePage = () => {
                 </div>
 
 
-                <div class="card">
+                <div className="card">
                     <h3>75 Tokens</h3>
-                    <p class="price">$29.99</p>
+                    <p className="price">$29.99</p>
                     <ul>
                         <li>One-Time Purchase of 75 tokens</li>
                     </ul>
@@ -41,9 +41,9 @@ const TokenPurchasePage = () => {
                 </div>
 
 
-                <div class="card">
+                <div className="card">
                     <h3>100 Tokens</h3>
-                    <p class="price">$39.99</p>
+                    <p className="price">$39.99</p>
                     <ul>
                         <li>One-Time Purchase of 100 tokens</li>
                     </ul>
