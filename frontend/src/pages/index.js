@@ -15,3 +15,4 @@ export { default as BusinessInfoUpdateSuccessPage } from './BusinessInfoSuccessP
 export { default as BusinessInfoPage } from './BusinessInfoPage';
 export { default as CancelSubscriptionPage } from './CancelSubscriptionPage';
 export { default as ChangeSubscriptionPage } from './ChangeSubscriptionPage';
+export { default as ExportPDFPage } from './ExportPDFPage';

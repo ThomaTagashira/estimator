@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { exportPDF } from '../components/utils/exportPDF';
 // import { resizeImage } from '../components/utils/logoResize';
 import axios from 'axios';
 
@@ -539,44 +538,6 @@ const useDynamicTable = (apiUrl, estimateId, selectedString, setSelectedString )
         };
     };
 
-    const exportTablePDF = (data) => {
-        console.log("Data received in exportTablePDF:", data);
-        console.log(tableData)
-        
-        const totals = calculateTotals();
-
-        exportPDF({
-            // logo,
-            companyName:data.companyName,
-            address:data.address,
-            phone:data.phone,
-            estimateId,
-            clientName:data.clientName,
-            clientAddress:data.clientAddress,
-            clientPhone:data.clientPhone,
-            clientEmail:data.clientEmail,
-            projectName:data.projectName,
-            projectLocation:data.projectLocation,
-            startDate:data.startDate,
-            endDate:data.endDate,
-
-            
-            totalLaborCost: totals.totalLaborCost,
-            totalMaterialCost: totals.totalMaterialCost,
-            combinedTotal: totals.combinedTotal,
-            discountPercent,
-            totalDiscount: totals.totalDiscount,
-            salesTaxPercent,
-            totalSalesTax: totals.totalSalesTax,
-            grandTotal: totals.grandTotal,
-            tableData: tableData.map((item) => {
-                const { job, laborCost, materialCost } = splitTaskIntoColumns(item);
-                const adjustedLaborCost = applyMargin ? applyMarginToLaborCost(laborCost) : laborCost;
-                return { job, laborCost: `$${adjustedLaborCost}`, materialCost: `$${materialCost}` };
-            }),
-            applyDiscount,
-        });
-    };
 
     const { totalLaborCost, totalMaterialCost, combinedTotal, totalDiscount, totalSalesTax, grandTotal } = calculateTotals();
 
@@ -603,7 +564,6 @@ const useDynamicTable = (apiUrl, estimateId, selectedString, setSelectedString )
         startDate,
         endDate,
         saveEstimateData,
-        exportTablePDF,
         inputFields,
         editIndex,
         editValues,

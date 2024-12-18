@@ -4,6 +4,7 @@ import useDynamicTable from '../hooks/useDynamicTable';
 import axios from 'axios';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEdit, faXmark, faCheck, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { useNavigate } from 'react-router-dom';
 
 
 const DynamicTablePage = ({ apiUrl, estimateId, selectedString, setSelectedString, refreshKey  }) => {
@@ -50,7 +51,7 @@ const DynamicTablePage = ({ apiUrl, estimateId, selectedString, setSelectedStrin
         handleUpdateClick,
         splitTaskIntoColumns,
         applyMarginToLaborCost,
-        exportTablePDF,
+        // exportTablePDF,
         setTableData,
         handleCancelClick,
         isProjectEditable,
@@ -77,8 +78,52 @@ const DynamicTablePage = ({ apiUrl, estimateId, selectedString, setSelectedStrin
   const [originalClientInfo, setOriginalClientInfo] = useState(null);
   const [originalProjectInfo, setOriginalProjectInfo] = useState(null);
   
+  const navigate = useNavigate();
 
 
+    const handleGeneratePreview = () => {
+        const exportData = {
+        totalLaborCost,
+        totalMaterialCost,
+        combinedTotal,
+        totalDiscount,
+        totalSalesTax,
+        grandTotal,
+        discountPercent,
+        salesTaxPercent,
+        applyDiscount,
+        estimateId,
+        companyName,
+        address,
+        phone,
+        clientName,
+        clientAddress,
+        clientPhone,
+        clientEmail,
+        projectName,
+        projectLocation,
+        startDate,
+        endDate,
+        tableData: tableData.map((item) => {
+            const { job, laborCost, materialCost } = splitTaskIntoColumns(item);
+
+            const cleanLaborCost = parseFloat(laborCost.replace('$', '')) || 0;
+            const adjustedLaborCost = applyMargin
+                ? applyMarginToLaborCost(cleanLaborCost)
+                : cleanLaborCost;
+
+            const cleanMaterialCost = parseFloat(materialCost.replace('$', '')) || 0;
+
+            return {
+                job,
+                laborCost: `$${adjustedLaborCost.toFixed(2)}`,
+                materialCost: `$${cleanMaterialCost.toFixed(2)}`,
+            };
+        }),
+
+    };
+        navigate('/export-pdf', { state: { exportData } });
+    };
 
   useEffect(() => {
     console.log('DynamicTablePage Refresh Key:', refreshKey);
@@ -608,28 +653,10 @@ const handleClientSave = async () => {
                             </div>
                         )}
                   </div>
-              <div className='buttons'>
-                <button
-                    onClick={() =>
-                        exportTablePDF({
-                            companyName,
-                            address,
-                            phone,
-                            estimateId,
-                            clientName,
-                            clientAddress,
-                            clientPhone,
-                            clientEmail,
-                            projectName,
-                            projectLocation,
-                            startDate,
-                            endDate,
-                        })
-                    }
-                    >
-                    Generate Estimate
-                </button>
-              </div>
+            <div className='buttons'>
+              <button onClick={handleGeneratePreview}>Generate Estimate Preview</button>
+
+            </div>
           </div>
         </div>
     </div>

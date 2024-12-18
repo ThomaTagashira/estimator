@@ -4,9 +4,25 @@ import { BrowserRouter as Router, Route, Routes, redirect } from 'react-router-d
 import setupInterceptors from './components/setupInterceptor';
 import GoogleCallback from './components/GoogleCallback';
 // import GitHubCallback from './components/GitHubCallback';
-import { BusinessInfoUpdateSuccessPage, SuccessPage, SearchPage, CancelPage, SubscriptionPage, TokenPurchasePage, LoginPage, RegisterPage, CreateEstimatePage, EstimatesPage, EstimateDetailPage, BusinessInfoPage, CancelSubscriptionPage, ChangeSubscriptionPage }  from './pages';
 import Header from './components/Header';
 import AuthenticatedRoute from './components/Auth/AuthenticatedRoute';
+import {
+    BusinessInfoUpdateSuccessPage,
+    SuccessPage,
+    SearchPage,
+    CancelPage,
+    SubscriptionPage,
+    TokenPurchasePage,
+    LoginPage, RegisterPage,
+    CreateEstimatePage,
+    EstimatesPage,
+    EstimateDetailPage,
+    BusinessInfoPage,
+    CancelSubscriptionPage,
+    ChangeSubscriptionPage,
+    ExportPDFPage
+}  from './pages';
+
 
 setupInterceptors();
 const apiUrl = process.env.REACT_APP_API_URL;
@@ -162,6 +178,11 @@ function App() {
                 <Route path="/change-subscription-tier" element={
             <AuthenticatedRoute isAuthenticated={isAuthenticated} hasActiveSubscription={hasActiveSubscription}>
               <ChangeSubscriptionPage  apiUrl={apiUrl} userSubscriptionTier={userSubscriptionTier} />
+            </AuthenticatedRoute>
+        }/>
+                <Route path="/export-pdf" element={
+            <AuthenticatedRoute isAuthenticated={isAuthenticated} hasActiveSubscription={hasActiveSubscription}>
+              <ExportPDFPage  apiUrl={apiUrl} userSubscriptionTier={userSubscriptionTier} />
             </AuthenticatedRoute>
         }/>
         <Route path="/" element={isAuthenticated && hasActiveSubscription ? (<EstimatesPage />) : (<LoginPage setIsAuthenticated={setIsAuthenticated}setHasActiveSubscription={setHasActiveSubscription} />)} />
