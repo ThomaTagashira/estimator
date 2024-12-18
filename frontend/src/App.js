@@ -33,32 +33,38 @@ function App() {
   const [userSubscriptionTier, setUserSubscriptionTier] = useState('');
   const [tokenCount, setTokenCount] = useState(0);
 
-  const fetchTokenCount = async () => {
-    const token = localStorage.getItem('access_token');
-    if (!token) {
-        console.error('No access token found');
-        return;
-    }
-    console.log('called in app: ',tokenCount)
-    try {
-        const response = await fetch(`${apiUrl}/api/get-user-token-count/`, {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-            },
-        });
-
-        if (response.ok) {
-            const data = await response.json();
-            console.log('Fetched token balance from API:', data.token_balance); 
-            setTokenCount(data.token_balance); 
-        } else {
-            console.error('Failed to fetch token count:', await response.json());
+  const fetchTokenCount = useCallback(() => {
+    const fetchData = async () => {
+        const token = localStorage.getItem('access_token');
+        if (!token) {
+            console.error('No access token found');
+            return;
         }
-    } catch (error) {
-        console.error('Error fetching token balance:', error);
-    }
-};
+
+        console.log('called in app: ', tokenCount);
+
+        try {
+            const response = await fetch(`${apiUrl}/api/get-user-token-count/`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                },
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                console.log('Fetched token balance from API:', data.token_balance);
+                setTokenCount(data.token_balance);
+            } else {
+                console.error('Failed to fetch token count:', await response.json());
+            }
+        } catch (error) {
+            console.error('Error fetching token balance:', error);
+        }
+    };
+
+    fetchData(); 
+}, [apiUrl, tokenCount]); 
 
   useEffect(() => {
     fetchTokenCount(); 
