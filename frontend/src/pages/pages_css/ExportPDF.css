@@ -75,6 +75,8 @@ table {
   width: 100%;
   border-collapse: collapse;
   margin-top: 20px;
+  page-break-inside: auto;
+
 }
 
 table, th, td {
@@ -84,8 +86,14 @@ table, th, td {
 th, td {
   padding: 10px;
   text-align: left;
+  page-break-inside: avoid; 
+  page-break-after: auto;
 }
 
+tr {
+  page-break-inside: avoid; /* Avoid splitting table rows */
+  page-break-after: auto;
+}
 .export-btn {
   margin: 20px 0;
   padding: 10px 20px;
