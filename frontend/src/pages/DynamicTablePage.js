@@ -9,11 +9,6 @@ import { useNavigate } from 'react-router-dom';
 
 const DynamicTablePage = ({ apiUrl, estimateId, selectedString, setSelectedString, refreshKey  }) => {
     const {
-        // textResults,
-        // scopeResults,
-        // searchResult,
-        // handleSearch,
-        // fetchScopeData,
         inputFields,
         editIndex,
         editValues,
@@ -112,13 +107,14 @@ const DynamicTablePage = ({ apiUrl, estimateId, selectedString, setSelectedStrin
                 ? applyMarginToLaborCost(cleanLaborCost)
                 : cleanLaborCost;
 
-            const cleanMaterialCost = parseFloat(materialCost.replace('$', '')) || 0;
-
-            return {
-                job,
-                laborCost: `$${adjustedLaborCost.toFixed(2)}`,
-                materialCost: `$${cleanMaterialCost.toFixed(2)}`,
-            };
+              const cleanMaterialCost = parseFloat(materialCost.replace('$', '')) || 0;
+              const validAdjustedLaborCost = parseFloat(adjustedLaborCost) || 0;
+              
+              return {
+                  job,
+                  laborCost: `$${validAdjustedLaborCost.toFixed(2)}`,
+                  materialCost: `$${cleanMaterialCost.toFixed(2)}`,
+              };
         }),
 
     };
@@ -485,180 +481,184 @@ const handleClientSave = async () => {
       </div>
 
       <div className="dynamic-table">
-              <div ref={tableRef}>
-                <table>
-                  <thead>
-                    <tr>
-                      <th></th>
-                      <th>Job</th>
-                      <th></th>
-                      <th>Labor</th>
-                      <th>Material</th>
-                      <th></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {tableData && tableData.map((item, index) => {
-                    //   console.log("Item in tableData:", item);
+        <div ref={tableRef}>
+          <table>
+            <thead>
+              <tr>
+                <th></th>
+                <th>Job</th>
+                <th></th>
+                <th>Labor</th>
+                <th>Material</th>
+                <th></th>
+              </tr>
+            </thead>
 
-                      const { job, laborCost, materialCost } = splitTaskIntoColumns(item);
-                    //   console.log("Job:", job, "Labor Cost:", laborCost, "Material Cost:", materialCost);
+            <tbody>
+              {tableData && tableData.map((item, index) => {
 
-                      const adjustedLaborCost = applyMargin ? applyMarginToLaborCost(laborCost) : laborCost;
+                const { job, laborCost, materialCost } = splitTaskIntoColumns(item);
+                const adjustedLaborCost = applyMargin ? applyMarginToLaborCost(laborCost) : laborCost;
 
-                      return (
-                        <tr key={index}>
-                          <td>{index + 1}</td>
-                          <td colSpan={2}>
-                            {editIndex === index ? (
-                              <textarea
-                                name="job"
-                                value={editValues.job}
-                                onChange={handleEditChange}
-                                rows="3"
-                                style={{ width: '100%' }}
-                              />
-                            ) : (
-                              job
-                            )}
-                          </td>
-                          <td>
-                            {editIndex === index ? (
-                              <input
-                                type="text"
-                                name="laborCost"
-                                value={editValues.laborCost}
-                                onChange={handleEditChange}
-                                placeholder="0.00"
-                              />
-                            ) : (
-                              `$${adjustedLaborCost}`
-                            )}
-                          </td>
-                          <td>
-                            {editIndex === index ? (
-                              <input
-                                type="text"
-                                name="materialCost"
-                                value={editValues.materialCost}
-                                onChange={handleEditChange}
-                                placeholder="0.00"
-                              />
-                            ) : (
-                              `$${materialCost}`
-                            )}
-                          </td>
-                          <td className='DT-btn-group'>
-                            {editIndex === index ? (
-                              <>
-                                <button onClick={() => handleUpdateClick(index)}>
-                                  <FontAwesomeIcon icon={faCheck} style={{ color: 'green', cursor: 'pointer' }} />
-                                </button>
-
-                                <button onClick={() => handleCancelClick(index)}>
-                                < FontAwesomeIcon icon={faXmark} style={{ color: "red", cursor: "pointer" }} />
-                                </button>
-                              </>
-                            ) : (
-                              <>
-                                <button onClick={() => handleEditClick(index)}>
-                                 <FontAwesomeIcon icon={faEdit} style={{ color: 'blue', cursor: 'pointer' }} />
-                                  </button>
-                                <button onClick={() => handleDeleteTask(index)}>
-                                  <FontAwesomeIcon icon={faTrash} style={{ color: 'red', cursor: 'pointer' }} />
-                                  </button>
-                              </>
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    })}
-
-                    <tr>
-                      <td colSpan={2}><strong>Total Labor and Material</strong></td>
-                      <td></td>
-                      <td><strong>${totalLaborCost}</strong></td>
-                      <td><strong>${totalMaterialCost}</strong></td>
-                      <td></td>
-                    </tr>
-
-                    <tr>
-                      <td colSpan={3}><strong>Subtotal</strong></td>
-                      <td></td>
-                      <td><strong>${combinedTotal}</strong></td>
-                      <td></td>
-                    </tr>
-
-                    {applyDiscount && (
-                      <tr>
-                        <td colSpan={3}><strong>Discount</strong></td>
-                        <td className="center-input">
-                        <input
-                            type="number"
-                            value={discountPercent}
-                            onFocus={handleDiscountFocus}
-                            onBlur={handleDiscountBlur}
-                            onChange={handleDiscountChange}
-                            placeholder="0%"
-                            />
-                        </td>
-                        <td><strong>${totalDiscount}</strong></td>
-                        <td></td>
-                      </tr>
-                    )}
-                    <tr>
-                      <td colSpan={3}><strong>Tax</strong></td>
-                      <td className="center-input">
-                      <input
-                        type="number"
-                        value={salesTaxPercent}
-                        onFocus={handleSalesTaxFocus}
-                        onBlur={handleSalesTaxBlur}
-                        onChange={handleSalesTaxChange}
-                        placeholder="0%"
+                return (
+                  <tr key={index}>
+                    <td>{index + 1}</td>
+                    <td colSpan={2}>
+                      {editIndex === index ? (
+                        <textarea
+                          name="job"
+                          value={editValues.job}
+                          onChange={handleEditChange}
+                          rows="3"
+                          style={{ width: '100%' }}
                         />
-                      </td>
-                      <td><strong>${totalSalesTax}</strong></td>
-                      <td></td>
-                    </tr>
-                    <tr>
-                      <td colSpan={3}><strong>Total</strong></td>
-                      <td></td>
-                      <td><strong>${grandTotal}</strong></td>
-                      <td></td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
+                      ) : (
+                        job
+                      )}
+                    </td>
+                    <td>
+                      {editIndex === index ? (
+                        <input
+                          type="text"
+                          name="laborCost"
+                          value={editValues.laborCost}
+                          onChange={handleEditChange}
+                          placeholder="0.00"
+                        />
+                      ) : (
+                        `$${adjustedLaborCost}`
+                      )}
+                    </td>
+                    <td>
+                      {editIndex === index ? (
+                        <input
+                          type="text"
+                          name="materialCost"
+                          value={editValues.materialCost}
+                          onChange={handleEditChange}
+                          placeholder="0.00"
+                        />
+                      ) : (
+                        `$${materialCost}`
+                      )}
+                    </td>
+                    <td className='DT-btn-group'>
+                      {editIndex === index ? (
+                        <>
+                          <button onClick={() => handleUpdateClick(index)}>
+                            <FontAwesomeIcon icon={faCheck} style={{ color: 'green', cursor: 'pointer' }} />
+                          </button>
 
-            <div className='DT-margins-container'>
-              <div className='buttons'>
-                    <button onClick={toggleMargin}>
-                        {applyMargin ? 'Remove Margin' : 'Add Margin %'}
-                    </button>        
-                    <button onClick={toggleDiscount}>
-                        {applyDiscount ? 'Remove Discount' : 'Apply Discount'}
-                    </button>        
-                        {applyMargin && (
-                            <div className='margin-input'>
-                                <span>Enter Margin</span>
-                                <input
-                                type="number"
-                                value={marginPercent}
-                                onFocus={handleMarginFocus}
-                                onBlur={handleMarginBlur}
-                                onChange={handleMarginChange}
-                                placeholder="0%"
-                                />
-                            </div>
-                        )}
-                  </div>
+                          <button onClick={() => handleCancelClick(index)}>
+                            < FontAwesomeIcon icon={faXmark} style={{ color: "red", cursor: "pointer" }} />
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button onClick={() => handleEditClick(index)}>
+                            <FontAwesomeIcon icon={faEdit} style={{ color: 'blue', cursor: 'pointer' }} />
+                          </button>
+
+                          <button onClick={() => handleDeleteTask(index)}>
+                            <FontAwesomeIcon icon={faTrash} style={{ color: 'red', cursor: 'pointer' }} />
+                          </button>
+                        </>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+
+              <tr>
+                <td colSpan={2}><strong>Total Labor and Material</strong></td>
+                <td></td>
+                <td><strong>${totalLaborCost}</strong></td>
+                <td><strong>${totalMaterialCost}</strong></td>
+                <td></td>
+              </tr>
+
+              <tr>
+                <td colSpan={3}><strong>Subtotal</strong></td>
+                <td></td>
+                <td><strong>${combinedTotal}</strong></td>
+                <td></td>
+              </tr>
+
+              {applyDiscount && (
+                <tr>
+                  <td colSpan={3}><strong>Discount</strong></td>
+                  <td className="center-input">
+                  <input
+                      type="number"
+                      value={discountPercent}
+                      onFocus={handleDiscountFocus}
+                      onBlur={handleDiscountBlur}
+                      onChange={handleDiscountChange}
+                      placeholder="0%"
+                      />
+                  </td>
+                  <td><strong>${totalDiscount}</strong></td>
+                  <td></td>
+                </tr>
+              )}
+
+              <tr>
+                <td colSpan={3}><strong>Tax</strong></td>
+                <td className="center-input">
+                <input
+                  type="number"
+                  value={salesTaxPercent}
+                  onFocus={handleSalesTaxFocus}
+                  onBlur={handleSalesTaxBlur}
+                  onChange={handleSalesTaxChange}
+                  placeholder="0%"
+                  />
+                </td>
+                <td><strong>${totalSalesTax}</strong></td>
+                <td></td>
+              </tr>
+
+              <tr>
+                <td colSpan={3}><strong>Total</strong></td>
+                <td></td>
+                <td><strong>${grandTotal}</strong></td>
+                <td></td>
+              </tr>
+
+            </tbody>
+          </table>
+        </div>
+
+        <div className='DT-margins-container'>
+          <div className='buttons'>
+            <button onClick={toggleMargin}>
+              {applyMargin ? 'Remove Margin' : 'Add Margin %'}
+            </button>       
+
+            <button onClick={toggleDiscount}>
+              {applyDiscount ? 'Remove Discount' : 'Apply Discount'}
+            </button>        
+
+              {applyMargin && (
+                <div className='margin-input'>
+                  <span>Enter Margin</span>
+                  <input
+                  type="number"
+                  value={marginPercent}
+                  onFocus={handleMarginFocus}
+                  onBlur={handleMarginBlur}
+                  onChange={handleMarginChange}
+                  placeholder="0%"
+                  />
+                </div>
+              )}
+            </div>
+
             <div className='buttons'>
               <button onClick={handleGeneratePreview}>Generate Estimate Preview</button>
-
             </div>
           </div>
-        </div>
+      </div>
     </div>
   );
 };

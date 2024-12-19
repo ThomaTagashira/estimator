@@ -491,10 +491,12 @@ const useDynamicTable = (apiUrl, estimateId, selectedString, setSelectedString )
 
 
     const applyMarginToLaborCost = (laborCost) => {
-        const cost = parseFloat(laborCost.replace('$', '')) || 0;
+        const costString = typeof laborCost === 'string' ? laborCost : String(laborCost || 0);
+        const cost = parseFloat(costString.replace('$', '')) || 0; 
         const marginAmount = cost * (marginPercent / 100);
         return (cost + marginAmount).toFixed(2);
     };
+    
 
     const handleMarginChange = (event) => {
         const value = event.target.value;

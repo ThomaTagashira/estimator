@@ -35,8 +35,8 @@ const ExportPDFPage = () => {
     startDate,
     endDate,
     tableData,
-    // totalLaborCost,
-    // totalMaterialCost,
+    totalLaborCost,
+    totalMaterialCost,
     combinedTotal,
     discountPercent,
     totalDiscount,
@@ -87,7 +87,7 @@ const ExportPDFPage = () => {
             </div>
           </div>
 
-          <table>
+          <table className='pdf-table'>
             <thead>
               <tr>
                 <th></th>
@@ -106,23 +106,62 @@ const ExportPDFPage = () => {
                 </tr>
               ))}
             </tbody>
-          </table>
+              
+            <tbody className='pdf-table-totals'>
+                <tr>
+                  <td colSpan={4}>
+                    <hr className="divider" />
+                  </td>
+                </tr>
 
-          <h3>Totals</h3>
-          <p>Subtotal: ${combinedTotal}</p>
-          {applyDiscount && <p>Discount ({discountPercent}%): -${totalDiscount}</p>}
-          <p>Tax ({salesTaxPercent}%): ${totalSalesTax}</p>
-          <p><strong>Grand Total: ${grandTotal}</strong></p>
+                <tr>
+                  <td colSpan={2}><strong>Total Labor and Material Costs</strong></td>
+                  <td><strong>${totalLaborCost}</strong></td>
+                  <td><strong>${totalMaterialCost}</strong></td>
+                </tr>
+
+                <tr>
+                  <td colSpan={3}><strong>Subtotal</strong></td>
+                  <td><strong>${combinedTotal}</strong></td>
+                </tr>
+
+                {applyDiscount &&
+                  <tr>
+                    <td colSpan={2}><strong>Discount</strong></td>
+                    <td>{discountPercent}%</td>
+                    <td><strong>-${totalDiscount}</strong></td>
+                  </tr>
+                }
+
+                <tr>
+                  <td colSpan={2}><strong>Tax</strong></td>
+                  <td>{salesTaxPercent}%</td>
+                  <td><strong>${totalSalesTax}</strong></td>
+                </tr>
+
+                <tr>
+                  <td colSpan={3}><strong>Total</strong></td>
+                  <td><strong>${grandTotal}</strong></td>
+                </tr>                            
+             </tbody>
+          </table>
+          <hr className="divider" />
         </div>
 
-        {!isExporting && (
-          <button
-            className="export-btn"
-            onClick={() => exportToPDF(pdfRef, `Estimate_${estimateId}.pdf`)}
-          >
-            Export to PDF
-          </button>
-        )}
+        <div className='disclaimer-section'>
+          <p><strong>Disclaimer: This estimate is for informational purposes only and is not a contract or agreement. Final costs and terms will be determined upon the approval of a formal contract. All prices are subject to change based on material availability, labor rates, and project modifications.</strong></p>
+        </div>
+        
+        <div className='export-btn-container'>
+          {!isExporting && (
+            <button
+              className="export-btn"
+              onClick={() => exportToPDF(pdfRef, `Estimate_${estimateId}.pdf`)}
+            >
+              Export to PDF
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

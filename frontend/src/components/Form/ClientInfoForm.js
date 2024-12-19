@@ -7,6 +7,8 @@ const ClientInfoForm = ({
   handleNext,
   handleCancel,
 }) => {
+
+  
   return (
     <div>
       <form>

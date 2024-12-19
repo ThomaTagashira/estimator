@@ -82,9 +82,19 @@ const usePhotoUpload = () => {
         setData(updatedData);
     };
 
-    const handleLineSearch = async (line, onSearch) => {
+    const handleLineSearch = async (lineKey, onSearch) => {
         try {
-            await onSearch(line);
+            await onSearch(data[lineKey]);
+    
+            setData((prevData) => {
+                const updatedData = { ...prevData };
+                delete updatedData[lineKey];
+                return updatedData; 
+            });
+    
+            const photoUploadData = JSON.parse(localStorage.getItem('PhotoUploadData')) || {};
+            delete photoUploadData[lineKey];
+            localStorage.setItem('PhotoUploadData', JSON.stringify(photoUploadData));
         } catch (err) {
             setError('Error during search');
         }
@@ -92,10 +102,11 @@ const usePhotoUpload = () => {
 
     const handleAllSearches = async (onSearch) => {
         setError(null);
-
-        for (const key of Object.keys(data)) {
+    
+        const keys = Object.keys(data);
+        for (const key of keys) {
             try {
-                await handleLineSearch(data[key], onSearch);
+                await handleLineSearch(key, onSearch); 
             } catch (err) {
                 setError(`Search failed for line ${key}`);
                 break;
