@@ -28,7 +28,7 @@ class EstimateMarginViewsTest(APITestCase):
         self.client = APIClient()
         self.client.force_authenticate(user=self.user)
 
-        self.save_url = '/api/save-estimate-margin/'
+        self.save_url = f'/api/save-estimate-margin/{self.estimate.estimate_id}/'
         self.get_url = f'/api/get-estimate-margin/{self.estimate.estimate_id}/'
 
 
