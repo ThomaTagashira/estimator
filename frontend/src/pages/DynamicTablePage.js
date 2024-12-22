@@ -46,7 +46,6 @@ const DynamicTablePage = ({ apiUrl, estimateId, selectedString, setSelectedStrin
         handleUpdateClick,
         splitTaskIntoColumns,
         applyMarginToLaborCost,
-        // exportTablePDF,
         setTableData,
         handleCancelClick,
         isProjectEditable,
@@ -57,6 +56,9 @@ const DynamicTablePage = ({ apiUrl, estimateId, selectedString, setSelectedStrin
         handleProjectCancel,
         isClientEditable,
         setIsClientEditable,
+        setSalesTaxPercent,
+        setDiscountPercent,
+        setMarginPercent
     } = useDynamicTable(apiUrl, estimateId, selectedString, setSelectedString);
 
   const [companyName, setCompanyName] = useState('');
@@ -72,54 +74,83 @@ const DynamicTablePage = ({ apiUrl, estimateId, selectedString, setSelectedStrin
   const [endDate, setEndDate] = useState('');
   const [originalClientInfo, setOriginalClientInfo] = useState(null);
   const [originalProjectInfo, setOriginalProjectInfo] = useState(null);
-  
   const navigate = useNavigate();
 
 
-    const handleGeneratePreview = () => {
-        const exportData = {
-        totalLaborCost,
-        totalMaterialCost,
-        combinedTotal,
-        totalDiscount,
-        totalSalesTax,
-        grandTotal,
-        discountPercent,
-        salesTaxPercent,
-        applyDiscount,
-        estimateId,
-        companyName,
-        address,
-        phone,
-        clientName,
-        clientAddress,
-        clientPhone,
-        clientEmail,
-        projectName,
-        projectLocation,
-        startDate,
-        endDate,
-        tableData: tableData.map((item) => {
-            const { job, laborCost, materialCost } = splitTaskIntoColumns(item);
-
-            const cleanLaborCost = parseFloat(laborCost.replace('$', '')) || 0;
-            const adjustedLaborCost = applyMargin
-                ? applyMarginToLaborCost(cleanLaborCost)
-                : cleanLaborCost;
-
-              const cleanMaterialCost = parseFloat(materialCost.replace('$', '')) || 0;
-              const validAdjustedLaborCost = parseFloat(adjustedLaborCost) || 0;
-              
-              return {
-                  job,
-                  laborCost: `$${validAdjustedLaborCost.toFixed(2)}`,
-                  materialCost: `$${cleanMaterialCost.toFixed(2)}`,
-              };
-        }),
-
+  const handleGeneratePreview = async () => {
+    const exportData = {
+      totalLaborCost,
+      totalMaterialCost,
+      combinedTotal,
+      totalDiscount,
+      totalSalesTax,
+      grandTotal,
+      discountPercent,
+      salesTaxPercent,
+      applyDiscount,
+      estimateId,
+      companyName,
+      address,
+      phone,
+      clientName,
+      clientAddress,
+      clientPhone,
+      clientEmail,
+      projectName,
+      projectLocation,
+      startDate,
+      endDate,
+      tableData: tableData.map((item) => {
+        const { job, laborCost, materialCost } = splitTaskIntoColumns(item);
+  
+        const cleanLaborCost = parseFloat(laborCost.replace('$', '')) || 0;
+        const adjustedLaborCost = applyMargin
+          ? applyMarginToLaborCost(cleanLaborCost)
+          : cleanLaborCost;
+  
+        const cleanMaterialCost = parseFloat(materialCost.replace('$', '')) || 0;
+        const validAdjustedLaborCost = parseFloat(adjustedLaborCost) || 0;
+  
+        return {
+          job,
+          laborCost: `$${validAdjustedLaborCost.toFixed(2)}`,
+          materialCost: `$${cleanMaterialCost.toFixed(2)}`,
+        };
+      }),
     };
-        navigate('/export-pdf', { state: { exportData } });
+  
+    const saveMarginData = async () => {
+      const accessToken = localStorage.getItem('access_token');
+      const marginData = {
+        margin_percent: marginPercent,
+        tax_percent: salesTaxPercent,
+        discount_percent: discountPercent,
+      };
+  
+      try {
+        const response = await fetch(`${apiUrl}/api/save-estimate-margin/${estimateId}/`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify(marginData),
+        });
+  
+        if (response.ok) {
+          console.log('Margin info saved successfully');
+        } else {
+          console.error('Failed to save margin info');
+        }
+      } catch (error) {
+        console.error('Error saving margin info:', error);
+      }
     };
+  
+    await saveMarginData();
+    navigate('/export-pdf', { state: { exportData } });
+  };
+  
 
   useEffect(() => {
     console.log('DynamicTablePage Refresh Key:', refreshKey);
@@ -252,77 +283,122 @@ useEffect(() => {
 }, [estimateId, apiUrl, setInputFields, refreshKey]); 
 
 
+useEffect(() => {
+  const fetchMarginData = async () => {
+    try {
+      const accessToken = localStorage.getItem('access_token');
+      const response = await fetch(`${apiUrl}/api/get-estimate-margin/${estimateId}`, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const marginData = await response.json();
+        console.log('Fetched margin data:', marginData);
+
+        if (marginData) {
+          setMarginPercent(marginData.margin_percent || 0);
+          setSalesTaxPercent(marginData.tax_percent || 0);
+          setDiscountPercent(marginData.discount_percent || 0);
+        } else {
+          console.warn('No margin data found. Using default values.');
+          setMarginPercent(0);
+          setSalesTaxPercent(0);
+          setDiscountPercent(0);
+        }
+      } else {
+        console.error('Failed to fetch margin data: Status', response.status);
+        setMarginPercent(0);
+        setSalesTaxPercent(0);
+        setDiscountPercent(0);
+      }
+    } catch (error) {
+      console.error('Error fetching margin data:', error);
+      setMarginPercent(0);
+      setSalesTaxPercent(0);
+      setDiscountPercent(0);
+    }
+  };
+
+  fetchMarginData();
+}, [apiUrl, estimateId, setMarginPercent, setSalesTaxPercent, setDiscountPercent]);
+
+
+
 const handleClientSave = async () => {
-    const accessToken = localStorage.getItem('access_token');
-    const updatedClientInfo = {
-      client_name: clientName,
-      client_address: clientAddress,
-      client_phone: clientPhone,
-      client_email: clientEmail,
-    };
-
-    if (JSON.stringify(updatedClientInfo) !== JSON.stringify(originalClientInfo)) {
-      try {
-        const response = await fetch(`${apiUrl}/api/update-estimate/${estimateId}/`, {
-          method: 'PATCH',
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ client_data: updatedClientInfo }),
-        });
-
-        if (response.ok) {
-          console.log('Client info updated successfully');
-          setOriginalClientInfo(updatedClientInfo);
-          setIsClientEditable(false);
-        } else {
-          console.error('Failed to update client info');
-        }
-      } catch (error) {
-        console.error('Error saving client info:', error);
-      }
-    } else {
-      console.log('No changes made to client info');
-      setIsClientEditable(false);
-    }
+  const accessToken = localStorage.getItem('access_token');
+  const updatedClientInfo = {
+    client_name: clientName,
+    client_address: clientAddress,
+    client_phone: clientPhone,
+    client_email: clientEmail,
   };
 
-  const handleProjectSave = async () => {
-    const accessToken = localStorage.getItem('access_token');
-    const updatedProjectInfo = {
-      project_name: projectName,
-      project_location: projectLocation,
-      start_date: startDate,
-      end_date: endDate,
-    };
+  if (JSON.stringify(updatedClientInfo) !== JSON.stringify(originalClientInfo)) {
+    try {
+      const response = await fetch(`${apiUrl}/api/update-estimate/${estimateId}/`, {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ client_data: updatedClientInfo }),
+      });
 
-    if (JSON.stringify(updatedProjectInfo) !== JSON.stringify(originalProjectInfo)) {
-      try {
-        const response = await fetch(`${apiUrl}/api/update-estimate/${estimateId}/`, {
-          method: 'PATCH',
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ project_data: updatedProjectInfo }),
-        });
-
-        if (response.ok) {
-          console.log('Project info updated successfully');
-          setOriginalProjectInfo(updatedProjectInfo);
-          setIsProjectEditable(false);
-        } else {
-          console.error('Failed to update project info');
-        }
-      } catch (error) {
-        console.error('Error saving project info:', error);
+      if (response.ok) {
+        console.log('Client info updated successfully');
+        setOriginalClientInfo(updatedClientInfo);
+        setIsClientEditable(false);
+      } else {
+        console.error('Failed to update client info');
       }
-    } else {
-      console.log('No changes made to project info');
-      setIsProjectEditable(false);
+    } catch (error) {
+      console.error('Error saving client info:', error);
     }
+  } else {
+    console.log('No changes made to client info');
+    setIsClientEditable(false);
+  }
+};
+
+const handleProjectSave = async () => {
+  const accessToken = localStorage.getItem('access_token');
+  const updatedProjectInfo = {
+    project_name: projectName,
+    project_location: projectLocation,
+    start_date: startDate,
+    end_date: endDate,
   };
+
+  if (JSON.stringify(updatedProjectInfo) !== JSON.stringify(originalProjectInfo)) {
+    try {
+      const response = await fetch(`${apiUrl}/api/update-estimate/${estimateId}/`, {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ project_data: updatedProjectInfo }),
+      });
+
+      if (response.ok) {
+        console.log('Project info updated successfully');
+        setOriginalProjectInfo(updatedProjectInfo);
+        setIsProjectEditable(false);
+      } else {
+        console.error('Failed to update project info');
+      }
+    } catch (error) {
+      console.error('Error saving project info:', error);
+    }
+  } else {
+    console.log('No changes made to project info');
+    setIsProjectEditable(false);
+  }
+};
 
 
   
@@ -372,9 +448,12 @@ const handleClientSave = async () => {
     <div className='info-section-container'>
 
       <div className="info-section">
-        <h3>Client Information</h3>
-        <div>
+        <div className="form-group">
+          <label htmlFor="clientName">
+            <span className="form-icon">👤</span> Client Name
+          </label>
           <input
+            id="clientName"
             type="text"
             value={clientName}
             onChange={(e) => setClientName(e.target.value)}
@@ -382,8 +461,13 @@ const handleClientSave = async () => {
             placeholder="Client Name"
           />
         </div>
-        <div>
+
+        <div className="form-group">
+          <label htmlFor="clientAddress">
+            <span className="form-icon">📍</span> Client Address
+          </label>
           <input
+            id="clientAddress"
             type="text"
             value={clientAddress}
             onChange={(e) => setClientAddress(e.target.value)}
@@ -391,8 +475,13 @@ const handleClientSave = async () => {
             placeholder="Client Address"
           />
         </div>
-        <div>
+
+        <div className="form-group">
+          <label htmlFor="clientPhone">
+            <span className="form-icon">📞</span> Client Phone
+          </label>
           <input
+            id="clientPhone"
             type="text"
             value={clientPhone}
             onChange={(e) => setClientPhone(e.target.value)}
@@ -400,15 +489,20 @@ const handleClientSave = async () => {
             placeholder="Client Phone"
           />
         </div>
-        <div>
+
+        <div className="form-group">
+          <label htmlFor="clientEmail">
+            <span className="form-icon">✉️</span> Client Email
+          </label>
           <input
-            type="text"
+            id="clientEmail"
             value={clientEmail}
             onChange={(e) => setClientEmail(e.target.value)}
             disabled={!isClientEditable}
             placeholder="Client Email"
           />
         </div>
+
           <div className='edit'>
               {!isClientEditable ? (
               <button onClick={() => setIsClientEditable(true)}>Edit Client Info</button>
@@ -422,18 +516,25 @@ const handleClientSave = async () => {
       </div>
 
       <div className="info-section">
-        <h3>Project Information</h3>
-        <div>
+        <div className="form-group">
+          <label htmlFor="projectName">
+            <span className="form-icon">📋</span> Project Name
+          </label>
           <input
-            type="text"
+            id="projectName"
             value={projectName}
             onChange={(e) => setProjectName(e.target.value)}
             disabled={!isProjectEditable}
             placeholder="Project Name"
           />
         </div>
-        <div>
+        
+        <div className="form-group">
+          <label htmlFor="projectLocation">
+            <span className="form-icon">📍</span> Project Location
+          </label>
           <input
+            id="projectLocation"
             type="text"
             value={projectLocation}
             onChange={(e) => setProjectLocation(e.target.value)}
@@ -441,8 +542,13 @@ const handleClientSave = async () => {
             placeholder="Project Location"
           />
         </div>
-        <div>
+
+        <div className="form-group">
+          <label htmlFor="startDate">
+            <span className="form-icon">📅</span> Start Date
+          </label>
           <input
+            id="startDate"
             type="date"
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
@@ -450,8 +556,13 @@ const handleClientSave = async () => {
             placeholder="Start Date"
           />
         </div>
-        <div>
+
+        <div className="form-group">
+          <label htmlFor="endDate">
+            <span className="form-icon">🛑</span> End Date
+          </label>
           <input
+            id="endDate"
             type="date"
             value={endDate}
             onChange={(e) => setEndDate(e.target.value)}
@@ -459,18 +570,19 @@ const handleClientSave = async () => {
             placeholder="End Date"
           />
         </div>
-          <div className='edit'>
-              {!isProjectEditable ? (
-              <button onClick={() => setIsProjectEditable(true)}>Edit Project Info</button>
-              ) : (
-              <>  
-                <button onClick={handleProjectSave}>Save</button>
-                <button onClick={handleProjectCancel}>Cancel</button>
-              </>
-              )}
-          </div>
+
+        <div className='edit'>
+            {!isProjectEditable ? (
+            <button onClick={() => setIsProjectEditable(true)}>Edit Project Info</button>
+            ) : (
+            <>  
+              <button onClick={handleProjectSave}>Save</button>
+              <button onClick={handleProjectCancel}>Cancel</button>
+            </>
+            )}
         </div>
       </div>
+    </div>
 
   <hr className="divider" />
 

@@ -221,6 +221,15 @@ form {
   height: 20px;
 }
 
+.header-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 10px 20px;
+  background-color: #5c5b5b; 
+  color: #fff;
+}
+
 .header {
   display: flex;
   justify-content: space-between;
@@ -228,6 +237,8 @@ form {
   padding: 10px 20px;
   background-color: #5c5b5b;
   color: #fff;
+  width: 100%;
+  max-width: 1600px;
 }
 
 .hamburger {
@@ -309,16 +320,29 @@ label {
 }
 
 .logo-container {
-  display: flex; 
-  flex-direction: row; 
-  gap: 10px; 
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  transition: margin-left 0.5s ease; 
 }
+
+.nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 20px;
+  background-color: #5c5b5b;
+  color: #fff;
+}
+
 
 .nav li{
   display: flex;
   flex-direction: row;
   justify-content: center;
   align-items: center;
+  margin: 0 10px;
+
 }
 
 .nav button {
@@ -340,9 +364,90 @@ label {
   list-style: none;
   margin: 0;
   padding: 0;
-  display: inline-flex;
+  display: flex;
   gap: 15px;
 }
+
+.nav-hamburger {
+  display: none;
+  margin-right: 10px;
+  flex-direction: column;
+  justify-content: space-around;
+  width: 25px;
+  height: 20px;
+  cursor: pointer;
+  z-index: 1100; 
+  flex-shrink: 0;
+}
+
+.nav-hamburger span {
+  display: block;
+  width: 100%;
+  height: 3px;
+  
+  background-color: #fff;
+  transition: all 0.3s ease;
+}
+
+@media (max-width: 600px) {
+  .nav-link {
+    position: fixed;
+    top: 0;
+    left: -300px; 
+    width: 460px; 
+    height: 100%;
+    background-color: #5c5b5b;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
+    transition: transform 0.5s ease;
+    transform: translateX(-100%);
+    z-index: 1000;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    pointer-events: none; 
+
+  }
+  .nav-link.open {
+    transform: translateX(0);
+    pointer-events: auto; 
+    
+  }
+
+  .nav-link li{
+    display: flex;
+    flex-direction: column;
+    margin-top: 20px;
+    align-items: flex-end;
+  }
+
+  .nav-hamburger {
+    display: flex; 
+    /* position: fixed; */
+    top: 20px;
+    left: 20px;
+    z-index: 1000;
+    flex-direction: column;
+    justify-content: space-around;
+    width: 25px;
+    height: 20px;
+    cursor: pointer;
+  }
+
+  .nav-hamburger span {
+    display: block;
+    width: 100%;
+    height: 3px;
+    background-color: #fff;
+    border-radius: 2px;
+    transition: all 0.3s ease;
+  }
+
+  .nav.open .logo-container {
+    margin-left: 300px; 
+  }
+}
+
 
 .next-btn {
   margin-top: 20px;
@@ -362,7 +467,7 @@ label {
 
 .photo-upload-container {
   display: flex;
-  flex-direction: column;
+  /* flex-direction: column; */
 }
 
 .photo-upload-form {
@@ -371,8 +476,9 @@ label {
   align-items: center;
   justify-content: center;
   padding: 20px;
-  width: 400px;
-  margin: auto;
+  padding-right: 30px;
+  width: auto;
+  /* margin: auto; */
   text-align: center;
 }
 
@@ -539,12 +645,14 @@ label {
 }
 
 .uploaded-lines {
+  flex: 3; 
   padding: 20px;
-  align-items: center; 
+  padding-left: 30px;
+  /* align-items: center;  */
   gap: 10px; 
   margin-bottom: 10px; 
-  justify-content: center; 
-  text-align: center;  
+  width: auto;
+  /* text-align: center;   */
 }
 
 .uploaded-lines .button-group button {
@@ -566,7 +674,16 @@ label {
   justify-content: center; 
   gap: 10px; 
   margin-bottom: 10px; 
+  width: auto;
+}
 
+.uploaded-lines li:focus {
+  border-color: #007bff; 
+  box-shadow: 0 0 5px rgba(106, 13, 173, 0.3);
+}
+
+.uploaded-lines ul {
+  padding: 0;
 }
 
 .uploaded-lines textarea {
@@ -575,8 +692,14 @@ label {
   border-radius: 4px;
 }
 
-.uploaded-lines li:focus {
-  border-color: #007bff; 
-  box-shadow: 0 0 5px rgba(106, 13, 173, 0.3);
+.user-icon {
+  width: 35px; 
+  height: 35px;
+  color: #ffffff;
+  cursor: pointer;
+}
+
+.user-icon:hover {
+  color: #333;
 }
 

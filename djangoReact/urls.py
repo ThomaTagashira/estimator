@@ -46,6 +46,9 @@ urlpatterns = [
     path('api/save-search-responses/<str:estimate_id>/', SaveSearchResponseView.as_view(), name='save_search_responses'),
     path('api/get-search-responses/<str:estimate_id>/', RetrieveSearchResponseView.as_view(), name='get_search_responses'),
     path('api/delete-search-response/<str:estimate_id>/<int:saved_response_id>/', DeleteSearchResponseView.as_view(), name='delete_search_response'),
+    path('api/save-estimate-margin/<str:estimate_id>/', save_or_update_estimate_margin, name='save_or_update_estimate_margin'),
+    path('api/get-estimate-margin/<str:estimate_id>/', get_estimate_margin, name='get_estimate_margin'),
+
 
 
 

@@ -77,6 +77,28 @@ const usePhotoUpload = () => {
         }
     };
 
+    const addNewRow = () => {
+        const existingNumbers = Object.keys(data)
+        .map((key) => parseInt(key.split("_")[1], 10))
+        .filter((num) => !isNaN(num));
+    
+      const nextNumber = existingNumbers.length > 0
+        ? Math.max(...existingNumbers) + 1
+        : 1;
+    
+      const newKey = `line_${nextNumber}`;
+      console.log("New key:", newKey);
+    
+      setData((prevData) => {
+        const updatedData = {
+          ...prevData,
+          [newKey]: "",
+        };
+        console.log("Updated data:", updatedData);
+        return updatedData;
+      });
+    };
+
     const handleLineChange = (key, newValue) => {
         const updatedData = { ...data, [key]: newValue };
         setData(updatedData);
@@ -131,6 +153,7 @@ const usePhotoUpload = () => {
         handleLineChange,
         handleAllSearches,
         handleRemoveLine,
+        addNewRow
     };
 };
 

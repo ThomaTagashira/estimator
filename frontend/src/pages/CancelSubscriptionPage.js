@@ -6,14 +6,12 @@ const CancelSubscriptionPage = () => {
         <div>
             <h1>We're sorry to hear you go!</h1>
 
-            <h2>Important Notice: Subscription Cancellation Policy</h2>
+            <h2> Notice: Subscription Cancellation</h2>
 
-            <p>Upon canceling your subscription, your saved estimates and unused tokens will remain available for reactivation until the end of your billing cycle. 
-                If you choose to reactivate your subscription within this period, these resources will be fully restored to your account. 
-                After the last day of your billing cycle has passed, all saved estimates and unused tokens will be permanently deleted and cannot be recovered.</p>
+            <p>Upon canceling your subscription, you will have access to your account until the end of your billing cycle. If you decide to reactivate your subscription, all saved estimates and unused tokens will be returned to you.</p>
 
             <div>
-                <h3>If you understand and wish to proceed, please click the button below to confirm the cancellation of your subscription.</h3>
+                <h3>If you wish to proceed, please click the button below to confirm the cancellation of your subscription.</h3>
                 <CancelSubscriptionButton
                     apiEndpoint="/api/cancel-subscription/"
                 />

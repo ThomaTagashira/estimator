@@ -136,8 +136,14 @@ function App() {
 
   return (
     <Router>
-      <Header handleLogout={handleLogout} hasActiveSubscription={hasActiveSubscription} tokenCount={tokenCount} userSubscriptionTier={userSubscriptionTier} />
-      <Routes>
+    <div className="header-container">
+      <Header
+        handleLogout={handleLogout}
+        hasActiveSubscription={hasActiveSubscription}
+        tokenCount={tokenCount}
+        userSubscriptionTier={userSubscriptionTier}
+      />
+    </div>      <Routes>
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/google-callback" element={<GoogleCallback setIsAuthenticated={setIsAuthenticated} setHasActiveSubscription={setHasActiveSubscription} />} />
         <Route path="/subscribe" element={<SubscriptionPage />} />

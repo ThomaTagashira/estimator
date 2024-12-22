@@ -183,7 +183,6 @@ const useDynamicTable = (apiUrl, estimateId, selectedString, setSelectedString )
     
         try {
             const accessToken = localStorage.getItem('access_token');
-    
             const saveResponse = await fetch(`${apiUrl}/api/save-estimate-items/`, {
                 method: 'POST',
                 headers: {
@@ -233,7 +232,6 @@ const useDynamicTable = (apiUrl, estimateId, selectedString, setSelectedString )
     };
     
     
-
 
     const handleAddCustomRow = async () => {
         const customTask = {
@@ -398,7 +396,6 @@ const useDynamicTable = (apiUrl, estimateId, selectedString, setSelectedString )
             console.error('Error updating task:', error);
         }
     };
-
 
     const handleSalesTaxFocus = () => {
         if (salesTaxPercent === 0) {
@@ -613,7 +610,12 @@ const useDynamicTable = (apiUrl, estimateId, selectedString, setSelectedString )
         handleClientCancel,
         isClientEditable,
         setIsClientEditable,
+        setSalesTaxPercent,
+        setDiscountPercent,
+        setMarginPercent
     };
 };
 
 export default useDynamicTable;
+
+

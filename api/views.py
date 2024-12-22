@@ -1240,6 +1240,10 @@ def get_saved_business_info(request):
     return Response(serializer.data)
 
 
+
+
+
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_user_token_count(request):
@@ -1369,3 +1373,84 @@ class DeleteSearchResponseView(APIView):
             print(f"Error in DeleteSearchResponseView: {e}")
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+
+
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def save_or_update_estimate_margin(request, estimate_id):
+    try:
+        data = request.data
+        user = request.user
+        margin_percent = data.get('margin_percent') or 0
+        tax_percent = data.get('tax_percent') or 0
+        discount_percent = data.get('discount_percent') or 0
+
+        margin_percent = int(margin_percent) if margin_percent else 0
+        tax_percent = int(tax_percent) if tax_percent else 0
+        discount_percent = int(discount_percent) if discount_percent else 0
+
+        estimate = UserEstimates.objects.filter(estimate_id=estimate_id, user=user).first()
+        if not estimate:
+            return Response({'error': 'Estimate not found.'}, status=404)
+
+        estimate_margin, created = EstimateMarginData.objects.get_or_create(
+            user=user,
+            estimate=estimate,
+            defaults={
+                'margin_percent': margin_percent,
+                'tax_percent': tax_percent,
+                'discount_percent': discount_percent,
+            }
+        )
+
+        if not created:
+            estimate_margin.margin_percent = margin_percent
+            estimate_margin.tax_percent = tax_percent
+            estimate_margin.discount_percent = discount_percent
+            estimate_margin.save()
+
+        return Response({
+            'message': 'Record saved successfully.',
+            'estimate_margin_id': estimate_margin.id,
+        }, status=200)
+
+    except ValueError as e:
+        return Response({'error': f'Invalid value: {e}'}, status=400)
+    except Exception as e:
+        return Response({'error': f'Unexpected error: {e}'}, status=500)
+
+
+    
+
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_estimate_margin(request, estimate_id):
+    try:
+        estimate = UserEstimates.objects.filter(estimate_id=estimate_id, user=request.user).first()
+        if not estimate:
+            print("No matching estimate found")
+            return Response({'error': 'Estimate not found.'}, status=404)
+
+        estimate_margin = EstimateMarginData.objects.filter(estimate=estimate, user=request.user).first()
+
+        if estimate_margin:
+            data = {
+                'margin_percent': estimate_margin.margin_percent or 0,
+                'tax_percent': estimate_margin.tax_percent or 0,
+                'discount_percent': estimate_margin.discount_percent or 0,
+            }
+        else:
+            data = {
+                'margin_percent': 0,
+                'tax_percent': 0,
+                'discount_percent': 0,
+            }
+
+        return Response(data, status=200)
+
+    except Exception as e:
+        return Response({'error': str(e)}, status=400)

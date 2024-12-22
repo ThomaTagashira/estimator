@@ -15,6 +15,7 @@ const PhotoUploadForm = ({
   handleLineChange,
   handleAllSearches,
   handleRemoveLine,
+  addNewRow
 }) => {
 
 
@@ -22,23 +23,23 @@ const PhotoUploadForm = ({
       <div className="photo-upload-container">
         <div className="photo-upload-form">
           <h3>Photo Upload Form</h3>
-          <div
-            className="drop-zone"
-            onDrop={(e) => {
-              e.preventDefault();
-              const file = e.dataTransfer.files[0];
+            <div
+              className="drop-zone"
+              onDrop={(e) => {
+                e.preventDefault();
+                const file = e.dataTransfer.files[0];
 
-              if (file) {
-                  handleFileChange(file);
-              }
-            }}
-            onDragOver={(e) => e.preventDefault()}
-          >
-            {selectedFile ? (
+                if (file) {
+                    handleFileChange(file);
+                }
+              }}
+              onDragOver={(e) => e.preventDefault()}
+            >
+              {selectedFile ? (
               <>
                 {isUploading ? (
                   <p className="loading-message">
-                    Converting photo to text, please wait...
+                    Converting photo to text, please do not reload page until completed...
                   </p>
                 ) : (
 
@@ -99,35 +100,33 @@ const PhotoUploadForm = ({
           </form>
         </div>
 
-      <hr className="divider" />
+      {/* <hr className="divider" /> */}
 
-      <div className="uploaded-lines-container">
-        <div className="uploaded-lines">
-          <h3>Uploaded Lines</h3>
+      <div className="uploaded-lines">
+        <h3>Search Tasks</h3>
 
-          {error && <p className="error-message">{error}</p>}
+        {error && <p className="error-message">{error}</p>}
+        <button onClick={addNewRow}>Add New Search</button>
 
-          <ul>
-            {Object.keys(data).map((key) => (
-              <li key={key}>
-                <textarea
-                  value={data[key]}
-                  onChange={(e) => handleLineChange(key, e.target.value)}
-                />
+        <ul>
+          {Object.keys(data).map((key) => (
+            <li key={key}>
+              <textarea
+                value={data[key]}
+                onChange={(e) => handleLineChange(key, e.target.value)}
+              />
 
-                <button onClick={() => handleRemoveLine(key)} >
-                  <FontAwesomeIcon icon={faTrash} style={{ color: 'red', cursor: 'pointer' }} />
-                </button>
-              </li>
-            ))}
-          </ul>
+              <button onClick={() => handleRemoveLine(key)} >
+                <FontAwesomeIcon icon={faTrash} style={{ color: 'red', cursor: 'pointer' }} />
+              </button>
+            </li>
+          ))}
+        </ul>
 
-          <div>
-            <button onClick={() => handleAllSearches(onSearch)} className="upload-btn">
-              Search All
-            </button>
-          </div>
-
+        <div>
+          <button onClick={() => handleAllSearches(onSearch)} className="upload-btn">
+            Search All
+          </button>
         </div>
       </div>
     </div>

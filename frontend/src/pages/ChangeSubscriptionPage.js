@@ -20,42 +20,42 @@ const ChangeSubscriptionPage = ({ userSubscriptionTier }) => {
             <div className="cards">
                 <div className="card">                
                     <h3>Basic</h3>
-                    <p className="price">$24.99/month</p>
+                    <p className="price">$14.99/month</p>
                     <ul>
-                        <li>Add Things Here</li>
-                        <li>Add Things Here</li>
+                    <li>Receive 50 tokens at the beginning of each billing cycle</li>
+                    <li>Add Things Here</li>
                         <li>Add Things Here</li>
                     </ul>
                     <button onClick={() => handleSelectNewTier('Basic')}>
-                        Basic - $24.99/month
+                        Basic - $14.99/month
                     </button>
                 </div>
 
 
                 <div className="card">
                     <h3>Premium</h3>
-                    <p className="price">$49.99/month</p>
+                    <p className="price">$24.99/month</p>
                     <ul>
-                        <li>Add Things Here</li>
-                        <li>Add Things Here</li>
+                    <li>Receive 120 tokens at the beginning of each billing cycle</li>
+                    <li>Add Things Here</li>
                         <li>Add Things Here</li>
                     </ul>
                     <button onClick={() => handleSelectNewTier('Premium')}>
-                        Premium - $49.99/month
+                        Premium - $24.99/month
                     </button>
                 </div>
 
 
                 <div className="card">
                     <h3>Enterprise</h3>
-                    <p className="price">$99.99</p>
+                    <p className="price">$49.99</p>
                     <ul>
-                        <li>Add Things Here</li>
-                        <li>Add Things Here</li>
+                    <li>Receive 275 tokens at the beginning of each billing cycle</li>
+                    <li>Add Things Here</li>
                         <li>Add Things Here</li>
                     </ul>
                     <button onClick={() => handleSelectNewTier('Enterprise')}>
-                        Enterprise - $99.99/month
+                        Enterprise - $49.99/month
                     </button>
                 </div>
             </div>

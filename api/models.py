@@ -244,3 +244,21 @@ class SearchResponseData(models.Model):
 
     def __str__(self):
         return f"SearchResponseData(user={self.user}, task={self.task}, estimate_reference_id={self.estimate_reference_id})"
+
+
+
+
+
+class EstimateMarginData(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    estimate = models.ForeignKey(UserEstimates, on_delete=models.CASCADE, related_name='estimate_margins')
+    margin_percent = models.PositiveIntegerField(null=True, blank=True)
+    tax_percent = models.PositiveIntegerField(null=True, blank=True)
+    discount_percent = models.PositiveIntegerField(null=True, blank=True)
+
+
+    def save(self, *args, **kwargs):
+        if self.estimate_id:
+            self.estimate_id = f"{int(self.estimate_id):05}"
+
+        super().save(*args, **kwargs)

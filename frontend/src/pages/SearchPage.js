@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-
-import SearchForm from '../components/Form/SearchForm';
+// import SearchForm from '../components/Form/SearchForm';
 import PhotoUploadForm from '../components/Form/PhotoUploadForm';
 import useSearch from '../hooks/useSearch';
 import usePhotoUpload from '../hooks/usePhotoUpload';
@@ -55,7 +54,7 @@ const SearchPage = ({ apiUrl, fetchTokenCount }) => {
   const {
     selectedString,
     setSelectedString,
-    fetchScopeData,
+    // fetchScopeData,
     handleSearch,
   } = useSearch(apiUrl, estimateId);
 
@@ -69,7 +68,8 @@ const SearchPage = ({ apiUrl, fetchTokenCount }) => {
     handleRemoveLine,
     handleAllSearches,
     handleRemovePhoto,
-    isUploading
+    isUploading,
+    addNewRow
   } = usePhotoUpload();
 
 const handleTabSwitch = async (tab) => {
@@ -116,7 +116,7 @@ const handleTabSwitch = async (tab) => {
 
   {activeTab === 'search' && (
     <div className="search-tab">
-      <SearchForm onScopeSubmit={fetchScopeData}/>
+      {/* <SearchForm onScopeSubmit={fetchScopeData}/> */}
       <PhotoUploadForm
         onSearch={(query) => handleSearch(query, estimateId, setRefreshKey, fetchTokenCount)}
         selectedFile={selectedFile}
@@ -129,6 +129,7 @@ const handleTabSwitch = async (tab) => {
         handleLineChange={handleLineChange}
         handleAllSearches={(queries) => handleAllSearches(queries, estimateId)}
         handleRemoveLine={handleRemoveLine}
+        addNewRow={addNewRow}
       />
     </div>
   )}
