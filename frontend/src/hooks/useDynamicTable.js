@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 // import { resizeImage } from '../components/utils/logoResize';
 import axios from 'axios';
 
@@ -33,6 +34,8 @@ const useDynamicTable = (apiUrl, estimateId, selectedString, setSelectedString )
     const [originalValues] = useState(null);
     const [isProjectEditable, setIsProjectEditable] = useState(false);
     const [isClientEditable, setIsClientEditable] = useState(false);
+    const [deletingEstimate, setDeletingEstimate] = useState(null);
+    const navigate = useNavigate(); 
 
     const tableRef = useRef();
 
@@ -290,7 +293,37 @@ const useDynamicTable = (apiUrl, estimateId, selectedString, setSelectedString )
         }
     };
 
+    const confirmDelete = (estimateId) => {
+        setDeletingEstimate(estimateId); 
+    };
+    
+    const cancelDelete = () => {
+        setDeletingEstimate(null); 
+    };
 
+    const handleDeleteEstimate = async () => {
+        if (!deletingEstimate) return; 
+
+        try {
+            const accessToken = localStorage.getItem('access_token');
+            const response = await fetch(`${apiUrl}/api/delete-estimate/${estimateId}/`, {
+                method: 'DELETE',
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (response.ok) {
+                console.log('Estimate deleted successfully.');
+            } else {
+                console.error('Failed to delete estimate:', response.statusText);
+            }
+        } catch (err) {
+            console.error('Error deleting estimate:', err);
+        }
+        navigate('/');
+    };
 
     const handleDeleteTask = async (index) => {
         try {
@@ -612,7 +645,11 @@ const useDynamicTable = (apiUrl, estimateId, selectedString, setSelectedString )
         setIsClientEditable,
         setSalesTaxPercent,
         setDiscountPercent,
-        setMarginPercent
+        setMarginPercent,
+        confirmDelete,
+        cancelDelete,
+        handleDeleteEstimate,
+        deletingEstimate
     };
 };
 

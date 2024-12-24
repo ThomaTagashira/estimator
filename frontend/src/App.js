@@ -20,7 +20,8 @@ import {
     BusinessInfoPage,
     CancelSubscriptionPage,
     ChangeSubscriptionPage,
-    ExportPDFPage
+    ExportPDFPage,
+    DynamicTablePage
 }  from './pages';
 
 
@@ -157,11 +158,11 @@ function App() {
                 fetchTokenCount={fetchTokenCount}/>
             </AuthenticatedRoute>
         }/>
-        {/* <Route path="/estimates" element={
+        <Route path="/dynamic-table" element={
             <AuthenticatedRoute isAuthenticated={isAuthenticated} hasActiveSubscription={hasActiveSubscription}>
-              <SearchResults apiUrl={apiUrl}/>
+              <DynamicTablePage apiUrl={apiUrl}/>
             </AuthenticatedRoute>
-        }/> */}
+        }/>
         <Route path="/create-estimate" element={
             <AuthenticatedRoute isAuthenticated={isAuthenticated} hasActiveSubscription={hasActiveSubscription}>
               <CreateEstimatePage apiUrl={apiUrl} />

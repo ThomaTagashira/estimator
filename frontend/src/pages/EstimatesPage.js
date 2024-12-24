@@ -55,7 +55,7 @@ const EstimatesPage = () => {
         </div>
         <div className='create-btn'>
         <Link to="/create-estimate">
-          <button className="create-btn">+ Create New Estimate</button>
+          <button className="create-btn">Create New Estimate</button>
         </Link>
         </div>
       </div>

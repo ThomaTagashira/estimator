@@ -59,15 +59,15 @@ const Header = ({ handleLogout, hasActiveSubscription, tokenCount, userSubscript
           <>
             <li>
               <Link to="/" className="dropdown-link" onClick={() => setMenuOpen(false)}>
-                <button className="dropdown-button">Home</button>
+                <button className="nav-link-button">Home</button>
               </Link>
 
               <Link to="/save-business-info" className="dropdown-link" onClick={() => setMenuOpen(false)}>
-                <button className="dropdown-button">Business Info</button>
+                <button className="nav-link-button">Business Info</button>
               </Link>
 
               <Link to="/buy-tokens" className="dropdown-link" onClick={() => setMenuOpen(false)}>
-                <button className="dropdown-button">Purchase Tokens</button>
+                <button className="nav-link-button">Purchase Tokens</button>
               </Link>
             </li>
           </>

@@ -39,31 +39,31 @@ const useFetchEstimates = (apiUrl) => {
 
 
 
-  const handleDeleteEstimate = async (estimateId) => {
-    try {
-      const accessToken = localStorage.getItem('access_token'); 
+  // const handleDeleteEstimate = async (estimateId) => {
+  //   try {
+  //     const accessToken = localStorage.getItem('access_token'); 
 
-      if (!accessToken) {
-        console.error('No access token found');
-        return;
-      }
+  //     if (!accessToken) {
+  //       console.error('No access token found');
+  //       return;
+  //     }
   
-      const response = await fetch(`${apiUrl}/api/delete-estimate/${estimateId}/`, {
-        method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${accessToken}`, 
-          'Content-Type': 'application/json',
-        },
-      });      
-      if (!response.ok) {
-        throw new Error(`Failed to delete estimate: ${response.status}`);
-      }
+  //     const response = await fetch(`${apiUrl}/api/delete-estimate/${estimateId}/`, {
+  //       method: 'DELETE',
+  //       headers: {
+  //         Authorization: `Bearer ${accessToken}`, 
+  //         'Content-Type': 'application/json',
+  //       },
+  //     });      
+  //     if (!response.ok) {
+  //       throw new Error(`Failed to delete estimate: ${response.status}`);
+  //     }
   
-      setEstimates((prev) => prev.filter((est) => est.estimate_id !== estimateId));
-    } catch (err) {
-      console.error('Failed to delete estimate:', err);
-    }
-  };
+  //     setEstimates((prev) => prev.filter((est) => est.estimate_id !== estimateId));
+  //   } catch (err) {
+  //     console.error('Failed to delete estimate:', err);
+  //   }
+  // };
 
 
 
@@ -72,7 +72,7 @@ const useFetchEstimates = (apiUrl) => {
     estimates,
     loading,
     error,
-    handleDeleteEstimate,
+    // handleDeleteEstimate,
     fetchEstimates,
     currentPage,
     totalPages,

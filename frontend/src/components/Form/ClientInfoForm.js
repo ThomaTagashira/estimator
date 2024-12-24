@@ -65,11 +65,11 @@ const ClientInfoForm = ({
           />
         </div>
         <div className="button-group">
-          <button type="button" className="next-btn" onClick={handleNext}>
-            Next
-          </button>
           <button type='button' className='next-btn' onClick={handleCancel}>
             Cancel
+          </button>
+          <button type="button" className="next-btn" onClick={handleNext}>
+            Next
           </button>
         </div>
       </form>

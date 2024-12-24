@@ -137,6 +137,20 @@
   padding: 20px;
 }
 
+.DT-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.DT-delete-button {
+  height: fit-content;
+  width: fit-content;
+  font-weight: bold;
+  color: #ff4c4c; 
+  font-size: 14px;
+}
+
 .DT-margins-container {
  display: flex;
  justify-content: space-between;

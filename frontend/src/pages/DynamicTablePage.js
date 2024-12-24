@@ -5,9 +5,10 @@ import axios from 'axios';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEdit, faXmark, faCheck, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { useNavigate } from 'react-router-dom';
+import EstimateList from '../components/EstimateList';
 
 
-const DynamicTablePage = ({ apiUrl, estimateId, selectedString, setSelectedString, refreshKey  }) => {
+const DynamicTablePage = ({ apiUrl, estimateId, selectedString, setSelectedString, refreshKey, isLoading  }) => {
     const {
         inputFields,
         editIndex,
@@ -58,8 +59,13 @@ const DynamicTablePage = ({ apiUrl, estimateId, selectedString, setSelectedStrin
         setIsClientEditable,
         setSalesTaxPercent,
         setDiscountPercent,
-        setMarginPercent
+        setMarginPercent,
+        confirmDelete,
+        cancelDelete,
+        handleDeleteEstimate,
+        deletingEstimate
     } = useDynamicTable(apiUrl, estimateId, selectedString, setSelectedString);
+
 
   const [companyName, setCompanyName] = useState('');
   const [address, setAddress] = useState('');
@@ -74,6 +80,7 @@ const DynamicTablePage = ({ apiUrl, estimateId, selectedString, setSelectedStrin
   const [endDate, setEndDate] = useState('');
   const [originalClientInfo, setOriginalClientInfo] = useState(null);
   const [originalProjectInfo, setOriginalProjectInfo] = useState(null);
+  
   const navigate = useNavigate();
 
 
@@ -403,35 +410,78 @@ const handleProjectSave = async () => {
 
   
   return (
-<div className="DT-container">
-  <h2>Estimate ID: {estimateId}</h2>
-  
-  <hr className="divider" />
+  <div className="DT-container">
+    <div className='DT-header'>
+      <h2>Estimate ID: {estimateId}</h2>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation(); 
+                    confirmDelete(estimateId);
+                  }}
+                  className="DT-delete-button"
+                >
+                  <p>Delete Estimate</p>
+                </button>
+    </div>
 
-    <div className="DT-task-fields">
-      {inputFields.map((field, index) => (
-        <div key={field.saved_response_id || index} className="DT-task-row">
-          <input
-            type="text"
-            value={field.task}
-            onChange={(e) =>
-              setInputFields((prevFields) =>
-                prevFields.map((f) =>
-                  f.saved_response_id === field.saved_response_id
-                    ? { ...f, task: e.target.value }
-                    : f
-                )
-              )
-            }
-            placeholder={`Task ${field.saved_response_id}`}
-          />
-          <button onClick={() => handleRemoveField(field.saved_response_id)}>
-            <FontAwesomeIcon icon={faTrash} style={{ color: 'red', cursor: 'pointer' }} />
-          </button>
+    {deletingEstimate && (
+        <div className="slide-out-panel">
+          <p><strong>WARNING:</strong></p>
+          <p>Are you sure you want to delete Estimate: <strong>{estimateId}</strong>?</p>
+          <p>By selecting confirm, you will no longer have access to any records you have saved in:</p>
+          <p>Project: <strong>{projectName || 'Unnamed Project'}</strong></p>
+          <p>Estimate Number: <strong>{estimateId}</strong></p>
+          
+          <div className='slide-out-btn'>
+            <button onClick={handleDeleteEstimate} className="confirm-button">Confirm</button>
+            <button onClick={cancelDelete} className="cancel-button">Cancel</button>
+          </div>
         </div>
-      ))}
-        <div className='buttons'>
-          <button onClick={handleAddAllRows}>Add All Tasks to Estimate</button>
+      )}
+
+      <hr className="divider" />
+
+        <div className="DT-task-fields">
+          <table className="dynamic-table">
+            
+            {/* <thead>
+              <tr>
+                <th></th>
+                <th>Tasks to Add</th>
+                <th></th>
+              </tr>
+            </thead> */}
+
+            <tbody>
+              {inputFields.map((field, index) => (
+                <tr key={field.saved_response_id || index}>
+                  <td>{index + 1}</td> 
+                  <td>{field.task}</td> 
+                  <td>
+                    <button onClick={() => handleRemoveField(field.saved_response_id)} style={{float: 'right'}}>
+                      <FontAwesomeIcon icon={faTrash} style={{ color: 'red', cursor: 'pointer'}} />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          <div>
+            <button 
+              onClick={handleAddAllRows}
+              disabled={isLoading}
+              className="upload-btn"
+
+            >
+              {isLoading ? (
+                <>
+                  <div className="spinner"></div> Searching...
+                </>
+              ) : (
+                'Add All Tasks to Estimate'
+              )}                           
+            </button>
           </div>
         </div>
 

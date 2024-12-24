@@ -39,7 +39,7 @@ const ProfileButton = ({ handleLogout, header }) => {
         </Link>
 
         <div className="dropdown-link" onClick={() => { handleLogout(); setIsMenuOpen(false); }}>
-            <button className="dropdown-button">Logout</button>
+            <button className="logout">Logout</button>
         </div>
 
       </div>

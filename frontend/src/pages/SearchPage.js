@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-// import SearchForm from '../components/Form/SearchForm';
 import PhotoUploadForm from '../components/Form/PhotoUploadForm';
 import useSearch from '../hooks/useSearch';
 import usePhotoUpload from '../hooks/usePhotoUpload';
@@ -12,8 +11,10 @@ const SearchPage = ({ apiUrl, fetchTokenCount }) => {
   const [tableData, setTableData] = useState([]);
   const [searchParams] = useSearchParams();
   const [refreshKey, setRefreshKey] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
 
   const estimateId = searchParams.get('estimateId');
+  const tab = searchParams.get('tab'); 
 
   useEffect(() => {
     console.log('Estimate ID:', estimateId);
@@ -70,7 +71,7 @@ const SearchPage = ({ apiUrl, fetchTokenCount }) => {
     handleRemovePhoto,
     isUploading,
     addNewRow
-  } = usePhotoUpload();
+  } = usePhotoUpload( setIsLoading );
 
 const handleTabSwitch = async (tab) => {
     setActiveTab(tab);
@@ -96,57 +97,64 @@ const handleTabSwitch = async (tab) => {
     }
   };
 
+  useEffect(() => {
+    if (tab === 'table') {
+      setActiveTab('table');
+    } else {
+      setActiveTab('search');
+    }
+  }, [tab]);
 
   return (
-<div className="page">
-  <div className="tab-container">
-    <button
-      className={`tab-button ${activeTab === 'search' ? 'active' : ''}`}
-      onClick={() => handleTabSwitch('search')}
-    >
-      Search Tasks
-    </button>
-    <button
-      className={`tab-button ${activeTab === 'table' ? 'active' : ''}`}
-      onClick={() => handleTabSwitch('table')}
-    >
-      Estimate
-    </button>
-  </div>
+    <div className="page">
+      <div className="tab-container">
+        <button
+          className={`tab-button ${activeTab === 'search' ? 'active' : ''}`}
+          onClick={() => handleTabSwitch('search')}
+        >
+          Search Tasks
+        </button>
+        <button
+          className={`tab-button ${activeTab === 'table' ? 'active' : ''}`}
+          onClick={() => handleTabSwitch('table')}
+        >
+          Estimate
+        </button>
+      </div>
 
-  {activeTab === 'search' && (
-    <div className="search-tab">
-      {/* <SearchForm onScopeSubmit={fetchScopeData}/> */}
-      <PhotoUploadForm
-        onSearch={(query) => handleSearch(query, estimateId, setRefreshKey, fetchTokenCount)}
-        selectedFile={selectedFile}
-        data={data}
-        error={uploadError}
-        isUploading={isUploading} 
-        handleFileChange={handleFileChange}
-        handleRemovePhoto={handleRemovePhoto} 
-        handleSubmit={handleSubmit}
-        handleLineChange={handleLineChange}
-        handleAllSearches={(queries) => handleAllSearches(queries, estimateId)}
-        handleRemoveLine={handleRemoveLine}
-        addNewRow={addNewRow}
-      />
+      {activeTab === 'search' && (
+        <div className="search-tab">
+          <PhotoUploadForm
+            onSearch={(query) => handleSearch(query, estimateId, setRefreshKey, fetchTokenCount)}
+            selectedFile={selectedFile}
+            data={data}
+            error={uploadError}
+            isUploading={isUploading} 
+            handleFileChange={handleFileChange}
+            handleRemovePhoto={handleRemovePhoto} 
+            handleSubmit={handleSubmit}
+            handleLineChange={handleLineChange}
+            handleAllSearches={(queries) => handleAllSearches(queries, estimateId)}
+            handleRemoveLine={handleRemoveLine}
+            addNewRow={addNewRow}
+            isLoading={isLoading}
+          />
+        </div>
+      )}
+
+      {activeTab === 'table' && (
+        <div className="table-tab">
+          <DynamicTablePage
+            selectedString={selectedString}
+            setSelectedString={setSelectedString}
+            apiUrl={apiUrl}
+            estimateId={estimateId}
+            refreshKey={refreshKey}
+            isLoading={isLoading}
+          />
+        </div>
+      )}
     </div>
-  )}
-
-  {activeTab === 'table' && (
-    <div className="table-tab">
-      <DynamicTablePage
-        selectedString={selectedString}
-        setSelectedString={setSelectedString}
-        apiUrl={apiUrl}
-        estimateId={estimateId}
-        refreshKey={refreshKey}
-      />
-    </div>
-  )}
-</div>
-
   );
 };
 

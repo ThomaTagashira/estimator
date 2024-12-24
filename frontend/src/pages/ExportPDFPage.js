@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import useExportPDF from '../hooks/useExportPDF';
 import './pages_css/ExportPDF.css';
 
@@ -8,6 +8,8 @@ const ExportPDFPage = () => {
   const { exportData } = state || {};
   const pdfRef = useRef();
   const { exportToPDF, isExporting } = useExportPDF();
+  const navigate = useNavigate(); 
+
 
   function getTodayDate() {
     const today = new Date();
@@ -46,6 +48,10 @@ const ExportPDFPage = () => {
     applyDiscount,
   } = exportData;
 
+  const prevButton = (estimateId) => {
+    navigate(`/search?estimateId=${estimateId}&tab=table`);
+  };
+
   return (
     <div className='body'>
       <div ref={pdfRef} className="pdf-container">
@@ -53,6 +59,7 @@ const ExportPDFPage = () => {
           <h2>Estimate</h2>
           <p>{companyName} | {address} | {phone}</p>
         </div>
+        <hr className="divider" />
 
         <div className="sub-container">
           <div className="pdf-info-container">
@@ -106,7 +113,7 @@ const ExportPDFPage = () => {
                 </tr>
               ))}
             </tbody>
-              
+
             <tbody className='pdf-table-totals'>
                 <tr>
                   <td colSpan={4}>
@@ -153,6 +160,13 @@ const ExportPDFPage = () => {
         </div>
         
         <div className='export-btn-container'>
+          <button 
+            className='export-btn' 
+            onClick={() => prevButton(estimateId)}
+          >
+            Previous
+          </button>
+
           {!isExporting && (
             <button
               className="export-btn"

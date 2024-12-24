@@ -3,7 +3,7 @@ import axios from 'axios';
 
 const apiUrl = process.env.REACT_APP_API_URL;
 
-const usePhotoUpload = () => {
+const usePhotoUpload = (setIsLoading) => {
     const [selectedFile, setSelectedFile] = useState(null);
     const [data, setData] = useState(() => {
         const savedData = localStorage.getItem('photoUploadData');
@@ -105,6 +105,7 @@ const usePhotoUpload = () => {
     };
 
     const handleLineSearch = async (lineKey, onSearch) => {
+        setIsLoading(true);
         try {
             await onSearch(data[lineKey]);
     
@@ -119,21 +120,26 @@ const usePhotoUpload = () => {
             localStorage.setItem('PhotoUploadData', JSON.stringify(photoUploadData));
         } catch (err) {
             setError('Error during search');
-        }
+        } finally {
+            setIsLoading(false);
+        }    
     };
 
     const handleAllSearches = async (onSearch) => {
         setError(null);
+        setIsLoading(true);
     
         const keys = Object.keys(data);
         for (const key of keys) {
             try {
-                await handleLineSearch(key, onSearch); 
+                await handleLineSearch(key, onSearch);
             } catch (err) {
                 setError(`Search failed for line ${key}`);
                 break;
             }
         }
+    
+        setIsLoading(false); 
     };
 
     const handleRemoveLine = (key) => {

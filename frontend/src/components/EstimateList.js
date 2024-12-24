@@ -10,10 +10,14 @@ const EstimateList = ({ estimates: initialEstimates, loading, error, apiUrl, fet
   const navigate = useNavigate(); 
 
   const navigateToEstimate = (estimateId) => {
-    navigate(`/search?estimateId=${estimateId}`); 
+    navigate(`/search?estimateId=${estimateId}&tab=table`);
   };
+  
   const confirmDelete = (estimate) => {
+    console.log('Estimate:', estimate);
+
     setDeletingEstimate(estimate); 
+
   };
 
   const cancelDelete = () => {

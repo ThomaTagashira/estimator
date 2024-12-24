@@ -15,7 +15,8 @@ const PhotoUploadForm = ({
   handleLineChange,
   handleAllSearches,
   handleRemoveLine,
-  addNewRow
+  addNewRow,
+  isLoading,
 }) => {
 
 
@@ -38,9 +39,11 @@ const PhotoUploadForm = ({
               {selectedFile ? (
               <>
                 {isUploading ? (
-                  <p className="loading-message">
-                    Converting photo to text, please do not reload page until completed...
-                  </p>
+                  <>
+                <div className="spinner"></div>
+                Converting to text
+                </>
+
                 ) : (
 
                   <>
@@ -100,8 +103,6 @@ const PhotoUploadForm = ({
           </form>
         </div>
 
-      {/* <hr className="divider" /> */}
-
       <div className="uploaded-lines">
         <h3>Search Tasks</h3>
 
@@ -124,8 +125,18 @@ const PhotoUploadForm = ({
         </ul>
 
         <div>
-          <button onClick={() => handleAllSearches(onSearch)} className="upload-btn">
-            Search All
+          <button
+            onClick={() => handleAllSearches(onSearch)}
+            className="upload-btn"
+            disabled={isLoading} 
+          >
+            {isLoading ? (
+              <>
+                <div className="spinner"></div> Searching...
+              </>
+            ) : (
+              'Search All'
+            )}
           </button>
         </div>
       </div>
