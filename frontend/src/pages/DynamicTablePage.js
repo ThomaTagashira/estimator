@@ -5,7 +5,6 @@ import axios from 'axios';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEdit, faXmark, faCheck, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { useNavigate } from 'react-router-dom';
-import EstimateList from '../components/EstimateList';
 
 
 const DynamicTablePage = ({ apiUrl, estimateId, selectedString, setSelectedString, refreshKey, isLoading  }) => {
