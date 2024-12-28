@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
 import { getCookie } from '../utils/getCookies';
 import '../components_css/Components.css';
+import GoogleLoginButton from '../GoogleLoginButton';
+
+const googleID = process.env.REACT_APP_GOOGLE_CLIENT_ID;
+const redirUrl = process.env.REACT_APP_REDIR_URL;
 
 const RegisterForm = ({ 
 	userEmail,
@@ -16,6 +20,20 @@ const handleSubmit = (e) => {
 	e.preventDefault(); 
 	register(userEmail, password, getCookie('csrftoken')); 
 };
+
+const constructOAuthUrl = (baseUrl, clientId, redirectUri, scope, responseType = 'code') => {
+    return `${baseUrl}?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=${responseType}&scope=${scope}`;
+  };
+
+  const handleGoogleLogin = () => {
+    const authUrl = constructOAuthUrl(
+      'https://accounts.google.com/o/oauth2/v2/auth',
+      googleID,
+      `${redirUrl}/google-callback`,
+      'profile email'
+    );
+    window.location.href = authUrl;
+  };
 
 const [passwordStrength, setPasswordStrength] = useState(0);
 const [showStrength, setShowStrength] = useState(false);
@@ -74,14 +92,14 @@ const getStrengthColor = () => {
 
 	return (
 		<div>
-			<h2>Sign Up</h2>
+			<h2>Create Account</h2>
 			<form onSubmit={handleSubmit}>
 				<input
 					type="text"
 					name="userEmail"
 					value={userEmail}
 					onChange={(e) => setUserEmail(e.target.value)}
-					placeholder="Email Address"
+					placeholder="Email"
 				/>
 
 				<input
@@ -100,14 +118,20 @@ const getStrengthColor = () => {
 					</div>
 				)}
 
-				<div className="button-group">
-					<button type="submit" className="next-btn">
-						Register
+				{/* <div className="button-group"> */}
+					<button type="submit" className="login-btn">
+						<strong>Register</strong>
 					</button>
 
-					<button type='button' className='next-btn' onClick={handleCancel}>
-						Cancel
+					<button type='button' className='create-new-account-btn' onClick={handleCancel}>
+						<strong>Cancel</strong>					
 					</button>
+				{/* </div> */}
+
+				<hr className='divider'/>
+
+				<div style={{ display: "flex", justifyContent: "center"}}>
+					<  GoogleLoginButton googleID={googleID} handleGoogleLogin={handleGoogleLogin} />
 				</div>
 			</form>
 			{error && <p>{error}</p>}

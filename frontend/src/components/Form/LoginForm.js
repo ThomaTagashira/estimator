@@ -69,8 +69,7 @@ const LoginForm = ({ onSubmit, error }) => {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
-        <button type="submit" className="login-btn">Login</button>
-      </form>
+        <button type="submit" className="login-btn"><strong>Login</strong></button>
 
       {formError && 
         <p style={{ color: 'red' }}>{formError}</p>
@@ -81,7 +80,7 @@ const LoginForm = ({ onSubmit, error }) => {
       }
 
       <Link to="/register">
-        <button className="create-new-account-btn">Create New Account</button>
+        <button className="create-new-account-btn"><strong>Create New Account</strong></button>
       </Link>
 
       <hr className="divider" />
@@ -89,6 +88,7 @@ const LoginForm = ({ onSubmit, error }) => {
       <div style={{ display: "flex", justifyContent: "center" }}>
         <  GoogleLoginButton googleID={googleID} handleGoogleLogin={handleGoogleLogin} />
       </div>
+      </form>
     </div>
   );
 };

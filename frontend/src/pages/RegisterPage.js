@@ -19,7 +19,7 @@ const RegisterPage = () => {
     });
 
     return (
-        <div className='login-page-container'>
+        <div className='login-container'>
             <RegisterForm
                 userEmail={userEmail}
                 setUserEmail={setUserEmail}

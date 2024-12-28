@@ -412,15 +412,15 @@ const handleProjectSave = async () => {
   <div className="DT-container">
     <div className='DT-header'>
       <h2>Estimate ID: {estimateId}</h2>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation(); 
-                    confirmDelete(estimateId);
-                  }}
-                  className="DT-delete-button"
-                >
-                  <p>Delete Estimate</p>
-                </button>
+        <button
+          onClick={(e) => {
+            e.stopPropagation(); 
+            confirmDelete(estimateId);
+          }}
+          className="DT-delete-button"
+        >
+          <p>Delete Estimate</p>
+        </button>
     </div>
 
     {deletingEstimate && (

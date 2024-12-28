@@ -16,7 +16,6 @@
   font-family: Arial, sans-serif;
   cursor: pointer;
   transition: background-color 0.3s ease;
-  margin-top: 20px;  
 }
   
 .create-new-account-btn:hover {
