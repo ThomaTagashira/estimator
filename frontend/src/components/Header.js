@@ -6,7 +6,7 @@ import { faUserCircle } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 
-const Header = ({ handleLogout, hasActiveSubscription, tokenCount, userSubscriptionTier }) => {
+const Header = ({ handleLogout, hasActiveSubscription, tokenCount, userSubscriptionTier, inTrial }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const dropdownRef = useRef(null); 
 
@@ -45,7 +45,7 @@ const Header = ({ handleLogout, hasActiveSubscription, tokenCount, userSubscript
           <h2>FairBuild</h2>
         </div>
 
-        {hasActiveSubscription && (
+        {(hasActiveSubscription || inTrial) && (
           <div className="subscription-info">
             <div>Tokens: {tokenCount}</div>
             <div>Current Subscription: {userSubscriptionTier}</div>
@@ -91,7 +91,7 @@ const Header = ({ handleLogout, hasActiveSubscription, tokenCount, userSubscript
           </ul>
         </nav>
           <div className='user-icon'>
-            {hasActiveSubscription && (
+          {(hasActiveSubscription || inTrial) && (
               <ProfileButton
                 header={userProfileHeader}
                 handleLogout={handleLogout}

@@ -61,10 +61,10 @@ const ProjectInfoForm = ({
           />
         </div>
         <div className="button-group">
-          <button type="button" className="next-btn" onClick={handlePrevious}>
+          <button type="button" className="upload-btn" onClick={handlePrevious}>
             Previous
           </button>
-          <button type="button" className="next-btn" onClick={handleSubmit}>
+          <button type="button" className="upload-btn" onClick={handleSubmit}>
             Create Estimate
           </button>
         </div>

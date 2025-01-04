@@ -31,15 +31,19 @@ const ProfileButton = ({ handleLogout, header }) => {
       <div className={`dropdown-menu ${isMenuOpen ? 'open' : ''}`}>
 
         <Link to="/change-subscription-tier" className="dropdown-link" onClick={() => setIsMenuOpen(false)}>
-            <button className="dropdown-button">Change Subscription</button>
+            <button className="upload-btn">Change Subscription</button>
         </Link>
 
         <Link to="/cancel-subscription" className="dropdown-link" onClick={() => setIsMenuOpen(false)}>
-            <button className="dropdown-button">Cancel Subscription</button>
+            <button className="upload-btn">Cancel Subscription</button>
         </Link>
 
+        {/* <Link to="/cancel-subscription" className="dropdown-link" onClick={() => setIsMenuOpen(false)}>
+            <button className="upload-btn">Cancel Subscription</button>
+        </Link> */}
+        
         <div className="dropdown-link" onClick={() => { handleLogout(); setIsMenuOpen(false); }}>
-            <button className="logout">Logout</button>
+            <button className="logout"><strong>Logout</strong></button>
         </div>
 
       </div>

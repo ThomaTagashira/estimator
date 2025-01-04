@@ -19,16 +19,18 @@ const RegisterPage = () => {
     });
 
     return (
-        <div className='login-container'>
-            <RegisterForm
-                userEmail={userEmail}
-                setUserEmail={setUserEmail}
-                password={password}
-                setPassword={setPassword}
-                error={error}
-                register={register}
-                handleCancel={handleCancel}
-            />
+        <div className='page'>
+            <div className='login-container'>
+                <RegisterForm
+                    userEmail={userEmail}
+                    setUserEmail={setUserEmail}
+                    password={password}
+                    setPassword={setPassword}
+                    error={error}
+                    register={register}
+                    handleCancel={handleCancel}
+                />
+            </div>
         </div>
     );
 };

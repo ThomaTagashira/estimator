@@ -63,32 +63,37 @@ const useAuth = ({ setIsAuthenticated, setHasActiveSubscription }) => {
                 password,
             }, {
                 headers: {
-                    'X-CSRFToken': csrftoken
-                }
+                    'X-CSRFToken': csrftoken,
+                },
             });
-
+    
             const { access, refresh, has_active_subscription } = response.data;
             localStorage.setItem('access_token', access);
             localStorage.setItem('refresh_token', refresh);
             axios.defaults.headers.common['Authorization'] = `Bearer ${access}`;
-
+    
             setIsAuthenticated(true);
             setHasActiveSubscription(has_active_subscription);
-
+    
             if (has_active_subscription) {
                 navigate('/'); 
             } else {
                 navigate('/subscribe'); 
             }
+
         } catch (err) {
-            if (err.response?.status === 403) {
-                setError('Subscription required. Please subscribe.');
-                navigate('/subscribe');
-            } else {
+            if (err.response?.status === 401) {
                 setError('Invalid credentials. Please try again.');
+            } 
+            else if (err.response?.status === 403) {
+                setError('Subscription required. Please subscribe.');
+            } 
+            else {
+                setError('An unexpected error occurred. Please try again later.');
             }
         }
     };
+    
 
     return { login, error };
 };

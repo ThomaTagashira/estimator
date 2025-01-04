@@ -7,8 +7,10 @@ const LoginPage = ({ setIsAuthenticated, setHasActiveSubscription }) => {
     const { login, error } = useAuth({ setIsAuthenticated, setHasActiveSubscription });
 
     return (
-        <div className='login-container'>
-            <LoginForm onSubmit={login} error={error} />
+        <div className='page'>
+            <div className='login-container'>
+                <LoginForm onSubmit={login} error={error} />
+            </div>
         </div>
     );
 };

@@ -3,6 +3,8 @@ from pgvector.django import VectorField
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from datetime import timedelta
+from django.utils.timezone import now
 
 class LangchainPgCollection(models.Model):
     name = models.CharField(blank=True, null=True)
@@ -95,13 +97,28 @@ class Subscription(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     cancellation_date = models.DateTimeField(null=True, blank=True)
     auto_renew = models.BooleanField(default=True)
-    trial_end_date = models.DateTimeField(null=True, blank=True)
+    trial_start_date = models.DateTimeField(default=now)
+    trial_end_date = models.DateTimeField()
+    in_trial = models.BooleanField(default=True)    
     token_allocation = models.PositiveIntegerField(default=0)
     last_token_allocation_date = models.DateTimeField(null=True, blank=True)
     last_payment_date = models.DateTimeField(null=True, blank=True)
     last_processed_invoice_id = models.CharField(max_length=255, null=True, blank=True)
+    first_name = models.CharField(max_length=50, null=True, blank=True)  
+    last_name = models.CharField(max_length=50, null=True, blank=True)   
+    phone_number = models.CharField(max_length=15, null=True, blank=True) 
+    zipcode = models.CharField(max_length=10, null=True, blank=True)      
 
     def save(self, *args, **kwargs):
+        if not self.trial_end_date:
+            self.trial_end_date = timezone.now() + timedelta(days=7)
+
+        if self.in_trial:
+            self.is_active = True
+
+        if self.trial_end_date and now() > self.trial_end_date:
+            self.in_trial = False
+
         self.user_email = self.user.email
         super().save(*args, **kwargs)
     

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { getCookie } from '../utils/getCookies';
 import GoogleLoginButton from '../GoogleLoginButton';
+import { useNavigate  } from 'react-router-dom';
 
 const googleID = process.env.REACT_APP_GOOGLE_CLIENT_ID;
 // const githubID = process.env.REACT_APP_GITHUB_CLIENT_ID;
@@ -11,6 +12,7 @@ const LoginForm = ({ onSubmit, error }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [formError, setFormError] = useState('');
+  const navigate = useNavigate(); 
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -44,6 +46,7 @@ const LoginForm = ({ onSubmit, error }) => {
     window.location.href = authUrl;
   };
 
+  
     // const handleGitHubLogin = () => {
     //     const authUrl = constructOAuthUrl(
     //         'https://github.com/login/oauth/authorize',
@@ -78,6 +81,16 @@ const LoginForm = ({ onSubmit, error }) => {
       {error && 
         <p style={{ color: 'red' }}>{error}</p>
       }
+
+      <div>
+        <button
+          type="button"
+          onClick={() => navigate('/password-reset')}
+          style={{ color: 'blue', textDecoration: 'underline', background: 'none', border: 'none' }}
+        >
+          Forgot Password?
+        </button>
+      </div> 
 
       <Link to="/register">
         <button className="create-new-account-btn"><strong>Create New Account</strong></button>

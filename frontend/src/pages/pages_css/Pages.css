@@ -34,7 +34,7 @@
 .card {
   background: #fff;
   border-radius: 10px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.7);
   padding: 20px;
   width: 300px;
   text-align: left;
@@ -58,12 +58,12 @@
   margin: 0;
 }
 
-.connected-container {
+/* .connected-container {
   border: 1px solid #ddd;
   background-color: #f5f5f5;
   border-radius: 8px;
   box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
-}
+} */
 
 .create-btn {
   background-color: #919191; 
@@ -94,7 +94,7 @@
   background: #fff; 
   border-radius: 12px; 
   padding: 20px; 
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1); 
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5); 
   font-family: Arial, sans-serif;
 }
 
@@ -129,12 +129,24 @@
   width: 100%;
 }
 
+.DT-buttons-container {
+  padding-top: 5px;
+}
+
 .DT-container {
   display: flex;
   flex-direction: column;  
   border-radius: 8px;
   background-color: #fff;
   padding: 20px;
+}
+
+.DT-form-group {
+  display: flex;
+  align-items: center; 
+  justify-content: space-between; 
+  gap: 10px; 
+  margin-bottom: 5px;
 }
 
 .DT-header {
@@ -162,7 +174,7 @@
   gap: 5px;
 }
 
-.DT-slide-out-panel {
+/* .DT-slide-out-panel {
   position: fixed; 
   top: 50%; 
   left: 50%; 
@@ -222,10 +234,10 @@
 
 .DT-slide-out-panel button:last-of-type:hover {
   background-color: #a9a9a9; 
-}
+} */
 
 .DT-task-fields {
-  padding: 10px;
+  /* padding: 10px; */
   padding-top: 20px;
   border-radius: 8px;
   text-align: center;  
@@ -325,10 +337,17 @@
   text-align: center;
 }
 
+.edit-buttons {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+}
+
 .edit button {
   align-self: flex-end;
   padding: 10px 20px;
-  margin: 5px;
   background-color: #007bff;
   color: white;
   border: none;
@@ -352,8 +371,8 @@
   border: none;
   background: none;
   outline: none;
-  padding: 10px;
   font-size: 1rem;
+  padding-left: 15px;
   color: #333;
   width: calc(33ch + 20px);
 }
@@ -363,13 +382,15 @@
 }
 
 .estimates-page-header {
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 10px 20px;
   color: #fff;
   background-color: #0040b8d2;
-
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
 }
 
 .info-container {
@@ -390,7 +411,7 @@
   justify-content: space-evenly;
   gap: 20px;
   align-items: center;
-  margin: 20px;
+  margin: 15px;
 }
 
 input, textarea {
@@ -433,12 +454,15 @@ input, textarea {
 }
 
 .page {
+  display: flex;
+  flex-direction: column;
   position: relative; 
   padding: 40px; 
   max-width: 1600px; 
   overflow: visible; 
   margin: auto;
   margin-top: 25px; 
+  min-height: 100vh;
 }
 
 .pagination {
@@ -473,7 +497,7 @@ input, textarea {
   flex-direction: column; 
   align-items: center; 
   justify-content: flex-start; 
-  height: calc(100vh - 80px); 
+  min-height: 100vh;
   padding: 20px;
 }
 
@@ -578,9 +602,10 @@ input, textarea {
 }
 
 .search-tab {
-  border-radius: 8px;
+  border-bottom-right-radius: 8px;
+  border-bottom-left-radius: 8px;
   background-color: #fff;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
   padding: 40px;
 }
 
@@ -617,9 +642,10 @@ table thead {
 }
 
 .table-tab {
-  border-radius: 8px;
+  border-bottom-right-radius: 8px;
+  border-bottom-left-radius: 8px;
   background-color: #fff;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
   padding: 20px;
 }
 
@@ -670,6 +696,8 @@ table thead {
   align-items: center;
   background: #c0c0c0; 
   border-bottom: 1px solid #ddd;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+
 }
 
 .tab-navigation {

@@ -65,10 +65,10 @@ const ClientInfoForm = ({
           />
         </div>
         <div className="button-group">
-          <button type='button' className='next-btn' onClick={handleCancel}>
+          <button type='button' className='upload-btn' onClick={handleCancel}>
             Cancel
           </button>
-          <button type="button" className="next-btn" onClick={handleNext}>
+          <button type="button" className="upload-btn" onClick={handleNext}>
             Next
           </button>
         </div>

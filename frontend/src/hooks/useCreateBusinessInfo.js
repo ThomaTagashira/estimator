@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import refreshAccessToken from '../components/utils/refreshAccessToken';
 
 const useCreateBusinessInfo = (apiUrl) => {
@@ -11,8 +10,8 @@ const useCreateBusinessInfo = (apiUrl) => {
     });
 
     const [error, setError] = useState(null);
+    const [isEditable, setIsEditable] = useState(false);
 
-    const navigate = useNavigate();
     const accessToken = localStorage.getItem('access_token');
 
     const handleBusinessInfoChange = (e) => {
@@ -72,7 +71,7 @@ const useCreateBusinessInfo = (apiUrl) => {
 
             if (response.ok) {
             console.log('Business Info created successfully', responseData);
-            navigate(`/business-info-update-success`);
+            setIsEditable(false);
         } else {
             console.error('Failed to create Business Info', responseData);
             setError('Failed to create Business Info');
@@ -88,6 +87,8 @@ const useCreateBusinessInfo = (apiUrl) => {
             handleBusinessInfoChange,
             handleBusinessSubmit,
             setBusinessInfo,
+            isEditable,
+            setIsEditable,
             error,
         };
     };

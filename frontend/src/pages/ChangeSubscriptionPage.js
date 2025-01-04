@@ -12,9 +12,8 @@ const ChangeSubscriptionPage = ({ userSubscriptionTier }) => {
         <div className="purchase-container">
 
             <div className="purchase-header">
-                <h1>Which Tier Would You Like to Change Your Current Subscription To?</h1>
-                <h3>Your Current Subscription: {userSubscriptionTier}</h3>
-                <h2>Select Your Plan:</h2>
+                <h2>Select a New Plan:</h2>
+                <h3>Current Plan: {userSubscriptionTier}</h3>
             </div>
 
             <div className="cards">

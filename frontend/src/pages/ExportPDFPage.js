@@ -54,6 +54,7 @@ const ExportPDFPage = () => {
 
   return (
     <div className='body'>
+      <div className='pdf-wrapper'>
       <div ref={pdfRef} className="pdf-container">
         <div className="pdf-header">
           <h2>Estimate</h2>
@@ -160,22 +161,24 @@ const ExportPDFPage = () => {
         </div>
         
         <div className='export-btn-container'>
-          <button 
-            className='export-btn' 
-            onClick={() => prevButton(estimateId)}
-          >
-            Previous
-          </button>
-
           {!isExporting && (
-            <button
-              className="export-btn"
-              onClick={() => exportToPDF(pdfRef, `Estimate_${estimateId}.pdf`)}
-            >
-              Export to PDF
-            </button>
+            <>
+              <button 
+                className='export-btn' 
+                onClick={() => prevButton(estimateId)}
+              >
+                Previous
+              </button>
+              <button
+                className="export-btn"
+                onClick={() => exportToPDF(pdfRef, `Estimate_${estimateId}.pdf`)}
+              >
+                Export to PDF
+              </button>
+            </>
           )}
         </div>
+      </div>
       </div>
     </div>
   );

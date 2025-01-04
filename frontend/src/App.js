@@ -1,19 +1,27 @@
 import React, { useState, useEffect, useCallback} from 'react';
 import axios from 'axios';
 import { BrowserRouter as Router, Route, Routes, redirect } from 'react-router-dom';
-import setupInterceptors from './components/setupInterceptor';
-import GoogleCallback from './components/GoogleCallback';
-// import GitHubCallback from './components/GitHubCallback';
-import Header from './components/Header';
 import AuthenticatedRoute from './components/Auth/AuthenticatedRoute';
+import PasswordResetRequestForm from './components/Form/PasswordResetRequestForm';
+
 import {
-    BusinessInfoUpdateSuccessPage,
+  setupInterceptors,
+  GoogleCallback,
+  // GitHubCallback,
+  Header,
+  Footer,
+  VerifyEmailSuccess,
+  PasswordResetConfirm
+} from './components';
+
+import {
     SuccessPage,
     SearchPage,
     CancelPage,
     SubscriptionPage,
     TokenPurchasePage,
-    LoginPage, RegisterPage,
+    LoginPage, 
+    RegisterPage,
     CreateEstimatePage,
     EstimatesPage,
     EstimateDetailPage,
@@ -21,7 +29,11 @@ import {
     CancelSubscriptionPage,
     ChangeSubscriptionPage,
     ExportPDFPage,
-    DynamicTablePage
+    DynamicTablePage,
+    TermsAndConditionsPage,
+    RefundPolicyPage,
+    PrivacyPolicyPage,
+    EmailStatusPage
 }  from './pages';
 
 
@@ -33,6 +45,8 @@ function App() {
   const [hasActiveSubscription, setHasActiveSubscription] = useState(false);
   const [userSubscriptionTier, setUserSubscriptionTier] = useState('');
   const [tokenCount, setTokenCount] = useState(0);
+  const [inTrial, setInTrial] = useState(false)
+  const [userEmail, setUserEmail] = useState(null);
 
   const fetchTokenCount = useCallback(() => {
     const fetchData = async () => {
@@ -111,96 +125,215 @@ function App() {
     delete axios.defaults.headers.common['Authorization'];
     setIsAuthenticated(false);
     setHasActiveSubscription(false);
-    redirect('/login');
+    setInTrial(false);
+    redirect('/');
   };
 
   useEffect(() => {
-    const token = localStorage.getItem('access_token');
-    if (token) {
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      setIsAuthenticated(true);
-      axios.get(`${apiUrl}/api/subscription/status/`)
+    const searchParams = new URLSearchParams(window.location.search);
+    const emailVerificationToken = searchParams.get('token'); 
+    const email = searchParams.get('email'); 
+
+    if (email) {
+      setUserEmail(email); 
+    }
+
+    if (emailVerificationToken) {
+      axios.get(`${apiUrl}/api/verify-email/${emailVerificationToken}`)
         .then(response => {
-          setHasActiveSubscription(response.data.has_active_subscription);
+          const { access, refresh, has_active_subscription, in_trial } = response.data;
+  
+          localStorage.setItem('access_token', access);
+          localStorage.setItem('refresh_token', refresh);
+          axios.defaults.headers.common['Authorization'] = `Bearer ${access}`;
+  
+          setIsAuthenticated(true);
+          setHasActiveSubscription(has_active_subscription);
+          setInTrial(in_trial);
+  
+          if (has_active_subscription || in_trial) {
+            window.history.replaceState({}, document.title, '/'); 
+            redirect('/'); 
+          } else {
+            window.history.replaceState({}, document.title, '/'); 
+            redirect('/subscribe'); 
+          }
         })
         .catch(error => {
-          if (error.response && error.response.status === 401) {
-            setIsAuthenticated(false);
-            setHasActiveSubscription(false);
-            redirect('/login');
-          } else {
-            console.error('Error fetching subscription status:', error);
-          }
+          console.error('Error verifying email:', error);
+          setIsAuthenticated(false);
+          setHasActiveSubscription(false);
+          setInTrial(false);
+          window.history.replaceState({}, document.title, '/'); 
+          redirect('/'); 
         });
+    } else {
+      const token = localStorage.getItem('access_token');
+      if (token) {
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        setIsAuthenticated(true);
+        axios.get(`${apiUrl}/api/subscription/status/`)
+          .then(response => {
+            setHasActiveSubscription(response.data.has_active_subscription);
+            setInTrial(response.data.in_trial);
+          })
+          .catch(error => {
+            if (error.response && error.response.status === 401) {
+              setIsAuthenticated(false);
+              setHasActiveSubscription(false);
+              setInTrial(false);
+            } else {
+              console.error('Error fetching subscription status:', error);
+            }
+          });
+      }
     }
-}, [setIsAuthenticated, setHasActiveSubscription]);
+  }, [setIsAuthenticated, setHasActiveSubscription, setInTrial ]);
+  
+  
 
   return (
     <Router>
-    <div className="header-container">
-      <Header
-        handleLogout={handleLogout}
-        hasActiveSubscription={hasActiveSubscription}
-        tokenCount={tokenCount}
-        userSubscriptionTier={userSubscriptionTier}
-      />
-    </div>      <Routes>
+      <div className="header-container">
+        <Header
+          handleLogout={handleLogout}
+          hasActiveSubscription={hasActiveSubscription}
+          tokenCount={tokenCount}
+          userSubscriptionTier={userSubscriptionTier}
+          inTrial={inTrial}
+        />
+      </div>  
+    
+      <Routes>
         <Route path="/register" element={<RegisterPage />} />
+        {/* <Route path="/login" element={<LoginPage setIsAuthenticated={setIsAuthenticated}/>} /> */}
         <Route path="/google-callback" element={<GoogleCallback setIsAuthenticated={setIsAuthenticated} setHasActiveSubscription={setHasActiveSubscription} />} />
         <Route path="/subscribe" element={<SubscriptionPage />} />
         <Route path="/buy-tokens" element={<TokenPurchasePage />} />
         <Route path="/success" element={<SuccessPage />} />
         <Route path="/cancel" element={<CancelPage />} />
+        <Route path="/termsandconditions" element={<TermsAndConditionsPage />} />
+        <Route path="/refundpolicy" element={<RefundPolicyPage />} />
+        <Route path="/privacypolicy" element={<PrivacyPolicyPage />} />
+        {/* <Route path="/verify-email/:token" element={<VerifyEmail />} /> */}
+        <Route path="/verify-email-success" element={<VerifyEmailSuccess setIsAuthenticated={setIsAuthenticated} setHasActiveSubscription={setHasActiveSubscription} setInTrial={setInTrial}/>} />
+        <Route path="/email-status" element={<EmailStatusPage apiUrl={apiUrl} userEmail={userEmail}/>} />
+        <Route path="/password-reset" element={<PasswordResetRequestForm />} />
+        <Route path="/password-reset-confirm/:uid/:token" element={<PasswordResetConfirm />} />
+
+
+
         <Route path="/search" element={
-            <AuthenticatedRoute isAuthenticated={isAuthenticated} hasActiveSubscription={hasActiveSubscription}>
-              <SearchPage 
-                apiUrl={apiUrl}                             
-                fetchTokenCount={fetchTokenCount}/>
-            </AuthenticatedRoute>
+          <AuthenticatedRoute 
+            isAuthenticated={isAuthenticated} 
+            hasActiveSubscription={hasActiveSubscription}
+            inTrial={inTrial}
+          >
+            <SearchPage apiUrl={apiUrl} fetchTokenCount={fetchTokenCount}/>
+          </AuthenticatedRoute>
         }/>
+
         <Route path="/dynamic-table" element={
-            <AuthenticatedRoute isAuthenticated={isAuthenticated} hasActiveSubscription={hasActiveSubscription}>
-              <DynamicTablePage apiUrl={apiUrl}/>
-            </AuthenticatedRoute>
+          <AuthenticatedRoute 
+            isAuthenticated={isAuthenticated} 
+            hasActiveSubscription={hasActiveSubscription}
+            inTrial={inTrial}
+          >            
+            <DynamicTablePage apiUrl={apiUrl}/>
+          </AuthenticatedRoute>
         }/>
+
         <Route path="/create-estimate" element={
-            <AuthenticatedRoute isAuthenticated={isAuthenticated} hasActiveSubscription={hasActiveSubscription}>
-              <CreateEstimatePage apiUrl={apiUrl} />
-            </AuthenticatedRoute>
+          <AuthenticatedRoute 
+            isAuthenticated={isAuthenticated} 
+            hasActiveSubscription={hasActiveSubscription}
+            inTrial={inTrial}
+          >            
+            <CreateEstimatePage apiUrl={apiUrl} />
+          </AuthenticatedRoute>
         }/>
-                <Route path="/saved-estimate/:estimateId" element={
-            <AuthenticatedRoute isAuthenticated={isAuthenticated} hasActiveSubscription={hasActiveSubscription}>
-              <EstimateDetailPage apiUrl={apiUrl} />
-            </AuthenticatedRoute>
+
+        <Route path="/saved-estimate/:estimateId" element={
+          <AuthenticatedRoute 
+            isAuthenticated={isAuthenticated} 
+            hasActiveSubscription={hasActiveSubscription}
+            inTrial={inTrial}
+          >            
+            <EstimateDetailPage apiUrl={apiUrl} />
+          </AuthenticatedRoute>
         }/>
-                <Route path="/save-business-info" element={
-            <AuthenticatedRoute isAuthenticated={isAuthenticated} hasActiveSubscription={hasActiveSubscription}>
-              <BusinessInfoPage apiUrl={apiUrl} />
-            </AuthenticatedRoute>
+
+        <Route path="/save-business-info" element={
+          <AuthenticatedRoute 
+            isAuthenticated={isAuthenticated} 
+            hasActiveSubscription={hasActiveSubscription}
+            inTrial={inTrial}
+          >
+            <BusinessInfoPage apiUrl={apiUrl} />
+          </AuthenticatedRoute>
         }/>
-                <Route path="/business-info-update-success" element={
-            <AuthenticatedRoute isAuthenticated={isAuthenticated} hasActiveSubscription={hasActiveSubscription}>
-              <BusinessInfoUpdateSuccessPage apiUrl={apiUrl} />
-            </AuthenticatedRoute>
+
+        <Route path="/cancel-subscription" element={
+          <AuthenticatedRoute 
+            isAuthenticated={isAuthenticated} 
+            hasActiveSubscription={hasActiveSubscription}
+            inTrial={inTrial}
+          >            
+            <CancelSubscriptionPage  apiUrl={apiUrl} />
+          </AuthenticatedRoute>
         }/>
-                <Route path="/cancel-subscription" element={
-            <AuthenticatedRoute isAuthenticated={isAuthenticated} hasActiveSubscription={hasActiveSubscription}>
-              <CancelSubscriptionPage  apiUrl={apiUrl} />
-            </AuthenticatedRoute>
+
+        <Route path="/change-subscription-tier" element={
+          <AuthenticatedRoute 
+            isAuthenticated={isAuthenticated} 
+            hasActiveSubscription={hasActiveSubscription}
+            inTrial={inTrial}
+          >            
+            <ChangeSubscriptionPage  apiUrl={apiUrl} userSubscriptionTier={userSubscriptionTier} />
+          </AuthenticatedRoute>
         }/>
-                <Route path="/change-subscription-tier" element={
-            <AuthenticatedRoute isAuthenticated={isAuthenticated} hasActiveSubscription={hasActiveSubscription}>
-              <ChangeSubscriptionPage  apiUrl={apiUrl} userSubscriptionTier={userSubscriptionTier} />
-            </AuthenticatedRoute>
+
+        <Route path="/export-pdf" element={
+          <AuthenticatedRoute 
+            isAuthenticated={isAuthenticated} 
+            hasActiveSubscription={hasActiveSubscription}
+            inTrial={inTrial}
+          >            
+            <ExportPDFPage  apiUrl={apiUrl} userSubscriptionTier={userSubscriptionTier} />
+          </AuthenticatedRoute>
         }/>
-                <Route path="/export-pdf" element={
-            <AuthenticatedRoute isAuthenticated={isAuthenticated} hasActiveSubscription={hasActiveSubscription}>
-              <ExportPDFPage  apiUrl={apiUrl} userSubscriptionTier={userSubscriptionTier} />
-            </AuthenticatedRoute>
+
+
+{/* 
+        <Route path="/email-update" element={
+          <AuthenticatedRoute 
+            isAuthenticated={isAuthenticated} 
+            hasActiveSubscription={hasActiveSubscription}
+            inTrial={inTrial}
+          >
+            <EmailUpdateForm apiUrl={apiUrl}/>
+          </AuthenticatedRoute>
         }/>
+
+        <Route path="/password-update" element={
+          <AuthenticatedRoute 
+            isAuthenticated={isAuthenticated} 
+            hasActiveSubscription={hasActiveSubscription}
+            inTrial={inTrial}
+          >
+            <PasswordUpdateForm apiUrl={apiUrl}/>
+          </AuthenticatedRoute>
+        }/> */}
+
         <Route path="/" element={isAuthenticated && hasActiveSubscription ? (<EstimatesPage />) : (<LoginPage setIsAuthenticated={setIsAuthenticated}setHasActiveSubscription={setHasActiveSubscription} />)} />
+
       </Routes>
+      
+      <div className='footer-container'>
+        <Footer />
+      </div>    
     </Router>
+    
   );
 }
 

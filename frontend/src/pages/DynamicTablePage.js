@@ -466,7 +466,7 @@ const handleProjectSave = async () => {
             </tbody>
           </table>
 
-          <div>
+          <div className='add-task-btn'>
             <button 
               onClick={handleAddAllRows}
               disabled={isLoading}
@@ -475,7 +475,7 @@ const handleProjectSave = async () => {
             >
               {isLoading ? (
                 <>
-                  <div className="spinner"></div> Searching...
+                  <div className="spinner"></div> Retrieving Tasks
                 </>
               ) : (
                 'Add All Tasks to Estimate'
@@ -497,7 +497,7 @@ const handleProjectSave = async () => {
     <div className='info-section-container'>
 
       <div className="info-section">
-        <div className="form-group">
+        <div className="DT-form-group">
           <label htmlFor="clientName">
             <span className="form-icon">👤</span> Client Name
           </label>
@@ -511,7 +511,7 @@ const handleProjectSave = async () => {
           />
         </div>
 
-        <div className="form-group">
+        <div className="DT-form-group">
           <label htmlFor="clientAddress">
             <span className="form-icon">📍</span> Client Address
           </label>
@@ -525,7 +525,7 @@ const handleProjectSave = async () => {
           />
         </div>
 
-        <div className="form-group">
+        <div className="DT-form-group">
           <label htmlFor="clientPhone">
             <span className="form-icon">📞</span> Client Phone
           </label>
@@ -539,7 +539,7 @@ const handleProjectSave = async () => {
           />
         </div>
 
-        <div className="form-group">
+        <div className="DT-form-group">
           <label htmlFor="clientEmail">
             <span className="form-icon">✉️</span> Client Email
           </label>
@@ -556,16 +556,18 @@ const handleProjectSave = async () => {
               {!isClientEditable ? (
               <button onClick={() => setIsClientEditable(true)}>Edit Client Info</button>
               ) : (
-                <>  
-                  <button onClick={handleClientSave}>Save</button>
-                  <button onClick={handleClientCancel}>Cancel</button>
-                </>
+                <div className='edit-buttons'>
+                  <> 
+                    <button onClick={handleClientCancel}>Cancel</button>
+                    <button onClick={handleClientSave}>Save</button>
+                  </>
+                </div>
               )}
           </div>
       </div>
 
       <div className="info-section">
-        <div className="form-group">
+        <div className="DT-form-group">
           <label htmlFor="projectName">
             <span className="form-icon">📋</span> Project Name
           </label>
@@ -578,7 +580,7 @@ const handleProjectSave = async () => {
           />
         </div>
         
-        <div className="form-group">
+        <div className="DT-form-group">
           <label htmlFor="projectLocation">
             <span className="form-icon">📍</span> Project Location
           </label>
@@ -592,7 +594,7 @@ const handleProjectSave = async () => {
           />
         </div>
 
-        <div className="form-group">
+        <div className="DT-form-group">
           <label htmlFor="startDate">
             <span className="form-icon">📅</span> Start Date
           </label>
@@ -606,7 +608,7 @@ const handleProjectSave = async () => {
           />
         </div>
 
-        <div className="form-group">
+        <div className="DT-form-group">
           <label htmlFor="endDate">
             <span className="form-icon">🛑</span> End Date
           </label>
@@ -624,22 +626,26 @@ const handleProjectSave = async () => {
             {!isProjectEditable ? (
             <button onClick={() => setIsProjectEditable(true)}>Edit Project Info</button>
             ) : (
-            <>  
-              <button onClick={handleProjectSave}>Save</button>
-              <button onClick={handleProjectCancel}>Cancel</button>
-            </>
+            <div className='edit-buttons'>
+              <>  
+                <button onClick={handleProjectCancel}>Cancel</button>
+                <button onClick={handleProjectSave}>Save</button>
+              </>
+            </div>
             )}
         </div>
       </div>
     </div>
 
   <hr className="divider" />
-
+    
+    <div className='DT-buttons-container'>
       <div className='buttons'>
         <button onClick={handleAddCustomRow}>
             Add New Task
         </button>  
       </div>
+    </div>
 
       <div className="dynamic-table">
         <div ref={tableRef}>

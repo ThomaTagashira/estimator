@@ -2,7 +2,7 @@ import json, requests, logging, os, stripe
 from rest_framework.views import APIView
 from util.embedding import get_embedding
 from pgvector.django import CosineDistance
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, throttle_classes
 from rest_framework.response import Response
 from rest_framework import status
 from util.serializers import *
@@ -30,8 +30,18 @@ from django.core.validators import validate_email
 from django.contrib.auth.password_validation import validate_password
 from django.core.mail import send_mail
 from django.conf import settings
-from django.db.models import Q
+from django.db.models import Q, Max
 from django.core.paginator import Paginator
+from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
+from .throttles import ResendEmailThrottle
+from .permissions import HasActiveSubscriptionOrTrial
+from django.shortcuts import redirect
+from urllib.parse import urlencode
+
+import logging
+logger = logging.getLogger(__name__)
+
+
 
 load_dotenv()
 logger = logging.getLogger('django')
@@ -44,6 +54,7 @@ GITHUB_CLIENT_ID = os.getenv('GITHUB_CLIENT_ID')
 GITHUB_SECRET_KEY = os.getenv('GITHUB_SECRET_KEY')
 
 STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET')
+stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
 
 def serve_react(request, path, document_root=None):
     path = posixpath.normpath(path).lstrip("/")
@@ -52,6 +63,13 @@ def serve_react(request, path, document_root=None):
         return static_serve(request, path, document_root)
     else:
         return static_serve(request, "index.html", document_root)
+    
+
+class ProtectedView(APIView):
+    permission_classes = [IsAuthenticated, HasActiveSubscriptionOrTrial]
+
+    def get(self, request):
+        return Response({"message": "Access granted to protected content."})
     
 
 @api_view(['GET', 'POST'])
@@ -67,11 +85,6 @@ def index(request):
         embeddings = LangchainPgEmbedding.objects.all()
         serializer = LangchainPgEmbeddingSerializer(embeddings, many=True)
         return Response(serializer.data)
-
-
-
-
-
 
 
 @api_view(['GET', 'POST'])
@@ -93,12 +106,6 @@ def handle_scope(request):
         return Response({'error': 'Invalid request method'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 
-
-
-
-
-
-
 def process_job_scope(job_scope):
     query = job_scope
     retriever = generate_response(query)
@@ -113,12 +120,6 @@ def process_job_scope(job_scope):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-
-
-
-
-
-
 def process_line(Line):
     query = Line
     retriever = generate_response(query)
@@ -131,12 +132,6 @@ def process_line(Line):
     else:
         logger.error('Serializer errors: %s', serializer.errors)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-
-
-
-
 
 
 @api_view(['GET', 'POST'])
@@ -170,20 +165,11 @@ def upload_photo(request):
 
 
 
-
-
-
-
-
-
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def register_user(request):
-    # print("request:", request.data)
     email = request.data.get('userEmail')
     password = request.data.get('password')
-    # print("email:", email)
-    # print("pass:", password)
 
     if not email:
         return Response({'error': 'Email is required.'}, status=status.HTTP_400_BAD_REQUEST)
@@ -205,51 +191,241 @@ def register_user(request):
         user = User.objects.create_user(
             username=email,
             email=email,
-            password=password
+            password=password,
+            is_active=False  
         )
 
-        existing_profile = StripeProfile.objects.filter(user=user).exists()
-        if not existing_profile:
-            try:
-                customer = stripe.Customer.create(email=user.email)
-                StripeProfile.objects.create(user=user, stripe_customer_id=customer['id'])
-            except Exception as e:
-                user.delete()  
-                return Response({'error': f'Failed to create Stripe customer: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        send_verification_email(user)
 
-        try:
-            refresh = RefreshToken.for_user(user)
-            jwt_access_token = str(refresh.access_token)
-            jwt_refresh_token = str(refresh)
-        except Exception as e:
-            return Response({'error': f'Failed to generate JWT tokens: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-    return Response({
-        'user': {'email': user.email},
-        'access': jwt_access_token,
-        'refresh': jwt_refresh_token
-    }, status=status.HTTP_201_CREATED)
+    return Response({'message': 'Registration successful. Please verify your email to proceed.'}, status=status.HTTP_201_CREATED)
 
 
+serializer = URLSafeTimedSerializer(settings.SECRET_KEY)
+def generate_verification_token(email):
+    return serializer.dumps(email, salt='email-verify-salt')
 
 
+def send_verification_email(user):
+    token = generate_verification_token(user.email)
+    verification_url = f"{settings.BACKEND_URI}/api/verify-email/{token}"
 
+    subject = "Welcome to FairBuild!"
+    message = f"Hi {user.username},\n\nPlease verify your email by clicking the link below:\n{verification_url}\n\nThank you! This link is only valid for 15 minutes."
+    from_email = settings.DEFAULT_FROM_EMAIL
+    recipient_list = [user.email]
+
+    send_mail(subject, message, from_email, recipient_list)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+@throttle_classes([ResendEmailThrottle])
+def resend_verification_email(request):
+    email = request.data.get('email')
+    try:
+        user = User.objects.get(email=email)
+        if user.is_active:
+            logger.info(f"User {user.email} attempted to resend a verification email but is already verified.")
+            return Response({'message': 'Email already verified.'}, status=status.HTTP_200_OK)
+
+        send_verification_email(user)
+        logger.info(f"Verification email resent to {user.email}.")
+        return Response({'message': 'Verification email resent.'}, status=status.HTTP_200_OK)
+    except User.DoesNotExist:
+        logger.warning(f"Resend verification email attempted for non-existent email: {email}.")
+        return Response({'error': 'User not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+
+def confirm_verification_token(token, expiration=3600):
+    try:
+        email = serializer.loads(token, salt='email-verify-salt', max_age=expiration)
+        return email
+    except SignatureExpired:
+        print("Token expired in confirm_verification_token")
+        return None  
+    except BadSignature:
+        print("Invalid token in confirm_verification_token")
+        return None  
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def verify_email(request, token):
+    print(f"Received token: {token}")
+    email = confirm_verification_token(token)
+    
+    if not email:
+        print("Token invalid or expired")
+        return Response({'error': 'Invalid or expired token.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        user = User.objects.get(email=email)
+
+        if user.is_active:
+            print(f"User {user.email} is already active.")
+            return redirect(f'{REDIR_URI}/verify-email-success?email={email}')
+
+        user.is_active = True
+        user.save()
+        print(f"User {user.email} activated.")
+
+        stripe_profile, stripe_created = StripeProfile.objects.get_or_create(
+            user=user,
+            defaults={
+                'stripe_customer_id': stripe.Customer.create(email=user.email)['id']
+            }
+        )
+        if stripe_created:
+            print(f"Stripe profile created for {user.email}.")
+        else:
+            print(f"Stripe profile already exists for {user.email}.")
+
+        subscription, created = Subscription.objects.get_or_create(
+            user=user,
+            defaults={
+                'is_active': True,
+                'trial_start_date': now(),
+                'trial_end_date': now() + timedelta(days=7),
+                'in_trial': True,
+            }
+        )
+        if not created and not subscription.is_active:
+            subscription.is_active = True
+            subscription.in_trial = True
+            subscription.trial_start_date = now()
+            subscription.trial_end_date = now() + timedelta(days=7)
+            subscription.save()
+            print(f"Updated subscription for {user.email}.")
+
+        refresh = RefreshToken.for_user(user)
+        access_token = str(refresh.access_token)
+
+        query_params = urlencode({
+            'email': email,
+            'access': access_token,
+            'refresh': str(refresh),
+            'has_active_subscription': subscription.is_active,
+            'in_trial': subscription.in_trial,
+            'trial_end_date': subscription.trial_end_date.isoformat(),
+        })
+        redirect_url = f'{REDIR_URI}/verify-email-success?{query_params}'
+        return redirect(redirect_url)
+
+    except User.DoesNotExist:
+        print(f"User with email {email} does not exist.")
+        return Response({'error': 'User not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def check_verification_status(request):
+    user = request.user
+    return Response({'is_verified': user.is_active}, status=status.HTTP_200_OK)
+
+
+class PasswordResetRequestView(APIView):
+    def post(self, request):
+        serializer = PasswordResetSerializer(data=request.data)
+        if serializer.is_valid():
+            email = serializer.validated_data['email']
+            user = User.objects.filter(email=email).first()
+            if user:
+                serializer.send_reset_email(user, request)
+            return Response({'message': 'If this email is registered, a reset link has been sent.'}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class PasswordResetConfirmView(APIView):
+    def post(self, request):
+        serializer = PasswordResetConfirmSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(serializer.validated_data)
+            return Response({'message': 'Password reset successful.'}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class EmailUpdateView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = EmailUpdateSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(request.user)
+            return Response({'message': 'Email updated successfully.'}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class PasswordUpdateView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = PasswordUpdateSerializer(data=request.data, context={'request': request})
+        if serializer.is_valid():
+            serializer.save(request.user)
+            return Response({'message': 'Password updated successfully.'}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def complete_profile(request):
+    subscription = request.user.subscription  
+    first_name = request.data.get('first_name')
+    last_name = request.data.get('last_name')
+    zipcode = request.data.get('zipcode')
+    phone_number = request.data.get('phone_number')
+
+    if not first_name or not last_name or not zipcode:
+        return Response({'error': 'First name, last name, and zipcode are required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    subscription.first_name = first_name
+    subscription.last_name = last_name
+    subscription.zipcode = zipcode
+    subscription.phone_number = phone_number
+    subscription.save()
+
+    return Response({'message': 'Profile completed successfully. You can now access the app.'}, status=status.HTTP_200_OK)
+
+
+@permission_classes([AllowAny])
+def check_trial_status(user):
+    subscription = user.subscription
+    if subscription.in_trial and subscription.trial_end_date < timezone.now():
+        subscription.in_trial = False
+        subscription.save()
 
 
 @api_view(['GET', 'POST'])
 @permission_classes([AllowAny])
 def subscription_status(request):
     user = request.user
-    try:
-        subscription = Subscription.objects.get(user=user)
-        response_data = {'has_active_subscription': subscription.is_active}
-        logger.debug('Subscription True: %s', response_data)
-        return Response(response_data)
-    except Subscription.DoesNotExist:
-        response_data = {'has_active_subscription': False}
-        logger.debug('Subscription False: %s', response_data)
-        return Response(response_data)
+    response_data = {
+        'has_active_subscription': False,
+        'in_trial': False,
+        'trial_end_date': None,
+    }
 
+    if user.is_authenticated:
+        try:
+            subscription = Subscription.objects.get(user=user)
+            response_data['has_active_subscription'] = subscription.is_active
+            response_data['in_trial'] = subscription.in_trial
+            response_data['trial_end_date'] = subscription.trial_end_date
+
+            if subscription.in_trial and subscription.trial_end_date < timezone.now():
+                subscription.in_trial = False
+                subscription.save()
+                response_data['in_trial'] = False
+                logger.debug('Trial period ended for user: %s', user.username)
+
+            logger.debug('Subscription data: %s', response_data)
+        except Subscription.DoesNotExist:
+            logger.debug('No subscription found for user: %s', user.username)
+    else:
+        logger.debug('Unauthenticated access to subscription status.')
+
+    return Response(response_data)
 
 
 class UsernameTokenObtainPairView(TokenObtainPairView):
@@ -259,9 +435,13 @@ class UsernameTokenObtainPairView(TokenObtainPairView):
 
         try:
             user = User.objects.get(username=username)
-            active_subscription = Subscription.objects.filter(user=user, is_active=True).exists()
-            print(f"User {user.username} active subscription: {active_subscription}")
+            
+            if not user.is_active:
+                response.data = {'detail': "Email not verified. Please verify your email to proceed."}
+                response.status_code = status.HTTP_403_FORBIDDEN
+                return response
 
+            active_subscription = Subscription.objects.filter(user=user, is_active=True).exists()
             response.data['has_active_subscription'] = active_subscription
 
             if not active_subscription:
@@ -274,7 +454,6 @@ class UsernameTokenObtainPairView(TokenObtainPairView):
         return response
 
 
-
 class GoogleTokenObtainPairView(TokenObtainPairView):
     def post(self, request, *args, **kwargs):
         response = super().post(request, *args, **kwargs)
@@ -283,8 +462,6 @@ class GoogleTokenObtainPairView(TokenObtainPairView):
         response.data['has_active_subscription'] = active_subscription
         return response
 
-
-from django.db import transaction
 
 class GoogleLoginView(APIView):
     def post(self, request, *args, **kwargs):
@@ -363,45 +540,33 @@ class GoogleLoginView(APIView):
         }, status=status.HTTP_200_OK)
 
 
+# class GitHubLoginView(APIView):
+#     def post(self, request, *args, **kwargs):
+#         code = request.data.get('code')
+#         if not code:
+#             return Response({'error': 'Authorization code is missing'}, status=status.HTTP_400_BAD_REQUEST)
+#         token_response = requests.post(
+#             'https://github.com/login/oauth/access_token',
+#             data={
+#                 'client_id': GITHUB_CLIENT_ID,
+#                 'client_secret': GITHUB_SECRET_KEY,
+#                 'code': code,
+#                 'redirect_uri': f'{REDIR_URI}/github-callback',
+#             },
+#             headers={'Accept': 'application/json'}
+#         )
 
+#         token_data = token_response.json()
 
+#         if 'error' in token_data:
+#             return Response({'error': token_data['error_description']}, status=status.HTTP_400_BAD_REQUEST)
 
-class GitHubLoginView(APIView):
-    def post(self, request, *args, **kwargs):
-        code = request.data.get('code')
-        if not code:
-            return Response({'error': 'Authorization code is missing'}, status=status.HTTP_400_BAD_REQUEST)
-        token_response = requests.post(
-            'https://github.com/login/oauth/access_token',
-            data={
-                'client_id': GITHUB_CLIENT_ID,
-                'client_secret': GITHUB_SECRET_KEY,
-                'code': code,
-                'redirect_uri': f'{REDIR_URI}/github-callback',
-            },
-            headers={'Accept': 'application/json'}
-        )
+#         access_token = token_data.get('access_token')
 
-        token_data = token_response.json()
+#         return Response({
+#             'access_token': access_token,
+#         }, status=status.HTTP_200_OK)
 
-        if 'error' in token_data:
-            return Response({'error': token_data['error_description']}, status=status.HTTP_400_BAD_REQUEST)
-
-        access_token = token_data.get('access_token')
-
-        return Response({
-            'access_token': access_token,
-        }, status=status.HTTP_200_OK)
-
-
-
-
-
-
-
-
-
-stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
 
 class CreateSubscriptionCheckoutSessionView(APIView):
 
@@ -446,13 +611,6 @@ class CreateSubscriptionCheckoutSessionView(APIView):
         except Exception as e:
             logger.error(f"Error creating checkout session: {str(e)}")
             return JsonResponse({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-
-
-
-
-
-
 
 
 def handle_checkout_session_completed(session):
@@ -529,14 +687,6 @@ def handle_checkout_session_completed(session):
         logger.error(f"Error processing checkout.session.completed: {e}")
 
 
-
-
-
-
-
-
-
-
 def handle_invoice_payment_succeeded(invoice):
     logger.info("Handling invoice.payment_succeeded")
     customer_id = invoice.get('customer')
@@ -605,12 +755,6 @@ def handle_invoice_payment_succeeded(invoice):
         logger.error(f"Error processing invoice.payment_succeeded: {e}")
 
 
-
-
-
-
-
-
 class ChangeSubscriptionTierView(APIView):
 
     def post(self, request):
@@ -663,12 +807,6 @@ class ChangeSubscriptionTierView(APIView):
             return Response({'error': str(e)}, status=500)
 
 
-
-
-
-
-
-
 class CreateTokenCheckoutSessionView(APIView):
 
     def post(self, request):
@@ -718,12 +856,6 @@ class CreateTokenCheckoutSessionView(APIView):
             return Response({'error': str(e)}, status=400)
 
 
-
-
-
-
-
-
 def handle_token_purchase(session):
     stripe_customer_id = session.get('customer')
     logger.info(f"Received customer data: {session.get('customer')}")
@@ -748,11 +880,6 @@ def handle_token_purchase(session):
         logger.error(f"No user found with Stripe customer ID: {stripe_customer_id}")
     except Exception as e:
         logger.error(f"Error updating token balance for user: {e}")
-
-
-
-
-
 
 
 class CancelSubscriptionView(APIView):
@@ -792,11 +919,6 @@ class CancelSubscriptionView(APIView):
             return JsonResponse({'error': f'An unexpected error occurred: {str(e)}'}, status=500)
 
 
-
-
-
-
-
 def handle_cancel_subscription(subscription_data):
     """
     Handles the cancellation of a subscription when notified by Stripe.
@@ -826,13 +948,6 @@ def handle_cancel_subscription(subscription_data):
     except Exception as e:
         logger.error(f"Error finalizing subscription cancellation: {e}")
     return False
-
-
-
-
-
-
-
 
 
 @csrf_exempt
@@ -893,13 +1008,6 @@ def stripe_webhook(request):
     return JsonResponse({'status': 'success'})
 
 
-
-
-
-
-
-
-
 def handle_payment_failed(event):
     subscription_id = event['data']['object']['subscription']
 
@@ -926,11 +1034,6 @@ def handle_payment_failed(event):
         logger.error(f"Failed to send email: {e}")
 
 
-
-
-
-
-
 def user_estimate_view(request):
     user = request.user
     estimates = UserEstimates.objects.filter(user=user).select_related('project_data', 'estimate_items', 'client_data')
@@ -940,7 +1043,6 @@ def user_estimate_view(request):
     }
 
     return context
-
 
 
 @api_view(['POST'])
@@ -986,11 +1088,6 @@ def create_estimate(request):
         return JsonResponse({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
-
-
-
-
-
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_user_estimates(request):
@@ -1020,10 +1117,6 @@ def get_user_estimates(request):
     })
 
 
-
-
-
-
 @api_view(['DELETE'])
 @permission_classes([IsAuthenticated])
 def delete_user_estimate(request, estimate_id):
@@ -1036,13 +1129,6 @@ def delete_user_estimate(request, estimate_id):
     except UserEstimates.DoesNotExist:
         print(f"Estimate_id {estimate_id} not found or already deleted.")
         return Response({'error': 'Estimate not found or unauthorized'}, status=status.HTTP_404_NOT_FOUND)
-
-
-
-
-
-
-
 
 
 @api_view(['GET'])
@@ -1070,10 +1156,6 @@ def get_saved_estimate(request, estimate_id):
         print("Error:", e)
         return Response({'error': str(e)}, status=500)
 
-
-
-
-from django.db.models import Max
 
 class SaveEstimateItems(APIView):
     permission_classes = [IsAuthenticated]
@@ -1113,8 +1195,6 @@ class SaveEstimateItems(APIView):
         return Response({'message': 'Tasks saved successfully', 'tasks': saved_tasks}, status=status.HTTP_201_CREATED)
 
 
-
-
 class FetchEstimateItems(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -1136,9 +1216,6 @@ class FetchEstimateItems(APIView):
         return Response(task_data, status=status.HTTP_200_OK)
 
 
-
-import logging
-
 class UpdateTaskView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -1156,8 +1233,6 @@ class UpdateTaskView(APIView):
         return Response({'message': 'Task updated successfully'}, status=status.HTTP_200_OK)
 
 
-
-
 class DeleteTaskView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -1168,8 +1243,6 @@ class DeleteTaskView(APIView):
             return Response(status=status.HTTP_204_NO_CONTENT)
         except EstimateItems.DoesNotExist:
             return Response({'error': 'Task not found'}, status=status.HTTP_404_NOT_FOUND)
-
-
 
 
 class UpdateEstimateInfoView(APIView):
@@ -1204,7 +1277,6 @@ class UpdateEstimateInfoView(APIView):
         return Response({'message': 'Estimate information updated successfully'}, status=status.HTTP_200_OK)
 
 
-
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def save_business_info(request):
@@ -1232,16 +1304,13 @@ def save_business_info(request):
         status=status.HTTP_201_CREATED if created else status.HTTP_200_OK
     )
 
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_saved_business_info(request):
     business_infos = BusinessInfo.objects.filter(user=request.user)
     serializer = BusinessInfoSerializer(business_infos, many=True)
     return Response(serializer.data)
-
-
-
-
 
 
 @api_view(['GET'])
@@ -1281,8 +1350,6 @@ def get_user_subscription_tier(request):
     except Subscription.DoesNotExist:
         return Response({'error': 'User subscription not found'}, status=404)
     
-
-
 
 class SaveSearchResponseView(APIView):
     permission_classes = [IsAuthenticated]
@@ -1325,11 +1392,6 @@ class SaveSearchResponseView(APIView):
         return Response({'message': 'Search responses saved successfully', 'responses': saved_responses}, status=status.HTTP_201_CREATED)
 
 
-
-
-
-
-
 class RetrieveSearchResponseView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -1345,8 +1407,6 @@ class RetrieveSearchResponseView(APIView):
         return Response({"tasks": tasks}, status=status.HTTP_200_OK)
 
     
-
-
 class DeleteSearchResponseView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -1372,9 +1432,6 @@ class DeleteSearchResponseView(APIView):
         except Exception as e:
             print(f"Error in DeleteSearchResponseView: {e}")
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
-
 
 
 @api_view(['POST'])
@@ -1421,10 +1478,6 @@ def save_or_update_estimate_margin(request, estimate_id):
         return Response({'error': f'Invalid value: {e}'}, status=400)
     except Exception as e:
         return Response({'error': f'Unexpected error: {e}'}, status=500)
-
-
-    
-
 
 
 @api_view(['GET'])

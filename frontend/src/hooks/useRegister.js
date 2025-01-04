@@ -1,4 +1,3 @@
-// hooks/useRegister.js
 import { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
@@ -34,9 +33,9 @@ const register = async (email, password, csrftoken) => {
         axios.defaults.headers.common['Authorization'] = `Bearer ${access}`;
 
         if (response.data.has_active_subscription) {
-            navigate('/dashboard');
+            navigate('/');
         } else {
-            navigate('/subscribe');
+            navigate('/email-status');
         }
     } catch (err) {
         setError('Error during registration. Please try again.'+err.message);

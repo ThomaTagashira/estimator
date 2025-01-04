@@ -3,7 +3,7 @@ import {CancelSubscriptionButton} from '../components/StripeCheckoutButton';
 const CancelSubscriptionPage = () => {
 
     return (
-        <div>
+        <div className='page'>
             <h1>We're sorry to hear you go!</h1>
 
             <h2> Notice: Subscription Cancellation</h2>

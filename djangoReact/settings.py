@@ -6,6 +6,8 @@ from datetime import timedelta
 
 load_dotenv()
 
+BACKEND_URI = os.getenv('BACKEND_URI')
+FRONTEND_URI = os.getenv('REDIR_URI')
 
 SECRET_KEY = os.getenv('TEST_SECRET_KEY', os.getenv('SECRET_KEY'))
 
@@ -77,15 +79,14 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'dj_rest_auth',
     'dj_rest_auth.registration',
-    'api',
+    # 'api',
     'corsheaders',
     'util',
     'rest_framework_simplejwt',
     'django_crontab',
     'rest_framework_simplejwt.token_blacklist',
     'pgvector.django',
-
-
+    'api.apps.ApiConfig',
 ]
 
 AUTHENTICATION_BACKENDS = (
@@ -112,20 +113,28 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.AllowAny',
     ],
+
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.TokenAuthentication',
         'rest_framework.authentication.SessionAuthentication',
         'rest_framework_simplejwt.authentication.JWTAuthentication',
-
     ],
+
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.UserRateThrottle',
+        'rest_framework.throttling.AnonRateThrottle',
+    ],
+
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '1000/day',  
+        'user': '5000/day', 
+        'resend_email': '5/hour', 
+        'login': '5/hour',  
+        'password_reset': '3/hour',  
+    }
 }
 
-#stripe API handles timed jobs
-# CRONJOBS = [
-#     ('0 0 * * *', 'api.tasks.allocate_monthly_tokens'),  # runs daily at midnight for monthly token allocation job
-#     ('0 0 * * *', 'api.tasks.deactivate_expired_subscriptions'),  # runs daily at midnight for changing is_active=False for users who canceled their subscription
 
-# ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -204,8 +213,18 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'util.validators.CustomPasswordValidator',  
     },
 ]
+import logging
 
+logging.basicConfig(level=logging.DEBUG)
 
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = os.getenv('APP_EMAIL')
+EMAIL_HOST_PASSWORD = os.getenv('APP_PASS')
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_EMAIL')
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/

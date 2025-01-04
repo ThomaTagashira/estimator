@@ -1,4 +1,3 @@
-// Centralized export of pages
 export { default as SearchPage } from './SearchPage';
 export { default as SuccessPage } from './SuccessPage';
 export { default as CancelPage } from './CancelPage';
@@ -11,8 +10,11 @@ export { default as DynamicTablePage } from './DynamicTablePage';
 export { default as CreateEstimatePage } from './CreateEstimatePage';
 export { default as EstimatesPage } from './EstimatesPage';
 export { default as EstimateDetailPage } from './EstimateDetailPage';
-export { default as BusinessInfoUpdateSuccessPage } from './BusinessInfoSuccessPage';
 export { default as BusinessInfoPage } from './BusinessInfoPage';
 export { default as CancelSubscriptionPage } from './CancelSubscriptionPage';
 export { default as ChangeSubscriptionPage } from './ChangeSubscriptionPage';
 export { default as ExportPDFPage } from './ExportPDFPage';
+export { default as TermsAndConditionsPage } from './TermsAndConditionsPage';
+export { default as RefundPolicyPage } from './RefundPolicyPage';
+export { default as PrivacyPolicyPage } from './PrivacyPolicyPage';
+export { default as EmailStatusPage } from './EmailStatusPage';
