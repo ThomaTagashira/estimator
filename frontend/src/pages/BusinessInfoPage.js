@@ -18,7 +18,7 @@ const BusinessInfoPage = () => {
 
     useEffect(() => {
         fetchBusinessData();
-    }, [setBusinessInfo, fetchBusinessData]);
+    }, [setBusinessInfo]);
 
 
     return (
