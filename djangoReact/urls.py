@@ -55,6 +55,9 @@ urlpatterns = [
     path('api/password-reset-confirm/', PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
     path('api/update-email/', EmailUpdateView.as_view(), name='update_email'),
     path('api/update-password/', PasswordUpdateView.as_view(), name='update_password'),
+    path('api/get-user-profile/', UserInfoView.as_view(), name='get_user_profile'),
+    path('api/save-user-info/', save_user_data, name='save_user_data'),
+
 
 
 

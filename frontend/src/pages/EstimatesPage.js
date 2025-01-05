@@ -32,9 +32,6 @@ const EstimatesPage = () => {
   if (error) return <p>{error}</p>;
 
 
-
-
-
   return (
     <div className="page">
       <div className="estimates-page-header">

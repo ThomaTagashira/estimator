@@ -10,8 +10,8 @@ import {
   // GitHubCallback,
   Header,
   Footer,
-  VerifyEmailSuccess,
-  PasswordResetConfirm
+  PasswordResetConfirm,
+  VerifyEmailSuccess
 } from './components';
 
 import {
@@ -33,7 +33,9 @@ import {
     TermsAndConditionsPage,
     RefundPolicyPage,
     PrivacyPolicyPage,
-    EmailStatusPage
+    EmailStatusPage,
+    UserProfileSettingsPage,
+    LoginCompletePage
 }  from './pages';
 
 
@@ -221,7 +223,15 @@ function App() {
         <Route path="/password-reset" element={<PasswordResetRequestForm />} />
         <Route path="/password-reset-confirm/:uid/:token" element={<PasswordResetConfirm />} />
 
-
+        <Route path="/complete-login" element={
+          <AuthenticatedRoute 
+            isAuthenticated={isAuthenticated} 
+            hasActiveSubscription={hasActiveSubscription}
+            inTrial={inTrial}
+          >            
+            <LoginCompletePage apiUrl={apiUrl} />
+          </AuthenticatedRoute>
+        }/>
 
         <Route path="/search" element={
           <AuthenticatedRoute 
@@ -304,26 +314,16 @@ function App() {
         }/>
 
 
-{/* 
-        <Route path="/email-update" element={
+
+        <Route path="/user-profile-settings" element={
           <AuthenticatedRoute 
             isAuthenticated={isAuthenticated} 
             hasActiveSubscription={hasActiveSubscription}
             inTrial={inTrial}
           >
-            <EmailUpdateForm apiUrl={apiUrl}/>
+            <UserProfileSettingsPage apiUrl={apiUrl}/>
           </AuthenticatedRoute>
         }/>
-
-        <Route path="/password-update" element={
-          <AuthenticatedRoute 
-            isAuthenticated={isAuthenticated} 
-            hasActiveSubscription={hasActiveSubscription}
-            inTrial={inTrial}
-          >
-            <PasswordUpdateForm apiUrl={apiUrl}/>
-          </AuthenticatedRoute>
-        }/> */}
 
         <Route path="/" element={isAuthenticated && hasActiveSubscription ? (<EstimatesPage />) : (<LoginPage setIsAuthenticated={setIsAuthenticated}setHasActiveSubscription={setHasActiveSubscription} />)} />
 

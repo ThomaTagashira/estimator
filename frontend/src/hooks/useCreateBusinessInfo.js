@@ -10,7 +10,8 @@ const useCreateBusinessInfo = (apiUrl) => {
     });
 
     const [error, setError] = useState(null);
-    const [isEditable, setIsEditable] = useState(false);
+    const [isBusinessEditable, setIsBusinessEditable] = useState(false);
+    const [originalBusinessData, setOriginalBusinessData] = useState({}); 
 
     const accessToken = localStorage.getItem('access_token');
 
@@ -26,13 +27,12 @@ const useCreateBusinessInfo = (apiUrl) => {
             console.error('No authentication token found');
             return;
         }
+        
         const businessPayload = {
-
                 business_name: businessInfo.businessName,
                 business_address: businessInfo.businessAddress,
                 business_phone: businessInfo.businessPhone,
                 business_email: businessInfo.businessEmail,
-
         };
         console.log('businessPayload', JSON.stringify(businessPayload));
 
@@ -71,7 +71,7 @@ const useCreateBusinessInfo = (apiUrl) => {
 
             if (response.ok) {
             console.log('Business Info created successfully', responseData);
-            setIsEditable(false);
+            setIsBusinessEditable(false);
         } else {
             console.error('Failed to create Business Info', responseData);
             setError('Failed to create Business Info');
@@ -82,14 +82,50 @@ const useCreateBusinessInfo = (apiUrl) => {
         }
     };
 
+    const handleBusinessCancel = () => {
+        setOriginalBusinessData(originalBusinessData);
+        setIsBusinessEditable(false);
+    };
+
+    const fetchBusinessData = async () => {
+        const accessToken = localStorage.getItem('access_token');
+        const response = await fetch(`${apiUrl}/api/get-saved-business-info/`, {
+            method: 'GET',
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+                'Content-Type': 'application/json',
+            },
+        });
+
+        const data = await response.json();
+        console.log('API Response:', data);
+
+        if (data && data.length > 0) {
+            const businessData = {
+                businessName: data[0].business_name || '',
+                businessAddress: data[0].business_address || '',
+                businessPhone: data[0].business_phone || '',
+                businessEmail: data[0].business_email || '',
+            };
+            setBusinessInfo(businessData);
+            setOriginalBusinessData(originalBusinessData); 
+        } else {
+            console.error('Business data not found');
+        }
+    };
+
         return {
             businessInfo,
             handleBusinessInfoChange,
             handleBusinessSubmit,
             setBusinessInfo,
-            isEditable,
-            setIsEditable,
+            isBusinessEditable,
+            setIsBusinessEditable,
             error,
+            originalBusinessData,
+            setOriginalBusinessData,
+            handleBusinessCancel,
+            fetchBusinessData,
         };
     };
 

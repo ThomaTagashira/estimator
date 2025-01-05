@@ -18,3 +18,5 @@ export { default as TermsAndConditionsPage } from './TermsAndConditionsPage';
 export { default as RefundPolicyPage } from './RefundPolicyPage';
 export { default as PrivacyPolicyPage } from './PrivacyPolicyPage';
 export { default as EmailStatusPage } from './EmailStatusPage';
+export { default as UserProfileSettingsPage } from './UserProfileSettingsPage';
+export { default as LoginCompletePage } from './LoginCompletePage';

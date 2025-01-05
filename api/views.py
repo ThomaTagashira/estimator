@@ -365,28 +365,51 @@ class PasswordUpdateView(APIView):
             return Response({'message': 'Password updated successfully.'}, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
-    
 
-@api_view(['POST'])
+class UserInfoView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        try:
+            user_info = UserInfo.objects.get(user=request.user)
+        except UserInfo.DoesNotExist:
+            return Response({'error': 'User info not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = UserInfoSerializer(user_info)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def patch(self, request):
+        try:
+            user_info = UserInfo.objects.get(user=request.user)
+        except UserInfo.DoesNotExist:
+            return Response({'error': 'User info not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = UserInfoSerializer(user_info, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['POST', 'PATCH'])
 @permission_classes([IsAuthenticated])
-def complete_profile(request):
-    subscription = request.user.subscription  
-    first_name = request.data.get('first_name')
-    last_name = request.data.get('last_name')
-    zipcode = request.data.get('zipcode')
-    phone_number = request.data.get('phone_number')
+def save_user_data(request):
+    logger.debug(f"Incoming data: {request.data}")
 
-    if not first_name or not last_name or not zipcode:
-        return Response({'error': 'First name, last name, and zipcode are required.'}, status=status.HTTP_400_BAD_REQUEST)
+    user = request.user
 
-    subscription.first_name = first_name
-    subscription.last_name = last_name
-    subscription.zipcode = zipcode
-    subscription.phone_number = phone_number
-    subscription.save()
+    user_data = request.data.get('user_data', {})
 
-    return Response({'message': 'Profile completed successfully. You can now access the app.'}, status=status.HTTP_200_OK)
+    user_info, created = UserInfo.objects.get_or_create(user=user)
 
+    if request.method in ['POST', 'PATCH']:
+        serializer = UserInfoSerializer(user_info, data=user_data, partial=(request.method == 'PATCH'))
+        if serializer.is_valid():
+            serializer.save()
+            response_status = status.HTTP_201_CREATED if created else status.HTTP_200_OK
+            return Response(serializer.data, status=response_status)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
 
 @permission_classes([AllowAny])
 def check_trial_status(user):
@@ -756,7 +779,6 @@ def handle_invoice_payment_succeeded(invoice):
 
 
 class ChangeSubscriptionTierView(APIView):
-
     def post(self, request):
         try:
             logger.info(f"Request data: {request.data}")
@@ -808,7 +830,6 @@ class ChangeSubscriptionTierView(APIView):
 
 
 class CreateTokenCheckoutSessionView(APIView):
-
     def post(self, request):
         user = request.user  
         if not user.is_authenticated:

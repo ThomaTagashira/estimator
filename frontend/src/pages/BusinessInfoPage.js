@@ -10,47 +10,16 @@ const BusinessInfoPage = () => {
         handleBusinessInfoChange,
         handleBusinessSubmit,
         setBusinessInfo,
-        isEditable,
-        setIsEditable,
+        isBusinessEditable,
+        setIsBusinessEditable,
+        handleBusinessCancel,
+        fetchBusinessData
     } = useCreateBusinessInfo(apiUrl);
 
-    const [originalData, setOriginalData] = useState({}); 
-
     useEffect(() => {
-        const fetchBusinessData = async () => {
-            const accessToken = localStorage.getItem('access_token');
-            const response = await fetch(`${apiUrl}/api/get-saved-business-info/`, {
-                method: 'GET',
-                headers: {
-                    Authorization: `Bearer ${accessToken}`,
-                    'Content-Type': 'application/json',
-                },
-            });
-
-            const data = await response.json();
-            console.log('API Response:', data);
-
-            if (data && data.length > 0) {
-                const businessData = {
-                    businessName: data[0].business_name || '',
-                    businessAddress: data[0].business_address || '',
-                    businessPhone: data[0].business_phone || '',
-                    businessEmail: data[0].business_email || '',
-                };
-                setBusinessInfo(businessData);
-                setOriginalData(businessData); 
-            } else {
-                console.error('Business data not found');
-            }
-        };
-
         fetchBusinessData();
     }, [setBusinessInfo]);
 
-    const handleCancel = () => {
-        setBusinessInfo(originalData);
-        setIsEditable(false);
-    };
 
     return (
         <div className='page'>
@@ -67,7 +36,7 @@ const BusinessInfoPage = () => {
                             name="businessName"
                             value={businessInfo.businessName}
                             onChange={handleBusinessInfoChange}
-                            disabled={!isEditable}
+                            disabled={!isBusinessEditable}
                             placeholder="Enter Your Business Name"
                         />
                     </div>
@@ -81,7 +50,7 @@ const BusinessInfoPage = () => {
                             name="businessAddress"
                             value={businessInfo.businessAddress}
                             onChange={handleBusinessInfoChange}
-                            disabled={!isEditable}
+                            disabled={!isBusinessEditable}
                             placeholder="Enter Your Business Address"
                         />
                     </div>
@@ -95,7 +64,7 @@ const BusinessInfoPage = () => {
                             name="businessPhone"
                             value={businessInfo.businessPhone}
                             onChange={handleBusinessInfoChange}
-                            disabled={!isEditable}
+                            disabled={!isBusinessEditable}
                             placeholder="Enter Your Business Phone"
                         />
                     </div>
@@ -109,16 +78,16 @@ const BusinessInfoPage = () => {
                             name="businessEmail"
                             value={businessInfo.businessEmail}
                             onChange={handleBusinessInfoChange}
-                            disabled={!isEditable}
+                            disabled={!isBusinessEditable}
                             placeholder="Enter Your Business Email"
                         />
                     </div>
                     <div className='single-button'>
-                        {!isEditable ? (
+                        {!isBusinessEditable ? (
                             <button
                                 type="button"
                                 className="upload-btn"
-                                onClick={() => setIsEditable(true)}
+                                onClick={() => setIsBusinessEditable(true)}
                             >
                                 Edit Business Info
                             </button>
@@ -129,7 +98,7 @@ const BusinessInfoPage = () => {
                                     <button
                                         type="button"
                                         className="upload-btn"
-                                        onClick={handleCancel}
+                                        onClick={handleBusinessCancel}
                                     >
                                         Cancel
                                     </button>

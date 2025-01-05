@@ -9,6 +9,7 @@ from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes
 from django.contrib.auth.tokens import default_token_generator
 from django.conf import settings
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -244,5 +245,18 @@ class EmailUpdateSerializer(serializers.Serializer):
             "YourApp Team"
         )
         send_mail(email_subject, email_body, settings.DEFAULT_FROM_EMAIL, [user.email])
+
+class UserInfoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserInfo
+        fields = ['user_email', 'first_name', 'last_name', 'phone_number', 'zipcode']
+        read_only_fields = ['user_email']
+
+    def validate_phone_number(self, value):
+        # Example validation: Ensure phone number contains only digits and is of valid length
+        if not re.fullmatch(r'^\d{10}$', value): 
+            raise serializers.ValidationError("Phone number must be between 10 and 15 digits.")
+        return value
+
 
 

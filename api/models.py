@@ -103,11 +103,7 @@ class Subscription(models.Model):
     token_allocation = models.PositiveIntegerField(default=0)
     last_token_allocation_date = models.DateTimeField(null=True, blank=True)
     last_payment_date = models.DateTimeField(null=True, blank=True)
-    last_processed_invoice_id = models.CharField(max_length=255, null=True, blank=True)
-    first_name = models.CharField(max_length=50, null=True, blank=True)  
-    last_name = models.CharField(max_length=50, null=True, blank=True)   
-    phone_number = models.CharField(max_length=15, null=True, blank=True) 
-    zipcode = models.CharField(max_length=10, null=True, blank=True)      
+    last_processed_invoice_id = models.CharField(max_length=255, null=True, blank=True) 
 
     def save(self, *args, **kwargs):
         if not self.trial_end_date:
@@ -125,6 +121,19 @@ class Subscription(models.Model):
     def __str__(self):
         return f"{self.user.username}'s subscription: {self.subscription_type} - {'Active' if self.is_active else 'Inactive'}"
 
+
+class UserInfo(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='userInfo')
+    user_email = models.CharField(max_length=150, editable=False)  
+    first_name = models.CharField(max_length=50, null=True, blank=True)  
+    last_name = models.CharField(max_length=50, null=True, blank=True)   
+    phone_number = models.CharField(max_length=15, null=True, blank=True) 
+    zipcode = models.CharField(max_length=10, null=True, blank=True)     
+
+    def save(self, *args, **kwargs):
+
+        self.user_email = self.user.email
+        super().save(*args, **kwargs)
 
 
 class UserEstimates(models.Model):

@@ -62,13 +62,10 @@ const Header = ({ handleLogout, hasActiveSubscription, tokenCount, userSubscript
                 <button className="nav-link-button">Home</button>
               </Link>
 
-              <Link to="/save-business-info" className="dropdown-link" onClick={() => setMenuOpen(false)}>
-                <button className="nav-link-button">Business Info</button>
-              </Link>
-
               <Link to="/buy-tokens" className="dropdown-link" onClick={() => setMenuOpen(false)}>
                 <button className="nav-link-button">Purchase Tokens</button>
               </Link>
+
             </li>
           </>
           ) : (
