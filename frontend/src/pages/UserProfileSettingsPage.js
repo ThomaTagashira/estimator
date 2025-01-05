@@ -29,11 +29,11 @@ const UserProfileSettingsPage = ({apiUrl}) => {
 
 useEffect(() => {
     fetchBusinessData();
-}, [setBusinessInfo]);
+}, [setBusinessInfo,fetchBusinessData]);
 
   useEffect(() => {
     fetchUserData();
-  }, [apiUrl, setUserData, setOriginalUserData]);
+  }, [apiUrl, setUserData, setOriginalUserData, fetchUserData]);
 
 
 return (

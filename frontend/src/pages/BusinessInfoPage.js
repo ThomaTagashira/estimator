@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import useCreateBusinessInfo from '../hooks/useCreateBusinessInfo';
 
 
@@ -18,7 +18,7 @@ const BusinessInfoPage = () => {
 
     useEffect(() => {
         fetchBusinessData();
-    }, [setBusinessInfo]);
+    }, [setBusinessInfo, fetchBusinessData]);
 
 
     return (
