@@ -1,0 +1,36 @@
+# Python
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+*.pyd
+*.swp
+
+# Django specific
+/media/
+/staticfiles/
+*.log 
+
+# Environments
+.venv/
+env/
+venv/
+ENV/
+.env
+.env.backup
+
+# IDEs and Editors
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# macOS
+.DS_Store
+
+# Packages
+*.egg-info/
+.eggs/
+Dockerfile
+
+*.ipynb
