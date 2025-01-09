@@ -70,3 +70,4 @@ urlpatterns = [
     #re_path(r"^(?P<path>.*)$", serve_react, {"document_root": settings.REACT_APP_BUILD_PATH}),
 ]
 
+ 
