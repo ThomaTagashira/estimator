@@ -205,41 +205,64 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
         user.save()
 
 class PasswordUpdateSerializer(serializers.Serializer):
-    current_password = serializers.CharField(write_only=True)
+    current_password = serializers.CharField(write_only=True, required=False)
     new_password = serializers.CharField(write_only=True)
 
-    def validate_current_password(self, value):
-        if not self.context['request'].user.check_password(value):
-            raise serializers.ValidationError("Current password is incorrect.")
-        return value
+    def validate(self, data):
+        user = self.context['request'].user
 
-    def validate_new_password(self, value):
-        if len(value) < 8:
-            raise serializers.ValidationError("Password must be at least 8 characters long.")
-        return value
+        if 'current_password' in data:
+            if not user.check_password(data['current_password']):
+                raise serializers.ValidationError({"current_password": "Current password is incorrect."})
+
+        new_password = data.get('new_password')
+        if len(new_password) < 8:
+            raise serializers.ValidationError({"new_password": "Password must be at least 8 characters long."})
+
+        if user.check_password(new_password):
+            raise serializers.ValidationError({"new_password": "New password cannot be the same as the old password."})
+
+        return data
 
     def save(self, user):
         user.set_password(self.validated_data['new_password'])
         user.save()
 
 class EmailUpdateSerializer(serializers.Serializer):
+    old_email = serializers.EmailField(required=False)  
     email = serializers.EmailField()
 
-    def validate_email(self, value):
-        if User.objects.filter(email=value).exists():
-            raise serializers.ValidationError("This email is already in use.")
-        return value
+    def validate(self, data):
+        print("Context in validate:", self.context)  
+        user = self.context['request'].user
+
+        if 'old_email' in data and data['old_email'] != user.email:
+            raise serializers.ValidationError({"old_email": "Old email does not match our records."})
+
+        if User.objects.filter(email=data['email']).exists():
+            raise serializers.ValidationError({"email": "This email is already in use."})
+
+        return data
 
     def save(self, user):
+        old_email = user.email
         user.email = self.validated_data['email']
+        user.username = self.validated_data['email']  
         user.save()
-        self.send_confirmation_email(user)
+        
+        EmailChangeHistory.objects.create(
+            user=user,
+            old_email=old_email,
+            new_email=user.email,
+        )
+        self.send_confirmation_email(user, old_email)
 
-    def send_confirmation_email(self, user):
+    def send_confirmation_email(self, user, old_email):
         email_subject = "Email Updated Successfully"
         email_body = (
             f"Hi {user.username},\n\n"
-            "Your email address has been updated successfully. If you did not make this change, "
+            "Your email address has been updated successfully from "
+            f"{old_email} to {user.email}. If you did not make this change, "
             "please contact our support team immediately to secure your account.\n\n"
             "Best regards,\n"
             "YourApp Team"

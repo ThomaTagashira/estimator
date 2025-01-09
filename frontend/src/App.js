@@ -11,7 +11,7 @@ import {
   Header,
   Footer,
   PasswordResetConfirm,
-  VerifyEmailSuccess
+  VerifyEmailSuccess,
 } from './components';
 
 import {
@@ -35,7 +35,7 @@ import {
     PrivacyPolicyPage,
     EmailStatusPage,
     UserProfileSettingsPage,
-    LoginCompletePage
+    LoginCompletePage,
 }  from './pages';
 
 
@@ -49,6 +49,7 @@ function App() {
   const [tokenCount, setTokenCount] = useState(0);
   const [inTrial, setInTrial] = useState(false)
   const [userEmail, setUserEmail] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   const fetchTokenCount = useCallback(() => {
     const fetchData = async () => {
@@ -81,7 +82,7 @@ function App() {
     };
 
     fetchData(); 
-}, [tokenCount]); 
+  }, [tokenCount]); 
 
   useEffect(() => {
     fetchTokenCount(); 
@@ -118,28 +119,33 @@ function App() {
   }; 
 
   fetchSubscriptionTier();
-}, );
+  }, );
 
 
   const handleLogout = () => {
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
+
     delete axios.defaults.headers.common['Authorization'];
+
     setIsAuthenticated(false);
     setHasActiveSubscription(false);
     setInTrial(false);
-    redirect('/');
+
+    redirect('/login');
   };
+
+  
 
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
-    const emailVerificationToken = searchParams.get('token'); 
-    const email = searchParams.get('email'); 
-
+    const emailVerificationToken = searchParams.get('token');
+    const email = searchParams.get('email');
+  
     if (email) {
-      setUserEmail(email); 
+      setUserEmail(email);
     }
-
+  
     if (emailVerificationToken) {
       axios.get(`${apiUrl}/api/verify-email/${emailVerificationToken}`)
         .then(response => {
@@ -152,22 +158,15 @@ function App() {
           setIsAuthenticated(true);
           setHasActiveSubscription(has_active_subscription);
           setInTrial(in_trial);
-  
-          if (has_active_subscription || in_trial) {
-            window.history.replaceState({}, document.title, '/'); 
-            redirect('/'); 
-          } else {
-            window.history.replaceState({}, document.title, '/'); 
-            redirect('/subscribe'); 
-          }
         })
         .catch(error => {
           console.error('Error verifying email:', error);
           setIsAuthenticated(false);
           setHasActiveSubscription(false);
           setInTrial(false);
-          window.history.replaceState({}, document.title, '/'); 
-          redirect('/'); 
+        })
+        .finally(() => {
+          setIsLoading(false); 
         });
     } else {
       const token = localStorage.getItem('access_token');
@@ -187,10 +186,20 @@ function App() {
             } else {
               console.error('Error fetching subscription status:', error);
             }
+          })
+          .finally(() => {
+            setIsLoading(false); 
           });
+      } else {
+        setIsLoading(false); 
       }
     }
-  }, [setIsAuthenticated, setHasActiveSubscription, setInTrial ]);
+  }, [setIsAuthenticated, setHasActiveSubscription, setInTrial]);
+  
+  if (isLoading) {
+    return <div>Loading...</div>; 
+  }
+  
   
   
 
@@ -203,12 +212,13 @@ function App() {
           tokenCount={tokenCount}
           userSubscriptionTier={userSubscriptionTier}
           inTrial={inTrial}
+          apiUrl={apiUrl}
         />
       </div>  
     
       <Routes>
         <Route path="/register" element={<RegisterPage />} />
-        {/* <Route path="/login" element={<LoginPage setIsAuthenticated={setIsAuthenticated}/>} /> */}
+        <Route path="/login" element={<LoginPage setIsAuthenticated={setIsAuthenticated} setHasActiveSubscription={setHasActiveSubscription} setInTrial={setInTrial} />} />
         <Route path="/google-callback" element={<GoogleCallback setIsAuthenticated={setIsAuthenticated} setHasActiveSubscription={setHasActiveSubscription} />} />
         <Route path="/subscribe" element={<SubscriptionPage />} />
         <Route path="/buy-tokens" element={<TokenPurchasePage />} />
@@ -222,16 +232,7 @@ function App() {
         <Route path="/email-status" element={<EmailStatusPage apiUrl={apiUrl} userEmail={userEmail}/>} />
         <Route path="/password-reset" element={<PasswordResetRequestForm />} />
         <Route path="/password-reset-confirm/:uid/:token" element={<PasswordResetConfirm />} />
-
-        <Route path="/complete-login" element={
-          <AuthenticatedRoute 
-            isAuthenticated={isAuthenticated} 
-            hasActiveSubscription={hasActiveSubscription}
-            inTrial={inTrial}
-          >            
-            <LoginCompletePage apiUrl={apiUrl} />
-          </AuthenticatedRoute>
-        }/>
+        <Route path="/complete-login" element={<LoginCompletePage apiUrl={apiUrl} setIsAuthenticated={setIsAuthenticated} setHasActiveSubscription={setHasActiveSubscription} setInTrial={setInTrial}/>} />
 
         <Route path="/search" element={
           <AuthenticatedRoute 
@@ -325,8 +326,20 @@ function App() {
           </AuthenticatedRoute>
         }/>
 
-        <Route path="/" element={isAuthenticated && hasActiveSubscription ? (<EstimatesPage />) : (<LoginPage setIsAuthenticated={setIsAuthenticated}setHasActiveSubscription={setHasActiveSubscription} />)} />
-
+        <Route
+          path="/"
+          element={
+            (inTrial || (isAuthenticated && hasActiveSubscription)) ? (
+              <EstimatesPage />
+            ) : (
+              <LoginPage
+                setIsAuthenticated={setIsAuthenticated}
+                setHasActiveSubscription={setHasActiveSubscription}
+                setInTrial={setInTrial}
+              />
+            )
+          }
+        />
       </Routes>
       
       <div className='footer-container'>

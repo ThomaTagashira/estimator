@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
+import axios from 'axios';
 
 const useUserProfileSettings = (apiUrl) => {
   const [userData, setUserData] = useState({
@@ -10,6 +11,10 @@ const useUserProfileSettings = (apiUrl) => {
 
   const [originalUserData, setOriginalUserData] = useState(null);
   const [isUserDataEditable, setIsUserDataEditable] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+
 
   const handleUserDataCancel = () => {
     setOriginalUserData(originalUserData);
@@ -63,8 +68,63 @@ const useUserProfileSettings = (apiUrl) => {
     }
   };
   
+  const updateEmail = async (newEmail) => {
+    setLoading(true);
+    setError('');
+    setSuccess('');
 
-  const fetchUserData = async () => {
+    try {
+      const response = await axios.post(`${apiUrl}/api/update-email/`, {
+        email: newEmail,
+      }, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+        },
+      });
+
+      setSuccess('Email updated successfully!');
+      return response.data; 
+    } catch (err) {
+      setError('Failed to update email.');
+      console.error(err);
+      throw err; 
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updatePassword = async (newPassword, confirmPassword) => {
+    if (newPassword !== confirmPassword) {
+      setError('Passwords do not match.');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      const response = await axios.post(`${apiUrl}/api/update-password/`, {
+        new_password: newPassword, 
+      }, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+        },
+      });
+
+      setSuccess('Password updated successfully!');
+      return response.data; 
+    } catch (err) {
+      console.error('Error response:', error.response?.data); 
+      console.error(err);
+      throw err; 
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+  const fetchUserData = useCallback(async () => {
     const accessToken = localStorage.getItem('access_token');
     
     try {
@@ -88,11 +148,17 @@ const useUserProfileSettings = (apiUrl) => {
         phone: data.phone_number || '',
         zipcode: data.zipcode || '',
       });
+      setOriginalUserData({
+        firstName: data.first_name || '',
+        lastName: data.last_name || '',
+        phone: data.phone_number || '',
+        zipcode: data.zipcode || '',
+      });
     } catch (error) {
       console.error('Error fetching user data:', error);
       alert('Failed to fetch user data. Please try again.');
     }
-  };
+  }, [apiUrl]); 
 
 
   return {
@@ -105,6 +171,11 @@ const useUserProfileSettings = (apiUrl) => {
     setOriginalUserData,
     fetchUserData,
     handleUserDataChange,
+    updateEmail,
+    updatePassword,
+    loading,
+    error,
+    success,
   };
 };
 

@@ -10,7 +10,6 @@ const UserInfoForm = ({
 
   
   return (
-    <div>
       <form>
         <div className="DT-form-group">
           <label htmlFor="firstName">
@@ -77,7 +76,6 @@ const UserInfoForm = ({
           </button>
         </div>
       </form>
-    </div>
   );
 };
 

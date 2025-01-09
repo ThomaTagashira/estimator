@@ -6,7 +6,7 @@ import { faUserCircle } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 
-const Header = ({ handleLogout, hasActiveSubscription, tokenCount, userSubscriptionTier, inTrial }) => {
+const Header = ({ handleLogout, hasActiveSubscription, tokenCount, userSubscriptionTier, inTrial, apiUrl }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const dropdownRef = useRef(null); 
 
@@ -65,9 +65,6 @@ const Header = ({ handleLogout, hasActiveSubscription, tokenCount, userSubscript
               <Link to="/buy-tokens" className="dropdown-link" onClick={() => setMenuOpen(false)}>
                 <button className="nav-link-button">Purchase Tokens</button>
               </Link>
-        <Link to="/user-profile-settings">
-            <button className="upload-btn">Profile Settings</button>
-        </Link>
             </li>
           </>
           ) : (
@@ -94,6 +91,7 @@ const Header = ({ handleLogout, hasActiveSubscription, tokenCount, userSubscript
               <ProfileButton
                 header={userProfileHeader}
                 handleLogout={handleLogout}
+                apiUrl={apiUrl}
               />
             )}
           </div>

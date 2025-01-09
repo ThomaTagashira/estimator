@@ -10,27 +10,21 @@ const VerifyEmailSuccess = ({ setIsAuthenticated, setHasActiveSubscription, setI
   const email = searchParams.get('email');
   const accessToken = searchParams.get('access');
   const refreshToken = searchParams.get('refresh');
-  const hasActiveSubscription = searchParams.get('has_active_subscription') === 'true';
-  const inTrial = searchParams.get('in_trial') === 'true';
-
+  const hasActiveSubscription = searchParams.get('has_active_subscription') === 'true'; 
+  const inTrial = searchParams.get('in_trial') === 'true'; 
+  
   useEffect(() => {
     if (accessToken && refreshToken) {
       localStorage.setItem('access_token', accessToken);
       localStorage.setItem('refresh_token', refreshToken);
       axios.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
-
-      setIsAuthenticated(true);
-      setHasActiveSubscription(hasActiveSubscription);
-      setInTrial(inTrial);
-
-
       const timer = setTimeout(() => {
-        navigate('/');
-      }, 5000); 
+        navigate('/complete-login');
+      }, 5000);
 
       return () => clearTimeout(timer);
     } else {
-      navigate('/');
+      navigate('/register');
     }
   }, [
     accessToken,

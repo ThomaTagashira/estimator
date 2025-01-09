@@ -57,6 +57,8 @@ urlpatterns = [
     path('api/update-password/', PasswordUpdateView.as_view(), name='update_password'),
     path('api/get-user-profile/', UserInfoView.as_view(), name='get_user_profile'),
     path('api/save-user-info/', save_user_data, name='save_user_data'),
+    path('api/auth/user-state/', UserStateView.as_view(), name='user_state_view'),
+    path('api/subscription/complete-profile/', CompleteProfileView.as_view(), name='complete-profile'),
 
 
 

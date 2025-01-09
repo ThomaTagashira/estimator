@@ -16,21 +16,25 @@ const GoogleCallback = ({ setIsAuthenticated, setHasActiveSubscription }) => {
       if (code) {
         axios.post(`${apiUrl}/api/auth/google/`, { code })
           .then(response => {
-            const { access, refresh, has_active_subscription } = response.data;
+            const { access, refresh, has_active_subscription, profile_completed } = response.data;
 
             localStorage.setItem('access_token', access);
             localStorage.setItem('refresh_token', refresh);
             axios.defaults.headers.common['Authorization'] = `Bearer ${access}`;
 
-            setIsAuthenticated(true);
-            setHasActiveSubscription(has_active_subscription);
-
-            if (has_active_subscription) {
-                navigate('/');
-            } else {
-                navigate('/subscribe');
+            if (!has_active_subscription) {
+              navigate('/subscribe');
             }
-          })
+
+            if (!profile_completed) {
+              navigate('/complete-login');
+            } 
+            
+            else {
+                navigate('/');
+            }
+          }
+        )
           .catch(error => {
               console.error('Error exchanging Google code:', error);
               navigate('/');

@@ -2,7 +2,7 @@ import json, requests, logging, os, stripe
 from rest_framework.views import APIView
 from util.embedding import get_embedding
 from pgvector.django import CosineDistance
-from rest_framework.decorators import api_view, permission_classes, throttle_classes
+from rest_framework.decorators import api_view, permission_classes, throttle_classes, authentication_classes
 from rest_framework.response import Response
 from rest_framework import status
 from util.serializers import *
@@ -25,7 +25,7 @@ from django.contrib.auth.models import User
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.db import transaction
 from rest_framework.exceptions import ValidationError
-from django.utils.timezone import now
+from django.utils.timezone import now as timezone_now
 from django.core.validators import validate_email
 from django.contrib.auth.password_validation import validate_password
 from django.core.mail import send_mail
@@ -34,7 +34,7 @@ from django.db.models import Q, Max
 from django.core.paginator import Paginator
 from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 from .throttles import ResendEmailThrottle
-from .permissions import HasActiveSubscriptionOrTrial
+from .permissions import HasActiveSubscriptionOrTrial, ProfileCompletedPermission
 from django.shortcuts import redirect
 from urllib.parse import urlencode
 
@@ -66,7 +66,7 @@ def serve_react(request, path, document_root=None):
     
 
 class ProtectedView(APIView):
-    permission_classes = [IsAuthenticated, HasActiveSubscriptionOrTrial]
+    permission_classes = [IsAuthenticated, HasActiveSubscriptionOrTrial, ProfileCompletedPermission]
 
     def get(self, request):
         return Response({"message": "Access granted to protected content."})
@@ -166,6 +166,7 @@ def upload_photo(request):
 
 
 @api_view(['POST'])
+@authentication_classes([])
 @permission_classes([AllowAny])
 def register_user(request):
     email = request.data.get('userEmail')
@@ -218,6 +219,7 @@ def send_verification_email(user):
 
 
 @api_view(['POST'])
+@authentication_classes([])
 @permission_classes([AllowAny])
 @throttle_classes([ResendEmailThrottle])
 def resend_verification_email(request):
@@ -249,6 +251,7 @@ def confirm_verification_token(token, expiration=3600):
 
 
 @api_view(['GET'])
+@authentication_classes([])
 @permission_classes([AllowAny])
 def verify_email(request, token):
     print(f"Received token: {token}")
@@ -284,9 +287,10 @@ def verify_email(request, token):
             user=user,
             defaults={
                 'is_active': True,
-                'trial_start_date': now(),
-                'trial_end_date': now() + timedelta(days=7),
+                'trial_start_date': timezone_now(),
+                'trial_end_date': timezone_now() + timedelta(days=7),
                 'in_trial': True,
+                'subscription_type': 'Trial'
             }
         )
         if not created and not subscription.is_active:
@@ -294,6 +298,7 @@ def verify_email(request, token):
             subscription.in_trial = True
             subscription.trial_start_date = now()
             subscription.trial_end_date = now() + timedelta(days=7)
+            subscription.subscription_type = 'Trial'
             subscription.save()
             print(f"Updated subscription for {user.email}.")
 
@@ -304,11 +309,14 @@ def verify_email(request, token):
             'email': email,
             'access': access_token,
             'refresh': str(refresh),
-            'has_active_subscription': subscription.is_active,
-            'in_trial': subscription.in_trial,
+            'has_active_subscription': str(subscription.is_active).lower(),  
+            'in_trial': str(subscription.in_trial).lower(), 
             'trial_end_date': subscription.trial_end_date.isoformat(),
         })
         redirect_url = f'{REDIR_URI}/verify-email-success?{query_params}'
+
+        print(f"Redirect URL: {redirect_url}")
+
         return redirect(redirect_url)
 
     except User.DoesNotExist:
@@ -317,7 +325,8 @@ def verify_email(request, token):
 
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@authentication_classes([])
+@permission_classes([AllowAny])
 def check_verification_status(request):
     user = request.user
     return Response({'is_verified': user.is_active}, status=status.HTTP_200_OK)
@@ -348,11 +357,12 @@ class EmailUpdateView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        serializer = EmailUpdateSerializer(data=request.data)
+        serializer = EmailUpdateSerializer(data=request.data, context={'request': request})  # Pass context here
         if serializer.is_valid():
             serializer.save(request.user)
             return Response({'message': 'Email updated successfully.'}, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 
 class PasswordUpdateView(APIView):
@@ -363,8 +373,8 @@ class PasswordUpdateView(APIView):
         if serializer.is_valid():
             serializer.save(request.user)
             return Response({'message': 'Password updated successfully.'}, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
+        print("Validation errors:", serializer.errors)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)    
 
 class UserInfoView(APIView):
     permission_classes = [IsAuthenticated]
@@ -410,7 +420,7 @@ def save_user_data(request):
             return Response(serializer.data, status=response_status)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
-
+@authentication_classes([])
 @permission_classes([AllowAny])
 def check_trial_status(user):
     subscription = user.subscription
@@ -420,6 +430,7 @@ def check_trial_status(user):
 
 
 @api_view(['GET', 'POST'])
+@authentication_classes([])
 @permission_classes([AllowAny])
 def subscription_status(request):
     user = request.user
@@ -451,39 +462,94 @@ def subscription_status(request):
     return Response(response_data)
 
 
+class UserStateView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        if not user.is_authenticated:
+            return Response({'error': 'User is not authenticated'}, status=401)
+
+        subscription = getattr(user, 'subscription', None)
+        return Response({
+            'is_active': subscription.is_active if subscription else False,
+            'in_trial': subscription.in_trial if subscription else False,
+            'profile_completed': subscription.profile_completed if subscription else False,
+        })
+
+
 class UsernameTokenObtainPairView(TokenObtainPairView):
     def post(self, request, *args, **kwargs):
-        response = super().post(request, *args, **kwargs)
         username = request.data.get('username')
+
+        if not username:
+            return Response(
+                {'detail': "Username is required."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         try:
             user = User.objects.get(username=username)
-            
-            if not user.is_active:
-                response.data = {'detail': "Email not verified. Please verify your email to proceed."}
-                response.status_code = status.HTTP_403_FORBIDDEN
-                return response
 
-            active_subscription = Subscription.objects.filter(user=user, is_active=True).exists()
-            response.data['has_active_subscription'] = active_subscription
+            if not user.is_active:
+                return Response(
+                    {'detail': "Email not verified. Please verify your email to proceed."},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+
+            subscription = Subscription.objects.filter(user=user).first()
+            active_subscription = subscription.is_active if subscription else False
+            profile_completed = subscription.profile_completed if subscription else False
 
             if not active_subscription:
-                response.data['detail'] = "Subscription required."
-                response.status_code = status.HTTP_403_FORBIDDEN
-        except User.DoesNotExist:
-            response.data = {'detail': "Invalid credentials."}
-            response.status_code = status.HTTP_401_UNAUTHORIZED
+                return Response(
+                    {'detail': "Subscription required."},
+                    status=status.HTTP_403_FORBIDDEN
+                )
 
+        except User.DoesNotExist:
+            return Response(
+                {'detail': "Invalid credentials."},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+
+        response = super().post(request, *args, **kwargs)
+        response.data['has_active_subscription'] = active_subscription
+        response.data['profile_completed'] = profile_completed
         return response
 
 
 class GoogleTokenObtainPairView(TokenObtainPairView):
     def post(self, request, *args, **kwargs):
-        response = super().post(request, *args, **kwargs)
-        user = self.get_user(request.data['username'])
-        active_subscription = Subscription.objects.filter(user=user, is_active=True).exists()
-        response.data['has_active_subscription'] = active_subscription
-        return response
+        username = request.data.get('username')
+
+        if not username:
+            return Response(
+                {'detail': 'Username is required.'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            user = User.objects.get(username=username)
+        except User.DoesNotExist:
+            return Response(
+                {'detail': "Invalid credentials."}, 
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+
+        refresh = RefreshToken.for_user(user)
+        access = str(refresh.access_token)
+
+        subscription = Subscription.objects.filter(user=user).first()
+        active_subscription = subscription.is_active if subscription else False
+        profile_completed = subscription.profile_completed if subscription else False
+
+        return Response({
+            'refresh': str(refresh),
+            'access': access,
+            'has_active_subscription': active_subscription,
+            'profile_completed': profile_completed,
+        })
 
 
 class GoogleLoginView(APIView):
@@ -502,9 +568,9 @@ class GoogleLoginView(APIView):
                     'redirect_uri': f'{REDIR_URI}/google-callback',
                     'grant_type': 'authorization_code'
                 },
-                timeout=10  #timeout for network stability
+                timeout=10  
             )
-            token_response.raise_for_status()  #raise an HTTPError for bad responses
+            token_response.raise_for_status()
             token_data = token_response.json()
         except requests.exceptions.RequestException as e:
             return Response({'error': f'Failed to exchange token: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -522,7 +588,7 @@ class GoogleLoginView(APIView):
             user_info_response = requests.get(
                 'https://www.googleapis.com/oauth2/v1/userinfo',
                 params={'access_token': access_token},
-                timeout=10 
+                timeout=10  
             )
             user_info_response.raise_for_status()
         except requests.exceptions.RequestException as e:
@@ -535,17 +601,27 @@ class GoogleLoginView(APIView):
             return Response({'error': 'Email not provided by Google'}, status=status.HTTP_400_BAD_REQUEST)
 
         with transaction.atomic():
-            user, created = User.objects.get_or_create(username=email, defaults={'email': email})
+            user, created = User.objects.get_or_create(username=email, defaults={'email': email, 'is_active': True})
 
             if created:
-                existing_profile = StripeProfile.objects.filter(user=user).exists()
-                if not existing_profile:
+                if not StripeProfile.objects.filter(user=user).exists():
                     try:
                         customer = stripe.Customer.create(email=user.email)
                         StripeProfile.objects.create(user=user, stripe_customer_id=customer['id'])
                     except Exception as e:
                         user.delete()
                         return Response({'error': f'Failed to create Stripe customer: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+                Subscription.objects.get_or_create(
+                    user=user,
+                    defaults={
+                        'is_active': True,
+                        'trial_start_date': timezone_now(),
+                        'trial_end_date': timezone_now() + timedelta(days=7),
+                        'in_trial': True,
+                        'subscription_type': 'Trial'
+                    }
+                )
 
         try:
             refresh = RefreshToken.for_user(user)
@@ -554,13 +630,44 @@ class GoogleLoginView(APIView):
         except Exception as e:
             return Response({'error': f'Failed to generate JWT: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        has_active_subscription = Subscription.objects.filter(user=user, is_active=True).exists()
+        subscription = Subscription.objects.filter(user=user).first()
+        has_active_subscription = subscription.is_active if subscription else False
+        in_trial = subscription.in_trial if subscription else False
+        profile_completed = subscription.profile_completed if subscription else False
 
         return Response({
             'access': jwt_access_token,
             'refresh': jwt_refresh_token,
-            'has_active_subscription': has_active_subscription
+            'has_active_subscription': has_active_subscription,
+            'in_trial': in_trial,
+            'profile_completed': profile_completed
         }, status=status.HTTP_200_OK)
+
+
+class CompleteProfileView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        try:
+            subscription = Subscription.objects.get(user=request.user)
+        except Subscription.DoesNotExist:
+            return Response({'error': 'No subscription found'}, status=404)
+
+        if not subscription.profile_completed:
+            subscription.profile_completed = True
+            subscription.save()
+        else:
+            return Response({'message': 'Profile already completed'}, status=400)
+
+        user_token, created = UserToken.objects.get_or_create(user=request.user)
+        user_token.token_balance += 15  # Trial gift tokens
+        user_token.save()
+
+        return Response({
+            'message': 'Profile completed and tokens distributed',
+            'token_balance': user_token.token_balance,
+            'last_updated': user_token.last_updated.isoformat(),
+        })
 
 
 # class GitHubLoginView(APIView):
@@ -589,6 +696,7 @@ class GoogleLoginView(APIView):
 #         return Response({
 #             'access_token': access_token,
 #         }, status=status.HTTP_200_OK)
+
 
 
 class CreateSubscriptionCheckoutSessionView(APIView):

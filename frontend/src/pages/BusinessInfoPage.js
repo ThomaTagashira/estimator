@@ -9,7 +9,6 @@ const BusinessInfoPage = () => {
         businessInfo,
         handleBusinessInfoChange,
         handleBusinessSubmit,
-        setBusinessInfo,
         isBusinessEditable,
         setIsBusinessEditable,
         handleBusinessCancel,
@@ -18,7 +17,7 @@ const BusinessInfoPage = () => {
 
     useEffect(() => {
         fetchBusinessData();
-    }, [setBusinessInfo]);
+    }, [fetchBusinessData]);
 
 
     return (

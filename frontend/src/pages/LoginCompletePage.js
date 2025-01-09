@@ -4,7 +4,7 @@ import UserInfoForm from '../components/Form/UserInfoForm';
 import BusinessInfoForm from '../components/Form/BusinessInfoForm';
 
 
-const LoginCompletePage = ({apiUrl}) => {
+const LoginCompletePage = ({apiUrl, setIsAuthenticated, setHasActiveSubscription, setInTrial}) => {
     const {
       step,
       userData,
@@ -14,8 +14,8 @@ const LoginCompletePage = ({apiUrl}) => {
       handleNext,
       handlePrevious,
       handleLoginCompleteSubmit,
-      handleCancel
-    } = useLoginComplete(apiUrl);
+      handleCancel,
+    } = useLoginComplete(apiUrl, setIsAuthenticated, setHasActiveSubscription, setInTrial);
 
 
   return (

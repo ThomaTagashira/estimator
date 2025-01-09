@@ -88,7 +88,13 @@ class Subscription(models.Model):
     cancellation_pending = models.BooleanField(default=False)
     subscription_type = models.CharField(
         max_length=50,
-        choices=[('Basic', 'Basic'), ('Premium', 'Premium'), ('Enterprise', 'Enterprise')]
+        choices=[
+            ('Trial', 'Trial'), 
+            ('Basic', 'Basic'), 
+            ('Premium', 'Premium'), 
+            ('Enterprise', 'Enterprise')
+        ],
+        default='Trial' 
     )
     start_date = models.DateTimeField(auto_now_add=True)
     end_date = models.DateTimeField(null=True, blank=True)
@@ -104,6 +110,7 @@ class Subscription(models.Model):
     last_token_allocation_date = models.DateTimeField(null=True, blank=True)
     last_payment_date = models.DateTimeField(null=True, blank=True)
     last_processed_invoice_id = models.CharField(max_length=255, null=True, blank=True) 
+    profile_completed = models.BooleanField(default=False)  # New field
 
     def save(self, *args, **kwargs):
         if not self.trial_end_date:
@@ -288,3 +295,10 @@ class EstimateMarginData(models.Model):
             self.estimate_id = f"{int(self.estimate_id):05}"
 
         super().save(*args, **kwargs)
+
+
+class EmailChangeHistory(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    old_email = models.EmailField()
+    new_email = models.EmailField()
+    changed_at = models.DateTimeField(auto_now_add=True)

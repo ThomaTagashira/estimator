@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import refreshAccessToken from '../components/utils/refreshAccessToken';
 
 const useCreateBusinessInfo = (apiUrl) => {
@@ -87,32 +87,41 @@ const useCreateBusinessInfo = (apiUrl) => {
         setIsBusinessEditable(false);
     };
 
-    const fetchBusinessData = async () => {
-        const accessToken = localStorage.getItem('access_token');
-        const response = await fetch(`${apiUrl}/api/get-saved-business-info/`, {
-            method: 'GET',
-            headers: {
-                Authorization: `Bearer ${accessToken}`,
-                'Content-Type': 'application/json',
-            },
-        });
 
+    const fetchBusinessData = useCallback(async () => {
+      const accessToken = localStorage.getItem('access_token');
+      try {
+        const response = await fetch(`${apiUrl}/api/get-saved-business-info/`, {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+        });
+    
         const data = await response.json();
         console.log('API Response:', data);
-
+    
         if (data && data.length > 0) {
-            const businessData = {
-                businessName: data[0].business_name || '',
-                businessAddress: data[0].business_address || '',
-                businessPhone: data[0].business_phone || '',
-                businessEmail: data[0].business_email || '',
-            };
-            setBusinessInfo(businessData);
-            setOriginalBusinessData(originalBusinessData); 
+          const businessData = {
+            businessName: data[0].business_name || '',
+            businessAddress: data[0].business_address || '',
+            businessPhone: data[0].business_phone || '',
+            businessEmail: data[0].business_email || '',
+          };
+    
+          setBusinessInfo(businessData);
+          setOriginalBusinessData(businessData);
         } else {
-            console.error('Business data not found');
+          console.error('Business data not found');
+          alert('No business data found. Please create it.');
         }
-    };
+      } catch (error) {
+        console.error('Error fetching business data:', error);
+        alert('Failed to fetch business data. Please try again.');
+      }
+    }, [apiUrl]);
+    
 
         return {
             businessInfo,

@@ -1,17 +1,38 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState  } from 'react';
 import useUserProfileSettings from '../hooks/useUserProfileSettings';
 import useCreateBusinessInfo from '../hooks/useCreateBusinessInfo';
 import { Link } from 'react-router-dom';
 
 const UserProfileSettingsPage = ({apiUrl}) => {
+  const { updateEmail, updatePassword, loading, error, success } = useUserProfileSettings(apiUrl);
+  const [newEmail, setNewEmail] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+
+  const handleEmailUpdate = async () => {
+    try {
+      const response = await updateEmail(newEmail);
+      console.log('Email update response:', response);
+    } catch (err) {
+      console.error('Error updating email:', err);
+    }
+  };
+
+  const handlePasswordUpdate = async () => {
+    try {
+      const response = await updatePassword(newPassword, confirmPassword);
+      console.log('Password update response:', response);
+    } catch (err) {
+      console.error('Error updating password:', err);
+    }
+  };
+
   const {
     userData,
-    setUserData,
     handleUserDataSave,
     isUserDataEditable,  
     setIsUserDataEditable,
-    handleUserCancel,
-    setOriginalUserData,
+    handleUserDataCancel,
     fetchUserData,
     handleUserDataChange
   } = useUserProfileSettings(apiUrl);
@@ -20,26 +41,24 @@ const UserProfileSettingsPage = ({apiUrl}) => {
     businessInfo,
     handleBusinessInfoChange,
     handleBusinessSubmit,
-    setBusinessInfo,
     isBusinessEditable,
     setIsBusinessEditable,
     handleBusinessCancel,
     fetchBusinessData
-} = useCreateBusinessInfo(apiUrl);
+  } = useCreateBusinessInfo(apiUrl);
 
-useEffect(() => {
-    fetchBusinessData();
-}, [setBusinessInfo]);
+  useEffect(() => {
+      fetchBusinessData();
+  }, [fetchBusinessData]);
 
   useEffect(() => {
     fetchUserData();
-  }, [apiUrl, setUserData, setOriginalUserData]);
+  }, [apiUrl, fetchUserData ]);
 
 
 return (
   <div className='page'>
     <h2>Profile Settings</h2>
-
       <div>    
         <h3>User Information</h3>
         <div className="DT-form-group">
@@ -108,7 +127,7 @@ return (
           ) : (
           <div className='edit-buttons'>
             <>  
-              <button onClick={handleUserCancel}>Cancel</button>
+              <button onClick={handleUserDataCancel}>Cancel</button>
               <button onClick={handleUserDataSave}>Save</button>
             </>
           </div>
@@ -210,7 +229,45 @@ return (
             )}
           </div>
         </form>
-      </div>    
+      </div>  
+
+      <div>
+        <h2>Update Email</h2>
+        <input
+          type="email"
+          placeholder="Enter new email"
+          value={newEmail}
+          onChange={(e) => setNewEmail(e.target.value)}
+        />
+        <button onClick={handleEmailUpdate} disabled={loading}>
+          Update Email
+        </button>
+      </div>
+
+      <div>
+        <h2>Update Password</h2>
+        <input
+          type="password"
+          placeholder="Enter new password"
+          value={newPassword}
+          onChange={(e) => setNewPassword(e.target.value)}
+        />
+        <input
+          type="password"
+          placeholder="Confirm new password"
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+        />
+        <button onClick={handlePasswordUpdate} disabled={loading}>
+          Update Password
+        </button>
+      </div>
+
+      {error && <p style={{ color: 'red' }}>{error}</p>}
+      {success && <p style={{ color: 'green' }}>{success}</p>}
+
+
+
 
       <Link to="/change-subscription-tier">
           <button>Change Subscription</button>
@@ -221,6 +278,8 @@ return (
       </Link>
       
     </div>
+
+    
   );
 };
 

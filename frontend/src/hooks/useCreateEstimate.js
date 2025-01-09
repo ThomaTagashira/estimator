@@ -102,6 +102,10 @@ const useCreateEstimate = (apiUrl) => {
   
       if (response.ok) {
         console.log('Estimate created successfully', responseData);
+
+        localStorage.removeItem('clientInfo');
+        localStorage.removeItem('projectInfo');
+        
         navigate(`/search?estimateId=${responseData.estimate_id}`);
       } else {
         console.error('Failed to create estimate', responseData);

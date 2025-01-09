@@ -36,6 +36,7 @@ const CreateEstimatePage = () => {
                 handleNext={handleNext}
                 handleCancel={handleCancel}
               />
+              
             )}
             {step === 2 && (
               <ProjectInfoForm

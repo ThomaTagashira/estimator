@@ -19,7 +19,7 @@ const refreshAccessToken = async (apiUrl) => {
       const data = await response.json();
   
       if (response.ok) {
-        localStorage.setItem('access_token', data.access); // Store new access token
+        localStorage.setItem('access_token', data.access); 
         return data.access;
       } else {
         console.error('Failed to refresh token:', data);

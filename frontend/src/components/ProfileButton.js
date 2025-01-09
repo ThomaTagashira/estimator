@@ -1,13 +1,23 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import './components_css/Components.css';
+import useUserProfileSettings from '../hooks/useUserProfileSettings';
 
-const ProfileButton = ({ handleLogout, header }) => {
+const ProfileButton = ({ handleLogout, header, apiUrl }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const dropdownRef = useRef(null);
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
   };
+
+  const {
+    userData,
+    fetchUserData,
+  } = useUserProfileSettings(apiUrl);
+
+  useEffect(() => {
+    fetchUserData(); 
+  }, [fetchUserData]); 
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -29,6 +39,13 @@ const ProfileButton = ({ handleLogout, header }) => {
       </div>
 
       <div className={`dropdown-menu ${isMenuOpen ? 'open' : ''}`}>
+
+        {/* Display User's Name */}
+        {userData && (
+          <div className="user-name">
+            {userData.firstName} {userData.lastName}
+          </div>
+        )}
 
         <Link to="/user-profile-settings" className="dropdown-link" onClick={() => setIsMenuOpen(false)}>
             <button className="upload-btn">Profile Settings</button>

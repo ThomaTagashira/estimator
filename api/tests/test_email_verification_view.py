@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 from rest_framework import status
 from itsdangerous import URLSafeTimedSerializer
 from django.conf import settings
-from ..models import StripeProfile
+from ..models import StripeProfile, Subscription
 from django.core.cache import cache
 from unittest.mock import patch
 
@@ -29,6 +29,8 @@ class EmailVerificationTests(TestCase):
 
     def tearDown(self):
         StripeProfile.objects.all().delete()
+        Subscription.objects.all().delete()  
+        cache.clear()
         cache.clear()
 
 
@@ -90,9 +92,6 @@ class EmailVerificationTests(TestCase):
 
 
 
-
-
-    # Test /api/check-verification-status/
     def test_check_verification_status_unverified_user(self):
         self.client.force_authenticate(user=self.user)
         response = self.client.get(self.check_status_url)
@@ -109,3 +108,20 @@ class EmailVerificationTests(TestCase):
         response = self.client.get(self.check_status_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue(response.data['is_verified'])
+
+
+
+
+    def test_subscription_type_set_to_trial_after_verification(self):
+        response = self.client.get(self.verify_email_url)
+        self.user.refresh_from_db()  
+        
+        self.assertEqual(response.status_code, status.HTTP_302_FOUND)
+        self.assertTrue(self.user.is_active)
+
+        subscription = Subscription.objects.filter(user=self.user).first()
+        self.assertIsNotNone(subscription, "Subscription was not created.")
+        
+        self.assertEqual(subscription.subscription_type, "Trial", "Subscription type is not set to 'Trial'.")
+        self.assertTrue(subscription.in_trial, "Subscription is not marked as 'in_trial'.")
+        self.assertTrue(subscription.is_active, "Subscription is not marked as active.")

@@ -10,3 +10,9 @@ class HasActiveSubscriptionOrTrial(BasePermission):
             subscription = user.subscription
             return subscription.is_active or subscription.in_trial
         return False
+
+
+class ProfileCompletedPermission(BasePermission):
+    def has_permission(self, request, view):
+        user = request.user
+        return hasattr(user, 'userInfo') and user.userInfo.profile_completed
