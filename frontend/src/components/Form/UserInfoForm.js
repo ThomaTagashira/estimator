@@ -22,6 +22,7 @@ const UserInfoForm = ({
             value={userData.firstName}
             onChange={handleUserDataChange}
             placeholder="First Name"
+            required
           />
         </div>
 
@@ -36,6 +37,7 @@ const UserInfoForm = ({
             value={userData.lastName}
             onChange={handleUserDataChange}
             placeholder="Last Name"
+            required 
           />
         </div>
 

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import refreshAccessToken from '../components/utils/refreshAccessToken';
+import validateClientInfo from '../components/utils/validateClientInfo';
 
 const useCreateEstimate = (apiUrl) => {
   const [step, setStep] = useState(1);
@@ -33,6 +34,10 @@ const useCreateEstimate = (apiUrl) => {
   };
 
   const handleNext = () => {
+    if (!validateClientInfo(clientInfo)) {
+      return;
+    }
+    
     localStorage.setItem('clientInfo', JSON.stringify(clientInfo));
     setStep(2);
   };
@@ -66,6 +71,10 @@ const useCreateEstimate = (apiUrl) => {
       },
     };
   
+    if (!validateClientInfo(clientInfo)) {
+      return;
+    }
+
     try {
       let response = await fetch(`${apiUrl}/api/estimates/`, {
         method: 'POST',

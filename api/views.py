@@ -357,12 +357,11 @@ class EmailUpdateView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        serializer = EmailUpdateSerializer(data=request.data, context={'request': request})  # Pass context here
+        serializer = EmailUpdateSerializer(data=request.data, context={'request': request})  
         if serializer.is_valid():
             serializer.save(request.user)
             return Response({'message': 'Email updated successfully.'}, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 
 
 class PasswordUpdateView(APIView):

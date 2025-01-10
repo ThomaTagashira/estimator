@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import axios from 'axios';
+import validateUserData from '../components/utils/validateUserData';
 
 const useUserProfileSettings = (apiUrl) => {
   const [userData, setUserData] = useState({
@@ -14,6 +15,12 @@ const useUserProfileSettings = (apiUrl) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
+  // for when im ready to separate error messages
+  // const [passwordError, setPasswordError] = useState('');
+  // const [emailError, setEmailError] = useState('');
+  // const [emailSuccess, setEmailSuccess] = useState('');
+  // const [passwordSuccess, setPasswordSuccess] = useState('');
 
 
   const handleUserDataCancel = () => {
@@ -36,15 +43,19 @@ const useUserProfileSettings = (apiUrl) => {
       zipcode: userData.zipcode,
     };
   
+    if (!validateUserData(userData)) {
+      return;
+    }
+  
     if (JSON.stringify(updatedUserData) === JSON.stringify(originalUserData)) {
       console.log('No changes made to user data');
       setIsUserDataEditable(false);
-      return; 
+      return;
     }
   
     try {
       const response = await fetch(`${apiUrl}/api/save-user-info/`, {
-        method: 'PATCH', 
+        method: 'PATCH',
         headers: {
           Authorization: `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
@@ -53,7 +64,6 @@ const useUserProfileSettings = (apiUrl) => {
       });
   
       if (!response.ok) {
-
         console.error('Failed to update user data:', response.status, response.statusText);
         alert('Error saving user data. Please try again.');
         return;
@@ -85,7 +95,7 @@ const useUserProfileSettings = (apiUrl) => {
       setSuccess('Email updated successfully!');
       return response.data; 
     } catch (err) {
-      setError('Failed to update email.');
+      setError('Emails do not match.');
       console.error(err);
       throw err; 
     } finally {

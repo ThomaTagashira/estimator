@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import useUserProfileSettings from './useUserProfileSettings';
 import useCreateBusinessInfo from './useCreateBusinessInfo';
 import axios from 'axios';
+import validateUserData from '../components/utils/validateUserData';
+import validateBusinessInfo from '../components/utils/validateBusinessInfo';
 
 const useLoginComplete = (apiUrl, setHasActiveSubscription, setIsAuthenticated, setInTrial) => {
   const [step, setStep] = useState(1);
@@ -24,11 +26,19 @@ const useLoginComplete = (apiUrl, setHasActiveSubscription, setIsAuthenticated, 
 
 
   const handleNext = () => {
-    localStorage.setItem('userData', JSON.stringify(userData,));
+    if (!validateUserData(userData)) {
+      return;
+    }
+  
+    localStorage.setItem('userData', JSON.stringify(userData));
     setStep(2);
   };
 
   const handlePrevious = () => {
+    if (!validateBusinessInfo(businessInfo)) {
+      return;
+    }
+    
     localStorage.setItem('businessInfo', JSON.stringify(businessInfo));
     setStep(1);
   };

@@ -10,6 +10,8 @@ from django.utils.encoding import force_bytes
 from django.contrib.auth.tokens import default_token_generator
 from django.conf import settings
 import re
+from django.core.validators import validate_email
+from django.core.exceptions import ValidationError as DjangoValidationError
 
 logger = logging.getLogger(__name__)
 
@@ -95,6 +97,20 @@ class UserSerializer(serializers.ModelSerializer):
             'email': {'required': True},  
         }
 
+    def validate_email(self, value):
+        if not value:  
+            raise serializers.ValidationError("Email is required.")
+        
+        try:
+            validate_email(value)
+        except DjangoValidationError:
+            raise serializers.ValidationError("Invalid email format.")
+        
+        if User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("This email is already in use.")
+        
+        return value
+    
     def create(self, validated_data):
         user = User.objects.create_user(
             username=validated_data['email'],  
@@ -114,6 +130,24 @@ class ClientDataSerializer(serializers.ModelSerializer):
         model = ClientData
         fields = ['client_name', 'client_address', 'client_phone', 'client_email']
 
+    def validate_client_phone(self, value):
+        if value == "":
+            return value
+
+        if not re.fullmatch(r'^\d+$', value): 
+            raise serializers.ValidationError("Phone number must contain only digits.")
+        return value
+    
+    def validate_client_email(self, value):
+        if value == "":
+            return value 
+
+        try:
+            validate_email(value)
+        except DjangoValidationError:
+            raise serializers.ValidationError("Invalid email format.")
+        return value
+       
 class ProjectDataSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProjectData
@@ -148,6 +182,24 @@ class BusinessInfoSerializer(serializers.ModelSerializer):
         model = BusinessInfo
         fields = ['business_name', 'business_address', 'business_phone', 'business_email']
 
+    def validate_business_phone(self, value):
+        if value == "":
+            return value
+
+        if not re.fullmatch(r'^\d+$', value): 
+            raise serializers.ValidationError("Phone number must contain only digits.")
+        return value
+    
+    def validate_business_email(self, value):
+        if value == "":
+            return value 
+
+        try:
+            validate_email(value)
+        except DjangoValidationError:
+            raise serializers.ValidationError("Invalid email format.")
+        return value
+    
 class SearchResponseSerializer(serializers.ModelSerializer):
     class Meta:
         model = SearchResponseData
@@ -242,7 +294,13 @@ class EmailUpdateSerializer(serializers.Serializer):
         if User.objects.filter(email=data['email']).exists():
             raise serializers.ValidationError({"email": "This email is already in use."})
 
+        try:
+            validate_email(data['email'])
+        except DjangoValidationError:
+            raise serializers.ValidationError({"email": "Invalid email format."})
+
         return data
+
 
     def save(self, user):
         old_email = user.email
@@ -275,10 +333,30 @@ class UserInfoSerializer(serializers.ModelSerializer):
         fields = ['user_email', 'first_name', 'last_name', 'phone_number', 'zipcode']
         read_only_fields = ['user_email']
 
+    def validate_first_name(self, value):
+        if not value.strip(): 
+            raise serializers.ValidationError("First name cannot be blank.")
+        return value
+
+    def validate_last_name(self, value):
+        if not value.strip(): 
+            raise serializers.ValidationError("Last name cannot be blank.")
+        return value
+    
     def validate_phone_number(self, value):
-        # Example validation: Ensure phone number contains only digits and is of valid length
-        if not re.fullmatch(r'^\d{10}$', value): 
-            raise serializers.ValidationError("Phone number must be between 10 and 15 digits.")
+        if value == "":
+            return value
+
+        if not re.fullmatch(r'^\d+$', value): 
+            raise serializers.ValidationError("Phone number must contain only digits.")
+        return value
+
+    def validate_zipcode(self, value):
+        if value == "":
+            return value
+
+        if not re.fullmatch(r'^\d{5}$', value): 
+            raise serializers.ValidationError("Zipcode must be a valid 5-digit number.")
         return value
 
 

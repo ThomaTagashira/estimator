@@ -5,6 +5,7 @@ import axios from 'axios';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEdit, faXmark, faCheck, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { useNavigate } from 'react-router-dom';
+import validateDTClientInfo from '../components/utils/validateDTClientInfo';
 
 
 const DynamicTablePage = ({ apiUrl, estimateId, selectedString, setSelectedString, refreshKey, isLoading  }) => {
@@ -342,6 +343,10 @@ const handleClientSave = async () => {
     client_phone: clientPhone,
     client_email: clientEmail,
   };
+
+  if (!validateDTClientInfo(updatedClientInfo)) {
+    return; 
+  }
 
   if (JSON.stringify(updatedClientInfo) !== JSON.stringify(originalClientInfo)) {
     try {

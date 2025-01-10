@@ -6,12 +6,13 @@ import { Link } from 'react-router-dom';
 const UserProfileSettingsPage = ({apiUrl}) => {
   const { updateEmail, updatePassword, loading, error, success } = useUserProfileSettings(apiUrl);
   const [newEmail, setNewEmail] = useState('');
+  const [confirmEmail, setConfirmEmail] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
   const handleEmailUpdate = async () => {
     try {
-      const response = await updateEmail(newEmail);
+      const response = await updateEmail(newEmail, confirmEmail);
       console.log('Email update response:', response);
     } catch (err) {
       console.error('Error updating email:', err);
@@ -73,6 +74,7 @@ return (
             onChange={handleUserDataChange}
             disabled={!isUserDataEditable}
             placeholder="First Name"
+            required
           />
         </div>
 
@@ -88,6 +90,7 @@ return (
             onChange={handleUserDataChange}
             disabled={!isUserDataEditable}
             placeholder="Last Name"
+            required
           />
         </div>
 
@@ -238,6 +241,12 @@ return (
           placeholder="Enter new email"
           value={newEmail}
           onChange={(e) => setNewEmail(e.target.value)}
+        />
+        <input
+          type="email"
+          placeholder="Confirm new email"
+          value={confirmEmail}
+          onChange={(e) => setConfirmEmail(e.target.value)}
         />
         <button onClick={handleEmailUpdate} disabled={loading}>
           Update Email

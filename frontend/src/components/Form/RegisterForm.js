@@ -16,8 +16,19 @@ const RegisterForm = ({
 	handleCancel
 }) => {
 
+	const [confirmPassword, setConfirmPassword] = useState(''); 
+	const [passwordStrength, setPasswordStrength] = useState(0);
+	const [showStrength, setShowStrength] = useState(false);
+	const [passwordError, setPasswordError] = useState(''); 
+
 const handleSubmit = (e) => {
 	e.preventDefault(); 
+	if (password !== confirmPassword) {
+		setPasswordError('Passwords do not match');
+		return;
+	}
+
+	setPasswordError(''); 
 	register(userEmail, password, getCookie('csrftoken')); 
 };
 
@@ -34,9 +45,6 @@ const constructOAuthUrl = (baseUrl, clientId, redirectUri, scope, responseType =
     );
     window.location.href = authUrl;
   };
-
-const [passwordStrength, setPasswordStrength] = useState(0);
-const [showStrength, setShowStrength] = useState(false);
 
 const calculatePasswordStrength = (password) => {
 	let score = 0;
@@ -112,13 +120,23 @@ const getStrengthColor = () => {
 					onBlur={() => setShowStrength(false)}
 				/>
 
+				<input
+					type="password"
+					name="confirmPassword"
+					value={confirmPassword}
+					onChange={(e) => setConfirmPassword(e.target.value)}
+					placeholder="Confirm Password"
+				/>
+
 				{showStrength && (
 					<div style={{ color: getStrengthColor(), fontWeight: 'bold', margin: '5px 0' }}>
 						Password Strength: {getStrengthLabel()}
 					</div>
 				)}
 
-				{/* <div className="button-group"> */}
+				{/* Show error if passwords don't match */}
+				{passwordError && <p style={{ color: 'red' }}>{passwordError}</p>}
+
 					<button type="submit" className="login-btn">
 						<strong>Register</strong>
 					</button>
@@ -126,7 +144,6 @@ const getStrengthColor = () => {
 					<button type='button' className='create-new-account-btn' onClick={handleCancel}>
 						<strong>Cancel</strong>					
 					</button>
-				{/* </div> */}
 
 				<hr className='divider'/>
 

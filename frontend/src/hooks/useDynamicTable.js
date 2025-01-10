@@ -79,73 +79,6 @@ const useDynamicTable = (apiUrl, estimateId, selectedString, setSelectedString )
         fetchEstimateData();
     }, [estimateId, apiUrl]);
 
-    const saveEstimateData = async () => {
-        const accessToken = localStorage.getItem('access_token');
-
-        const clientDataChanged = (
-            clientName !== originalClientData.client_name ||
-            clientAddress !== originalClientData.client_address ||
-            clientPhone !== originalClientData.client_phone ||
-            clientEmail !== originalClientData.client_email
-        );
-
-        const projectDataChanged = (
-            projectName !== originalProjectData.project_name ||
-            projectLocation !== originalProjectData.project_location ||
-            startDate !== originalProjectData.start_date ||
-            endDate !== originalProjectData.end_date
-        );
-
-        try {
-            if (clientDataChanged || projectDataChanged) {
-                const requestBody = {
-                    client_data: {
-                        client_name: clientName,
-                        client_address: clientAddress,
-                        client_phone: clientPhone,
-                        client_email: clientEmail,
-                    },
-                    project_data: {
-                        project_name: projectName,
-                        project_location: projectLocation,
-                        start_date: startDate,
-                        end_date: endDate,
-                    },
-                };
-
-                const response = await fetch(`${apiUrl}/api/update-estimate/${estimateId}/`, {
-                    method: 'PATCH',
-                    headers: {
-                        'Authorization': `Bearer ${accessToken}`,
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(requestBody),
-                });
-
-                if (response.ok) {
-                    console.log('Estimate data saved successfully.');
-                    setOriginalClientData({
-                        client_name: clientName,
-                        client_address: clientAddress,
-                        client_phone: clientPhone,
-                        client_email: clientEmail,
-                    });
-                    setOriginalProjectData({
-                        project_name: projectName,
-                        project_location: projectLocation,
-                        start_date: startDate,
-                        end_date: endDate,
-                    });
-                } else {
-                    console.error('Failed to save estimate data.');
-                }
-            } else {
-                console.log('No changes detected.');
-            }
-        } catch (error) {
-            console.error('Error saving estimate data:', error);
-        }
-    };
 
     useEffect(() => {
         if (selectedString && Array.isArray(selectedString) && selectedString.length > 0) {
@@ -595,7 +528,6 @@ const useDynamicTable = (apiUrl, estimateId, selectedString, setSelectedString )
         projectLocation,
         startDate,
         endDate,
-        saveEstimateData,
         inputFields,
         editIndex,
         editValues,

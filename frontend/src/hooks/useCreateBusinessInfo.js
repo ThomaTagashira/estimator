@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import refreshAccessToken from '../components/utils/refreshAccessToken';
+import validateBusinessInfo from '../components/utils/validateBusinessInfo';
 
 const useCreateBusinessInfo = (apiUrl) => {
     const [businessInfo, setBusinessInfo] = useState({
@@ -35,6 +36,10 @@ const useCreateBusinessInfo = (apiUrl) => {
                 business_email: businessInfo.businessEmail,
         };
         console.log('businessPayload', JSON.stringify(businessPayload));
+
+        if (!validateBusinessInfo(businessInfo)) {
+          return;
+        }
 
         try {
             let response = await fetch(`${apiUrl}/api/save-business-info/`, {
