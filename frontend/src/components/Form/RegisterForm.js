@@ -117,7 +117,7 @@ const getStrengthColor = () => {
 					onChange={handlePasswordChange}
 					placeholder="Password"
 					onFocus={() => setShowStrength(true)}
-					onBlur={() => setShowStrength(false)}
+					// onBlur={() => setShowStrength(false)}
 				/>
 
 				<input

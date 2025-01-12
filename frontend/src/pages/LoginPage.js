@@ -3,7 +3,7 @@ import useAuth from '../hooks/useAuth';
 import LoginForm from '../components/Form/LoginForm';
 import './pages_css/Pages.css';
 
-const LoginPage = ({ setIsAuthenticated, setHasActiveSubscription, setInTrial  }) => {
+const LoginPage = ({ setIsAuthenticated, setHasActiveSubscription, setInTrial }) => {
     const { login, error } = useAuth({ setIsAuthenticated, setHasActiveSubscription, setInTrial  });
 
     return (

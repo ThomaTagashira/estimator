@@ -33,6 +33,7 @@ const register = async (email, password, csrftoken) => {
         axios.defaults.headers.common['Authorization'] = `Bearer ${access}`;
 
         if (response.data.has_active_subscription) {
+            console.log('useRegister page')
             navigate('/complete-login');
         } else {
             navigate('/email-status');

@@ -25,6 +25,7 @@ const useAuth = ({ setIsAuthenticated, setHasActiveSubscription, setInTrial }) =
         setInTrial(in_trial);
 
         console.log('isAuthenticated set to:', profile_completed);
+        console.log('hasActiveSubscription set to:', is_active);
     } catch (error) {
         console.error('Failed to fetch user state:', error);
         setIsAuthenticated(false);
@@ -39,7 +40,7 @@ const useAuth = ({ setIsAuthenticated, setHasActiveSubscription, setInTrial }) =
 
         if (!accessToken) {
             setIsAuthenticated(false);
-            navigate('/');
+            navigate('/login');
             return;
         }
 
@@ -65,7 +66,7 @@ const useAuth = ({ setIsAuthenticated, setHasActiveSubscription, setInTrial }) =
                     }
                 } else {
                     setIsAuthenticated(false);
-                    navigate('/');
+                    navigate('/login');
                 }
             }
         }
@@ -99,6 +100,7 @@ const useAuth = ({ setIsAuthenticated, setHasActiveSubscription, setInTrial }) =
             if (profile_completed) {
               navigate('/'); 
             } else {
+              console.log('useAuth error')
               navigate('/complete-login'); 
             }
           } else {

@@ -27,6 +27,7 @@ const GoogleCallback = ({ setIsAuthenticated, setHasActiveSubscription }) => {
             }
 
             if (!profile_completed) {
+                console.log('GoogleCallback page')
               navigate('/complete-login');
             } 
             
