@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useCallback} from 'react';
+import React, { useState, useEffect, useCallback, createContext } from 'react';
 import axios from 'axios';
-import { BrowserRouter as Router, Route, Routes, redirect } from 'react-router-dom';
+import { Route, Routes, redirect } from 'react-router-dom';
 import AuthenticatedRoute from './components/Auth/AuthenticatedRoute';
 import PasswordResetRequestForm from './components/Form/PasswordResetRequestForm';
+import useAuth from './hooks/useAuth';
 
 import {
   setupInterceptors,
@@ -41,6 +42,7 @@ import {
 
 setupInterceptors();
 const apiUrl = process.env.REACT_APP_API_URL;
+export const UserContext = createContext();
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -50,12 +52,13 @@ function App() {
   const [inTrial, setInTrial] = useState(false)
   const [userEmail, setUserEmail] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [authIsLoading, setAuthIsLoading] = useState(true);
 
   const fetchTokenCount = useCallback(() => {
     const fetchData = async () => {
         const token = localStorage.getItem('access_token');
         if (!token) {
-            console.error('No access token found');
+            console.error('No access token found (token count)');
             return;
         }
 
@@ -84,6 +87,36 @@ function App() {
     fetchData(); 
   }, [tokenCount]); 
 
+  const { validateAndFetchSubscriptionStatus } = useAuth({
+    setIsAuthenticated,
+    setHasActiveSubscription,
+    setInTrial,
+    setAuthIsLoading
+});
+
+useEffect(() => {
+  const initializeAuthState = async () => {
+      const storedIsAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
+      const storedHasActiveSubscription = localStorage.getItem('hasActiveSubscription') === 'true';
+      const storedInTrial = localStorage.getItem('inTrial') === 'true';
+
+      setIsAuthenticated(storedIsAuthenticated);
+      setHasActiveSubscription(storedHasActiveSubscription);
+      setInTrial(storedInTrial);
+
+      const accessToken = localStorage.getItem('access_token');
+      if (accessToken) {
+          await validateAndFetchSubscriptionStatus();
+      } else {
+          console.log('No access token found during initialization');
+          setAuthIsLoading(false); 
+      }
+  };
+
+  initializeAuthState();
+}, [validateAndFetchSubscriptionStatus, setIsAuthenticated, setHasActiveSubscription, setInTrial, setAuthIsLoading]);
+
+
   useEffect(() => {
     fetchTokenCount(); 
   }, [fetchTokenCount]); 
@@ -93,7 +126,7 @@ function App() {
     const fetchSubscriptionTier = async () => {
       const token = localStorage.getItem('access_token');
       if (!token) {
-          console.error('No access token found');
+          console.error('No access token found (sub tier)');
           return;
       }
 
@@ -124,6 +157,9 @@ function App() {
   const handleLogout = () => {
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
+    localStorage.removeItem('hasActiveSubscription');
+    localStorage.removeItem('inTrial');
+    localStorage.removeItem('isAuthenticated');
 
     delete axios.defaults.headers.common['Authorization'];
 
@@ -203,11 +239,12 @@ function App() {
   
 
   return (
-    <Router>
+    <UserContext.Provider value={{ isAuthenticated, hasActiveSubscription, inTrial }}>
       <div className="header-container">
         <Header
           handleLogout={handleLogout}
           hasActiveSubscription={hasActiveSubscription}
+          isAuthenticated={isAuthenticated}
           tokenCount={tokenCount}
           userSubscriptionTier={userSubscriptionTier}
           inTrial={inTrial}
@@ -217,8 +254,8 @@ function App() {
     
       <Routes>
         <Route path="/register" element={<RegisterPage />} />
-        <Route path="/login" element={<LoginPage setIsAuthenticated={setIsAuthenticated} setHasActiveSubscription={setHasActiveSubscription} setInTrial={setInTrial} />} />
-        <Route path="/google-callback" element={<GoogleCallback setIsAuthenticated={setIsAuthenticated} setHasActiveSubscription={setHasActiveSubscription} />} />
+        <Route path="/login" element={<LoginPage setIsAuthenticated={setIsAuthenticated} setHasActiveSubscription={setHasActiveSubscription} setInTrial={setInTrial} setAuthIsLoading={setAuthIsLoading} />} />
+        <Route path="/google-callback" element={<GoogleCallback setIsAuthenticated={setIsAuthenticated} setHasActiveSubscription={setHasActiveSubscription} setAuthIsLoading={setAuthIsLoading} setInTrial={setInTrial} />} />
         <Route path="/subscribe" element={<SubscriptionPage />} />
         <Route path="/buy-tokens" element={<TokenPurchasePage />} />
         <Route path="/success" element={<SuccessPage />} />
@@ -231,13 +268,14 @@ function App() {
         <Route path="/email-status" element={<EmailStatusPage apiUrl={apiUrl} userEmail={userEmail}/>} />
         <Route path="/password-reset" element={<PasswordResetRequestForm />} />
         <Route path="/password-reset-confirm/:uid/:token" element={<PasswordResetConfirm />} />
-        <Route path="/complete-login" element={<LoginCompletePage apiUrl={apiUrl} setIsAuthenticated={setIsAuthenticated} setHasActiveSubscription={setHasActiveSubscription} setInTrial={setInTrial}/>} />
+        <Route path="/complete-login" element={<LoginCompletePage apiUrl={apiUrl} setIsAuthenticated={setIsAuthenticated} setHasActiveSubscription={setHasActiveSubscription} setInTrial={setInTrial} />} />
 
         <Route path="/search" element={
           <AuthenticatedRoute 
             isAuthenticated={isAuthenticated} 
             hasActiveSubscription={hasActiveSubscription}
             inTrial={inTrial}
+            authIsLoading={authIsLoading}
           >
             <SearchPage apiUrl={apiUrl} fetchTokenCount={fetchTokenCount}/>
           </AuthenticatedRoute>
@@ -248,6 +286,7 @@ function App() {
             isAuthenticated={isAuthenticated} 
             hasActiveSubscription={hasActiveSubscription}
             inTrial={inTrial}
+            authIsLoading={authIsLoading}
           >            
             <DynamicTablePage apiUrl={apiUrl}/>
           </AuthenticatedRoute>
@@ -258,6 +297,7 @@ function App() {
             isAuthenticated={isAuthenticated} 
             hasActiveSubscription={hasActiveSubscription}
             inTrial={inTrial}
+            authIsLoading={authIsLoading}
           >            
             <CreateEstimatePage apiUrl={apiUrl} />
           </AuthenticatedRoute>
@@ -268,6 +308,7 @@ function App() {
             isAuthenticated={isAuthenticated} 
             hasActiveSubscription={hasActiveSubscription}
             inTrial={inTrial}
+            authIsLoading={authIsLoading}
           >            
             <EstimateDetailPage apiUrl={apiUrl} />
           </AuthenticatedRoute>
@@ -278,6 +319,7 @@ function App() {
             isAuthenticated={isAuthenticated} 
             hasActiveSubscription={hasActiveSubscription}
             inTrial={inTrial}
+            authIsLoading={authIsLoading}
           >
             <BusinessInfoPage apiUrl={apiUrl} />
           </AuthenticatedRoute>
@@ -288,6 +330,7 @@ function App() {
             isAuthenticated={isAuthenticated} 
             hasActiveSubscription={hasActiveSubscription}
             inTrial={inTrial}
+            authIsLoading={authIsLoading}
           >            
             <CancelSubscriptionPage  apiUrl={apiUrl} />
           </AuthenticatedRoute>
@@ -298,6 +341,7 @@ function App() {
             isAuthenticated={isAuthenticated} 
             hasActiveSubscription={hasActiveSubscription}
             inTrial={inTrial}
+            authIsLoading={authIsLoading}
           >            
             <ChangeSubscriptionPage  apiUrl={apiUrl} userSubscriptionTier={userSubscriptionTier} />
           </AuthenticatedRoute>
@@ -308,6 +352,7 @@ function App() {
             isAuthenticated={isAuthenticated} 
             hasActiveSubscription={hasActiveSubscription}
             inTrial={inTrial}
+            authIsLoading={authIsLoading}
           >            
             <ExportPDFPage  apiUrl={apiUrl} userSubscriptionTier={userSubscriptionTier} />
           </AuthenticatedRoute>
@@ -320,6 +365,7 @@ function App() {
             isAuthenticated={isAuthenticated} 
             hasActiveSubscription={hasActiveSubscription}
             inTrial={inTrial}
+            authIsLoading={authIsLoading}
           >
             <UserProfileSettingsPage apiUrl={apiUrl}/>
           </AuthenticatedRoute>
@@ -344,8 +390,7 @@ function App() {
       <div className='footer-container'>
         <Footer />
       </div>    
-    </Router>
-    
+    </UserContext.Provider>
   );
 }
 

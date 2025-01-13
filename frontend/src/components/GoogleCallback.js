@@ -1,49 +1,22 @@
-// GoogleCallback.js
-
 import React, { useEffect } from 'react';
-import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import useAuth from '../hooks/useAuth'; 
 
-const apiUrl = process.env.REACT_APP_API_URL;
-
-const GoogleCallback = ({ setIsAuthenticated, setHasActiveSubscription }) => {
+const GoogleCallback = ({ setIsAuthenticated, setHasActiveSubscription, setInTrial }) => {
   const navigate = useNavigate();
 
+  const { loginWithGoogle } = useAuth({ setIsAuthenticated, setHasActiveSubscription, setInTrial });
+
   useEffect(() => {
-      const queryParams = new URLSearchParams(window.location.search);
-      const code = queryParams.get('code');
+    const queryParams = new URLSearchParams(window.location.search);
+    const code = queryParams.get('code');
 
-      if (code) {
-        axios.post(`${apiUrl}/api/auth/google/`, { code })
-          .then(response => {
-            const { access, refresh, has_active_subscription, profile_completed } = response.data;
-
-            localStorage.setItem('access_token', access);
-            localStorage.setItem('refresh_token', refresh);
-            axios.defaults.headers.common['Authorization'] = `Bearer ${access}`;
-
-            if (!has_active_subscription) {
-              navigate('/subscribe');
-            }
-
-            if (!profile_completed) {
-                console.log('GoogleCallback page')
-              navigate('/complete-login');
-            } 
-            
-            else {
-                navigate('/');
-            }
-          }
-        )
-          .catch(error => {
-              console.error('Error exchanging Google code:', error);
-              navigate('/');
-          });
+    if (code) {
+      loginWithGoogle(code); 
     } else {
-      navigate('/');
+      navigate('/login'); 
     }
-  }, [setIsAuthenticated, setHasActiveSubscription, navigate]);
+  }, [loginWithGoogle, navigate]);
 
   return (
     <div>

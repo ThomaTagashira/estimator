@@ -165,28 +165,30 @@ def upload_photo(request):
 
 
 
+
+
 @api_view(['POST'])
 @authentication_classes([])
 @permission_classes([AllowAny])
 def register_user(request):
-    email = request.data.get('userEmail')
+    email = request.data.get('userEmail', '').lower()  
     password = request.data.get('password')
 
     if not email:
-        return Response({'error': 'Email is required.'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'email': 'Email is required.'}, status=status.HTTP_400_BAD_REQUEST) 
 
     try:
         validate_email(email)
     except ValidationError:
-        return Response({'error': 'Invalid email format.'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'email': 'Invalid email format.'}, status=status.HTTP_400_BAD_REQUEST) 
 
-    if User.objects.filter(email=email).exists():
-        return Response({'error': 'Email already in use.'}, status=status.HTTP_400_BAD_REQUEST)
+    if User.objects.filter(email__iexact=email).exists():
+        return Response({'email': 'Email already in use.'}, status=status.HTTP_400_BAD_REQUEST)  
 
     try:
         validate_password(password)
     except ValidationError as e:
-        return Response({'error': e.messages}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'password': e.messages}, status=status.HTTP_400_BAD_REQUEST)
 
     with transaction.atomic():
         user = User.objects.create_user(
@@ -196,9 +198,10 @@ def register_user(request):
             is_active=False  
         )
 
-        send_verification_email(user)
+        send_verification_email(user)  
 
     return Response({'message': 'Registration successful. Please verify your email to proceed.'}, status=status.HTTP_201_CREATED)
+
 
 
 serializer = URLSafeTimedSerializer(settings.SECRET_KEY)
@@ -479,7 +482,7 @@ class UserStateView(APIView):
 
 class UsernameTokenObtainPairView(TokenObtainPairView):
     def post(self, request, *args, **kwargs):
-        username = request.data.get('username')
+        username = request.data.get('username', '').lower()  
 
         if not username:
             return Response(
@@ -488,7 +491,7 @@ class UsernameTokenObtainPairView(TokenObtainPairView):
             )
 
         try:
-            user = User.objects.get(username=username)
+            user = User.objects.get(username__iexact=username)
 
             if not user.is_active:
                 return Response(
@@ -551,6 +554,7 @@ class GoogleTokenObtainPairView(TokenObtainPairView):
         })
 
 
+
 class GoogleLoginView(APIView):
     def post(self, request, *args, **kwargs):
         code = request.data.get('code')
@@ -567,15 +571,12 @@ class GoogleLoginView(APIView):
                     'redirect_uri': f'{REDIR_URI}/google-callback',
                     'grant_type': 'authorization_code'
                 },
-                timeout=10  
+                timeout=10
             )
             token_response.raise_for_status()
             token_data = token_response.json()
         except requests.exceptions.RequestException as e:
             return Response({'error': f'Failed to exchange token: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-        if 'error' in token_data:
-            return Response({'error': token_data['error']}, status=status.HTTP_400_BAD_REQUEST)
 
         access_token = token_data.get('access_token')
         id_token = token_data.get('id_token')
@@ -587,40 +588,42 @@ class GoogleLoginView(APIView):
             user_info_response = requests.get(
                 'https://www.googleapis.com/oauth2/v1/userinfo',
                 params={'access_token': access_token},
-                timeout=10  
+                timeout=10
             )
             user_info_response.raise_for_status()
+            user_info = user_info_response.json()
         except requests.exceptions.RequestException as e:
             return Response({'error': f'Failed to fetch user info: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        user_info = user_info_response.json()
         email = user_info.get('email')
-
         if not email:
             return Response({'error': 'Email not provided by Google'}, status=status.HTTP_400_BAD_REQUEST)
 
+        email = email.lower()  
+
         with transaction.atomic():
-            user, created = User.objects.get_or_create(username=email, defaults={'email': email, 'is_active': True})
+            user = User.objects.filter(email__iexact=email).first()
+            if not user:
+                user = User.objects.create_user(username=email, email=email, is_active=True)
 
-            if created:
-                if not StripeProfile.objects.filter(user=user).exists():
-                    try:
-                        customer = stripe.Customer.create(email=user.email)
-                        StripeProfile.objects.create(user=user, stripe_customer_id=customer['id'])
-                    except Exception as e:
-                        user.delete()
-                        return Response({'error': f'Failed to create Stripe customer: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            if not StripeProfile.objects.filter(user=user).exists():
+                try:
+                    customer = stripe.Customer.create(email=user.email)
+                    StripeProfile.objects.create(user=user, stripe_customer_id=customer['id'])
+                except Exception as e:
+                    user.delete()  
+                    return Response({'error': f'Failed to create Stripe customer: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-                Subscription.objects.get_or_create(
-                    user=user,
-                    defaults={
-                        'is_active': True,
-                        'trial_start_date': timezone_now(),
-                        'trial_end_date': timezone_now() + timedelta(days=7),
-                        'in_trial': True,
-                        'subscription_type': 'Trial'
-                    }
-                )
+            Subscription.objects.get_or_create(
+                user=user,
+                defaults={
+                    'is_active': True,
+                    'trial_start_date': timezone_now(),
+                    'trial_end_date': timezone_now() + timedelta(days=7),
+                    'in_trial': True,
+                    'subscription_type': 'Trial'
+                }
+            )
 
         try:
             refresh = RefreshToken.for_user(user)
@@ -641,6 +644,8 @@ class GoogleLoginView(APIView):
             'in_trial': in_trial,
             'profile_completed': profile_completed
         }, status=status.HTTP_200_OK)
+
+
 
 
 class CompleteProfileView(APIView):

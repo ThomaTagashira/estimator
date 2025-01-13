@@ -65,7 +65,7 @@ const useUserProfileSettings = (apiUrl) => {
   
       if (!response.ok) {
         console.error('Failed to update user data:', response.status, response.statusText);
-        alert('Error saving user data. Please try again.');
+        // alert('Error saving user data. Please try again.');
         return;
       }
   
@@ -74,7 +74,7 @@ const useUserProfileSettings = (apiUrl) => {
       setIsUserDataEditable(false);
     } catch (error) {
       console.error('Error saving user data:', error);
-      alert('An unexpected error occurred. Please try again.');
+      // alert('An unexpected error occurred. Please try again.');
     }
   };
   
@@ -166,7 +166,7 @@ const useUserProfileSettings = (apiUrl) => {
       });
     } catch (error) {
       console.error('Error fetching user data:', error);
-      alert('Failed to fetch user data. Please try again.');
+      // alert('Failed to fetch user data. Please try again.');
     }
   }, [apiUrl]); 
 

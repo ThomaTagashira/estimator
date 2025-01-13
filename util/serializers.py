@@ -98,6 +98,16 @@ class UserSerializer(serializers.ModelSerializer):
         }
 
     def validate_email(self, value):
+        normalized_email = value.lower()
+        if User.objects.filter(email__iexact=normalized_email).exists():
+            raise DjangoValidationError("A user with this email already exists.")
+        return normalized_email
+
+    def create(self, validated_data):
+        validated_data['email'] = validated_data['email'].lower()
+        return User.objects.create_user(**validated_data)
+
+    def validate_email(self, value):
         if not value:  
             raise serializers.ValidationError("Email is required.")
         

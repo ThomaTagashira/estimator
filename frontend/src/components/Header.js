@@ -6,7 +6,7 @@ import { faUserCircle } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 
-const Header = ({ handleLogout, hasActiveSubscription, tokenCount, userSubscriptionTier, inTrial, apiUrl }) => {
+const Header = ({ handleLogout, hasActiveSubscription, tokenCount, userSubscriptionTier, inTrial, apiUrl, isAuthenticated }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const dropdownRef = useRef(null); 
 
@@ -45,7 +45,7 @@ const Header = ({ handleLogout, hasActiveSubscription, tokenCount, userSubscript
           <h2>FairBuild</h2>
         </div>
 
-        {(hasActiveSubscription || inTrial) && (
+        {(hasActiveSubscription || inTrial) && isAuthenticated && (
           <div className="subscription-info">
             <div>Tokens: {tokenCount}</div>
             <div>Current Subscription: {userSubscriptionTier}</div>
@@ -55,7 +55,7 @@ const Header = ({ handleLogout, hasActiveSubscription, tokenCount, userSubscript
 
       <nav className='nav' ref={dropdownRef}>       
         <ul className={`nav-link ${menuOpen ? "open" : ""}`}>
-          {hasActiveSubscription ? (
+        {(hasActiveSubscription || inTrial) && isAuthenticated ? (
           <>
             <li>
               <Link to="/" className="dropdown-link" onClick={() => setMenuOpen(false)}>
@@ -87,7 +87,7 @@ const Header = ({ handleLogout, hasActiveSubscription, tokenCount, userSubscript
           </ul>
         </nav>
           <div className='user-icon'>
-          {(hasActiveSubscription || inTrial) && (
+          {(hasActiveSubscription || inTrial) && isAuthenticated && (
               <ProfileButton
                 header={userProfileHeader}
                 handleLogout={handleLogout}
