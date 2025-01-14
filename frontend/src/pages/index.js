@@ -20,3 +20,5 @@ export { default as PrivacyPolicyPage } from './PrivacyPolicyPage';
 export { default as EmailStatusPage } from './EmailStatusPage';
 export { default as UserProfileSettingsPage } from './UserProfileSettingsPage';
 export { default as LoginCompletePage } from './LoginCompletePage';
+export { default as UpdateEmailPage } from './UpdateEmailPage';
+export { default as UpdatePasswordPage } from './UpdatePasswordPage';

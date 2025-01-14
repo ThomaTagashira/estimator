@@ -39,6 +39,8 @@ import {
     EmailStatusPage,
     UserProfileSettingsPage,
     LoginCompletePage,
+    UpdateEmailPage,
+    UpdatePasswordPage
 }  from './pages';
 
 
@@ -374,6 +376,30 @@ useEffect(() => {
             <UserProfileSettingsPage apiUrl={apiUrl}/>
           </AuthenticatedRoute>
         }/>
+
+
+        <Route path="/user-update-email" element={
+          <AuthenticatedRoute 
+            isAuthenticated={isAuthenticated} 
+            hasActiveSubscription={hasActiveSubscription}
+            inTrial={inTrial}
+            authIsLoading={authIsLoading}
+          >
+            <UpdateEmailPage apiUrl={apiUrl} />
+          </AuthenticatedRoute>
+        }/>
+
+        <Route path="/user-update-password" element={
+          <AuthenticatedRoute 
+            isAuthenticated={isAuthenticated} 
+            hasActiveSubscription={hasActiveSubscription}
+            inTrial={inTrial}
+            authIsLoading={authIsLoading}
+          >
+            <UpdatePasswordPage apiUrl={apiUrl} />
+          </AuthenticatedRoute>
+        }/>
+
 
         <Route
           path="/"

@@ -156,4 +156,6 @@ const getStrengthColor = () => {
 	);
 };
 
+
+
 export default RegisterForm;

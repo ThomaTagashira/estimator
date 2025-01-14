@@ -1,5 +1,4 @@
 import { useState, useCallback } from 'react';
-import axios from 'axios';
 import validateUserData from '../components/utils/validateUserData';
 
 const useUserProfileSettings = (apiUrl) => {
@@ -12,15 +11,8 @@ const useUserProfileSettings = (apiUrl) => {
 
   const [originalUserData, setOriginalUserData] = useState(null);
   const [isUserDataEditable, setIsUserDataEditable] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
 
-  // for when im ready to separate error messages
-  // const [passwordError, setPasswordError] = useState('');
-  // const [emailError, setEmailError] = useState('');
-  // const [emailSuccess, setEmailSuccess] = useState('');
-  // const [passwordSuccess, setPasswordSuccess] = useState('');
 
 
   const handleUserDataCancel = () => {
@@ -78,81 +70,6 @@ const useUserProfileSettings = (apiUrl) => {
     }
   };
   
-  const updateEmail = async (newEmail, confirmEmail) => {
-    setLoading(true);
-    setError('');
-    setSuccess('');
-  
-    if (newEmail !== confirmEmail) {
-      setError('Emails do not match.');
-      setLoading(false);
-      return;
-    }
-  
-    try {
-      const response = await axios.post(
-        `${apiUrl}/api/update-email/`,
-        { email: newEmail },
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('access_token')}`,
-          },
-        }
-      );
-  
-      setSuccess(response.data.message);
-      return response.data;
-    } catch (err) {
-      if (err.response && err.response.data) {
-          const apiErrors = err.response.data;
-          if (apiErrors.email) {
-              setError(apiErrors.email[0]); 
-          } else if (apiErrors.old_email) {
-              setError(apiErrors.old_email[0]);
-          } else {
-              setError('An unexpected error occurred. Please try again.');
-          }
-      } else {
-          setError('An unexpected error occurred. Please try again.');
-      }
-      console.error('Error updating email:', err);
-      throw err;
-  } finally {
-      setLoading(false);
-  }
-  };
-  
-
-  const updatePassword = async (newPassword, confirmPassword) => {
-    if (newPassword !== confirmPassword) {
-      setError('Passwords do not match.');
-      return;
-    }
-
-    setLoading(true);
-    setError('');
-    setSuccess('');
-
-    try {
-      const response = await axios.post(`${apiUrl}/api/update-password/`, {
-        new_password: newPassword, 
-      }, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('access_token')}`,
-        },
-      });
-
-      setSuccess('Password updated successfully!');
-      return response.data; 
-    } catch (err) {
-      console.error('Error response:', error.response?.data); 
-      console.error(err);
-      throw err; 
-    } finally {
-      setLoading(false);
-    }
-  };
-
 
   const fetchUserData = useCallback(async () => {
     const accessToken = localStorage.getItem('access_token');
@@ -201,11 +118,7 @@ const useUserProfileSettings = (apiUrl) => {
     setOriginalUserData,
     fetchUserData,
     handleUserDataChange,
-    updateEmail,
-    updatePassword,
-    loading,
     error,
-    success,
     setError,
   };
 };

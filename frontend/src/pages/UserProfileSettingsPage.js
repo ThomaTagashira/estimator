@@ -1,40 +1,9 @@
-import React, { useEffect, useState  } from 'react';
+import React, { useEffect  } from 'react';
 import useUserProfileSettings from '../hooks/useUserProfileSettings';
 import useCreateBusinessInfo from '../hooks/useCreateBusinessInfo';
 import { Link } from 'react-router-dom';
 
 const UserProfileSettingsPage = ({apiUrl}) => {
-  const { updateEmail, updatePassword, loading, error, success, setError } = useUserProfileSettings(apiUrl);
-  const [newEmail, setNewEmail] = useState('');
-  const [confirmEmail, setConfirmEmail] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-
-  const handleEmailUpdate = async () => {
-    if (!newEmail || !confirmEmail) {
-      setError('Please confirm Email');
-      return;
-    }
-  
-    try {
-      const response = await updateEmail(newEmail, confirmEmail);
-      console.log('Email update response:', response);
-      setNewEmail(''); 
-      setConfirmEmail('');
-    } catch (err) {
-      console.error('Error updating email:', err);
-    }
-  };
-
-  const handlePasswordUpdate = async () => {
-    try {
-      const response = await updatePassword(newPassword, confirmPassword);
-      console.log('Password update response:', response);
-    } catch (err) {
-      console.error('Error updating password:', err);
-    }
-  };
-
   const {
     userData,
     handleUserDataSave,
@@ -241,49 +210,14 @@ return (
         </form>
       </div>  
 
-      <div>
-        <h2>Update Email</h2>
-        <input
-          type="email"
-          placeholder="Enter new email"
-          value={newEmail}
-          onChange={(e) => setNewEmail(e.target.value)}
-        />
-        <input
-          type="email"
-          placeholder="Confirm new email"
-          value={confirmEmail}
-          onChange={(e) => setConfirmEmail(e.target.value)}
-        />
-        <button onClick={handleEmailUpdate} disabled={loading}>
-          Update Email
-        </button>
-      </div>
 
-      <div>
-        <h2>Update Password</h2>
-        <input
-          type="password"
-          placeholder="Enter new password"
-          value={newPassword}
-          onChange={(e) => setNewPassword(e.target.value)}
-        />
-        <input
-          type="password"
-          placeholder="Confirm new password"
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-        />
-        <button onClick={handlePasswordUpdate} disabled={loading}>
-          Update Password
-        </button>
-      </div>
+      <Link to="/user-update-email">
+          <button>Update Email</button>
+      </Link>
 
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-      {success && <p style={{ color: 'green' }}>{success}</p>}
-
-
-
+      <Link to="/user-update-password">
+          <button>Update Password</button>
+      </Link>
 
       <Link to="/change-subscription-tier">
           <button>Change Subscription</button>
