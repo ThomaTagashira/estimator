@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 const useUpdatePassword = (apiUrl) => {
   const [newPassword, setNewPassword] = useState('');
@@ -9,6 +10,7 @@ const useUpdatePassword = (apiUrl) => {
   const [success, setSuccess] = useState('');
   const [passwordStrength, setPasswordStrength] = useState(0);
   const [showStrength, setShowStrength] = useState(false);
+  const navigate = useNavigate();
 
   const calculatePasswordStrength = (newPassword) => {
     let score = 0;
@@ -59,6 +61,10 @@ const useUpdatePassword = (apiUrl) => {
 	setNewPassword(newPassword);
 	const strength = calculatePasswordStrength(newPassword);
 	setPasswordStrength(strength);
+};
+
+const handleCancel = () => {
+  navigate(`/user-profile-settings`);
 };
 
   const handlePasswordUpdate = async () => {
@@ -115,7 +121,8 @@ const useUpdatePassword = (apiUrl) => {
     getStrengthLabel,
     handlePasswordChange,
     setShowStrength,
-    showStrength
+    showStrength,
+    handleCancel
   };
 };
 

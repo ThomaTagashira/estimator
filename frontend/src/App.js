@@ -57,6 +57,7 @@ function App() {
   const [userEmail, setUserEmail] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [authIsLoading, setAuthIsLoading] = useState(true);
+  const [isAccountOAuth, setIsAccountOAuth] = useState(false);
 
   const fetchTokenCount = useCallback(() => {
     const fetchData = async () => {
@@ -95,7 +96,8 @@ function App() {
     setIsAuthenticated,
     setHasActiveSubscription,
     setInTrial,
-    setAuthIsLoading
+    setAuthIsLoading,
+    setIsAccountOAuth
 });
 
 useEffect(() => {
@@ -164,6 +166,7 @@ useEffect(() => {
     localStorage.removeItem('hasActiveSubscription');
     localStorage.removeItem('inTrial');
     localStorage.removeItem('isAuthenticated');
+    localStorage.removeItem('isAccountOAuth');
 
     delete axios.defaults.headers.common['Authorization'];
 
@@ -259,7 +262,7 @@ useEffect(() => {
       <Routes>
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/login" element={<LoginPage setIsAuthenticated={setIsAuthenticated} setHasActiveSubscription={setHasActiveSubscription} setInTrial={setInTrial} setAuthIsLoading={setAuthIsLoading} />} />
-        <Route path="/google-callback" element={<GoogleCallback setIsAuthenticated={setIsAuthenticated} setHasActiveSubscription={setHasActiveSubscription} setAuthIsLoading={setAuthIsLoading} setInTrial={setInTrial} />} />
+        <Route path="/google-callback" element={<GoogleCallback setIsAuthenticated={setIsAuthenticated} setHasActiveSubscription={setHasActiveSubscription} setAuthIsLoading={setAuthIsLoading} setInTrial={setInTrial} setIsAccountOAuth={setIsAccountOAuth}/>} />
         <Route path="/subscribe" element={<SubscriptionPage />} />
         <Route path="/buy-tokens" element={<TokenPurchasePage />} />
         <Route path="/success" element={<SuccessPage />} />
@@ -364,8 +367,6 @@ useEffect(() => {
           </AuthenticatedRoute>
         }/>
 
-
-
         <Route path="/user-profile-settings" element={
           <AuthenticatedRoute 
             isAuthenticated={isAuthenticated} 
@@ -373,10 +374,9 @@ useEffect(() => {
             inTrial={inTrial}
             authIsLoading={authIsLoading}
           >
-            <UserProfileSettingsPage apiUrl={apiUrl}/>
+            <UserProfileSettingsPage apiUrl={apiUrl} isAccountOAuth={isAccountOAuth}/>
           </AuthenticatedRoute>
         }/>
-
 
         <Route path="/user-update-email" element={
           <AuthenticatedRoute 
@@ -399,7 +399,6 @@ useEffect(() => {
             <UpdatePasswordPage apiUrl={apiUrl} />
           </AuthenticatedRoute>
         }/>
-
 
         <Route
           path="/"

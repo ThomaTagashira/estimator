@@ -5,7 +5,7 @@ const VerifyUserEmailUpdateFailure = () => {
   const navigate = useNavigate();
 
   const handleRetry = () => {
-    navigate('/update-email'); // Redirect the user to the email update page
+    navigate('/user-update-email'); // Redirect the user to the email update page
   };
 
   return (

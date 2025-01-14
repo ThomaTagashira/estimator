@@ -536,6 +536,7 @@ class UserStateView(APIView):
             'is_active': subscription.is_active if subscription else False,
             'in_trial': subscription.in_trial if subscription else False,
             'profile_completed': subscription.profile_completed if subscription else False,
+            'is_account_OAuth': subscription.is_account_OAuth if subscription else False,
         })
 
 
@@ -675,6 +676,7 @@ class GoogleLoginView(APIView):
             Subscription.objects.get_or_create(
                 user=user,
                 defaults={
+                    'is_account_OAuth': True,
                     'is_active': True,
                     'trial_start_date': timezone_now(),
                     'trial_end_date': timezone_now() + timedelta(days=7),
@@ -700,7 +702,8 @@ class GoogleLoginView(APIView):
             'refresh': jwt_refresh_token,
             'has_active_subscription': has_active_subscription,
             'in_trial': in_trial,
-            'profile_completed': profile_completed
+            'profile_completed': profile_completed,
+            'is_account_OAuth': True
         }, status=status.HTTP_200_OK)
 
 

@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 
 const apiUrl = process.env.REACT_APP_API_URL;
 
-const useAuth = ({ setIsAuthenticated, setHasActiveSubscription, setInTrial, setAuthIsLoading }) => {
+const useAuth = ({ setIsAuthenticated, setHasActiveSubscription, setInTrial, setAuthIsLoading, setIsAccountOAuth }) => {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
@@ -16,26 +16,31 @@ const useAuth = ({ setIsAuthenticated, setHasActiveSubscription, setInTrial, set
         },
       });
 
-      const { is_active, in_trial, profile_completed } = response.data;
+      const { is_active, in_trial, profile_completed, is_account_OAuth } = response.data;
 
       setIsAuthenticated(profile_completed);
       setHasActiveSubscription(is_active);
       setInTrial(in_trial);
+      setIsAccountOAuth(is_account_OAuth);
+
+      // console.log('is_account_OAuth: ', is_account_OAuth)
 
       localStorage.setItem('isAuthenticated', profile_completed);
       localStorage.setItem('hasActiveSubscription', is_active);
       localStorage.setItem('inTrial', in_trial);
+      localStorage.setItem('is_account_OAuth', is_account_OAuth);
+
       
     } catch (error) {
       console.error('Failed to fetch user state:', error);
       setIsAuthenticated(false);
       setHasActiveSubscription(false);
       setInTrial(false);
-
+      setIsAccountOAuth(false);
     } finally {
       setAuthIsLoading(false);
 
-  }  }, [setIsAuthenticated, setHasActiveSubscription, setInTrial, setAuthIsLoading]);
+  }  }, [setIsAuthenticated, setHasActiveSubscription, setInTrial, setAuthIsLoading, setIsAccountOAuth]);
 
   const validateAndFetchSubscriptionStatus = useCallback(async () => {
     const accessToken = localStorage.getItem('access_token');
@@ -118,8 +123,8 @@ const useAuth = ({ setIsAuthenticated, setHasActiveSubscription, setInTrial, set
     try {
       const response = await axios.post(`${apiUrl}/api/auth/google/`, { code });
 
-      const { access, refresh, has_active_subscription, profile_completed, in_trial } = response.data;
-
+      const { access, refresh, has_active_subscription, profile_completed, in_trial, is_account_OAuth } = response.data;
+      console.log('is_account_OAuth:', is_account_OAuth)
       localStorage.setItem('access_token', access);
       localStorage.setItem('refresh_token', refresh);
       axios.defaults.headers.common['Authorization'] = `Bearer ${access}`;
@@ -127,6 +132,7 @@ const useAuth = ({ setIsAuthenticated, setHasActiveSubscription, setInTrial, set
       setIsAuthenticated(profile_completed);
       setHasActiveSubscription(has_active_subscription);
       setInTrial(in_trial);
+      setIsAccountOAuth(is_account_OAuth);
 
       if (!has_active_subscription) {
         navigate('/subscribe');

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 const useUpdateEmail = (apiUrl) => {
   const [newEmail, setNewEmail] = useState('');
@@ -7,6 +8,11 @@ const useUpdateEmail = (apiUrl) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const navigate = useNavigate();
+
+  const handleCancel = () => {
+    navigate(`/user-profile-settings`);
+  };
 
   const handleEmailUpdate = async () => {
     if (!newEmail || !confirmEmail) {
@@ -79,6 +85,7 @@ const useUpdateEmail = (apiUrl) => {
     handleEmailUpdate,
     updateEmail,
     loading,
+    handleCancel
   };
 };
 

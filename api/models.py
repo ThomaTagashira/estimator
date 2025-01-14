@@ -110,7 +110,8 @@ class Subscription(models.Model):
     last_token_allocation_date = models.DateTimeField(null=True, blank=True)
     last_payment_date = models.DateTimeField(null=True, blank=True)
     last_processed_invoice_id = models.CharField(max_length=255, null=True, blank=True) 
-    profile_completed = models.BooleanField(default=False)  # New field
+    profile_completed = models.BooleanField(default=False)  
+    is_account_OAuth = models.BooleanField(default=False)
 
     def save(self, *args, **kwargs):
         if not self.trial_end_date:

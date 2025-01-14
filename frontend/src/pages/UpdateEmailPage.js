@@ -12,7 +12,8 @@ const UpdateEmailPage = ({apiUrl}) => {
     error,
     success,
     handleEmailUpdate,
-    loading
+    loading,
+    handleCancel
   } = useUpdateEmail(apiUrl);
 
     
@@ -28,6 +29,10 @@ const UpdateEmailPage = ({apiUrl}) => {
           error={error}
           success={success}
           />
+
+        <button onClick={handleCancel} disabled={loading}>
+          Cancel
+        </button>
 
         <button onClick={handleEmailUpdate} disabled={loading}>
           Update Email

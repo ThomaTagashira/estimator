@@ -17,7 +17,8 @@ const UpdatePasswordPage = ({apiUrl}) => {
     getStrengthLabel,
     handlePasswordChange,
     setShowStrength,
-    showStrength
+    showStrength,
+    handleCancel
   } = useUpdatePassword(apiUrl);
 
     
@@ -38,6 +39,10 @@ const UpdatePasswordPage = ({apiUrl}) => {
           setShowStrength={setShowStrength}
           showStrength={showStrength}
           />
+
+        <button onClick={handleCancel} disabled={loading}>
+          Cancel
+        </button>
 
         <button onClick={handlePasswordUpdate} disabled={loading}>
           Update Password

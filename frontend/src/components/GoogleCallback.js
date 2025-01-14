@@ -2,10 +2,10 @@ import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useAuth from '../hooks/useAuth'; 
 
-const GoogleCallback = ({ setIsAuthenticated, setHasActiveSubscription, setInTrial }) => {
+const GoogleCallback = ({ setIsAuthenticated, setHasActiveSubscription, setInTrial, setIsAccountOAuth }) => {
   const navigate = useNavigate();
 
-  const { loginWithGoogle } = useAuth({ setIsAuthenticated, setHasActiveSubscription, setInTrial });
+  const { loginWithGoogle } = useAuth({ setIsAuthenticated, setHasActiveSubscription, setInTrial, setIsAccountOAuth });
 
   useEffect(() => {
     const queryParams = new URLSearchParams(window.location.search);

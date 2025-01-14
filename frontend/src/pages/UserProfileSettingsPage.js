@@ -3,7 +3,7 @@ import useUserProfileSettings from '../hooks/useUserProfileSettings';
 import useCreateBusinessInfo from '../hooks/useCreateBusinessInfo';
 import { Link } from 'react-router-dom';
 
-const UserProfileSettingsPage = ({apiUrl}) => {
+const UserProfileSettingsPage = ({apiUrl, isAccountOAuth}) => {
   const {
     userData,
     handleUserDataSave,
@@ -210,14 +210,23 @@ return (
         </form>
       </div>  
 
+      <div>
+          {!isAccountOAuth && (
+            <>
+              <div>
+                <Link to="/user-update-email">
+                  <button>Update Email</button>
+                </Link>
+              </div>
 
-      <Link to="/user-update-email">
-          <button>Update Email</button>
-      </Link>
-
-      <Link to="/user-update-password">
-          <button>Update Password</button>
-      </Link>
+              <div>
+                <Link to="/user-update-password">
+                  <button>Update Password</button>
+                </Link>
+              </div>
+            </>
+            )}
+          </div>
 
       <Link to="/change-subscription-tier">
           <button>Change Subscription</button>
