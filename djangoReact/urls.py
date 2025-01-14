@@ -59,6 +59,7 @@ urlpatterns = [
     path('api/save-user-info/', save_user_data, name='save_user_data'),
     path('api/auth/user-state/', UserStateView.as_view(), name='user_state_view'),
     path('api/subscription/complete-profile/', CompleteProfileView.as_view(), name='complete-profile'),
+    path('api/confirm-user-updated-email/<str:token>/', ConfirmEmailChangeView.as_view(), name='confirm-user-updated-email'),
 
 
 

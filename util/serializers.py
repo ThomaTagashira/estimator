@@ -302,6 +302,7 @@ class EmailUpdateSerializer(serializers.Serializer):
             raise serializers.ValidationError({"old_email": "Old email does not match our records."})
 
         if User.objects.filter(email=data['email']).exists():
+            print("email data:", data['email'])
             raise serializers.ValidationError({"email": "This email is already in use."})
 
         try:
@@ -311,18 +312,26 @@ class EmailUpdateSerializer(serializers.Serializer):
 
         return data
 
-
     def save(self, user):
         old_email = user.email
-        user.email = self.validated_data['email']
-        user.username = self.validated_data['email']  
+        print(f"Old email: {user.email}")
+
+        new_email = self.validated_data['email']
+
+        user.email = new_email
+        print(f"Updated email: {user.email}")
+
+        user.username = new_email
         user.save()
-        
+
+        Subscription.objects.filter(user=user).update(user_email=new_email)
+
         EmailChangeHistory.objects.create(
             user=user,
             old_email=old_email,
-            new_email=user.email,
+            new_email=new_email,
         )
+
         self.send_confirmation_email(user, old_email)
 
     def send_confirmation_email(self, user, old_email):

@@ -37,6 +37,7 @@ from .throttles import ResendEmailThrottle
 from .permissions import HasActiveSubscriptionOrTrial, ProfileCompletedPermission
 from django.shortcuts import redirect
 from urllib.parse import urlencode
+from django.urls import reverse
 
 import logging
 logger = logging.getLogger(__name__)
@@ -164,9 +165,6 @@ def upload_photo(request):
         return Response({'error': 'Invalid request method'}, status=status.HTTP_400_BAD_REQUEST)\
 
 
-
-
-
 @api_view(['POST'])
 @authentication_classes([])
 @permission_classes([AllowAny])
@@ -201,7 +199,6 @@ def register_user(request):
         send_verification_email(user)  
 
     return Response({'message': 'Registration successful. Please verify your email to proceed.'}, status=status.HTTP_201_CREATED)
-
 
 
 serializer = URLSafeTimedSerializer(settings.SECRET_KEY)
@@ -244,6 +241,8 @@ def resend_verification_email(request):
 def confirm_verification_token(token, expiration=3600):
     try:
         email = serializer.loads(token, salt='email-verify-salt', max_age=expiration)
+        print("Decoded email:", email)  # Debugging
+
         return email
     except SignatureExpired:
         print("Token expired in confirm_verification_token")
@@ -356,15 +355,73 @@ class PasswordResetConfirmView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+def generate_email_update_verification_token(old_email, new_email):
+    return serializer.dumps({'old_email': old_email, 'new_email': new_email}, salt='email-verify-salt')
+
+
+def confirm_email_update_verification_token(token, expiration=3600):
+    try:
+        data = serializer.loads(token, salt='email-verify-salt', max_age=expiration)
+        return data  
+    except SignatureExpired:
+        print("Token expired in confirm_verification_token")
+        return None
+    except BadSignature:
+        print("Invalid token in confirm_verification_token")
+        return None
+    
+
 class EmailUpdateView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        serializer = EmailUpdateSerializer(data=request.data, context={'request': request})  
+        print("Request data:", request.data)  
+        serializer = EmailUpdateSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
-            serializer.save(request.user)
-            return Response({'message': 'Email updated successfully.'}, status=status.HTTP_200_OK)
+            new_email = serializer.validated_data['email']
+            token = generate_email_update_verification_token(request.user.email, new_email)
+
+            verification_url = f"{settings.BACKEND_URI}/api/confirm-user-updated-email/{token}"
+            email_subject = "Confirm Your Email Address Change"
+            email_body = (
+                f"Hi {request.user.username},\n\n"
+                f"To confirm your email change to {new_email}, please click the link below:\n"
+                f"{verification_url}\n\n"
+                "If you did not request this change, please ignore this email.\n\n"
+                "Best regards,\nYourApp Team"
+            )
+            send_mail(email_subject, email_body, settings.DEFAULT_FROM_EMAIL, [new_email])
+
+            return Response({'message': 'Verification email sent. Please confirm your new email.'}, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        
+class ConfirmEmailChangeView(APIView):
+    permission_classes = [AllowAny] 
+
+    def get(self, request, token):
+        data = confirm_verification_token(token)
+        print('Decoded data: ', data)
+        if not data:
+            return redirect(f"{settings.FRONTEND_URI}/verify-email-failed")
+
+        old_email = data.get('old_email')
+        new_email = data.get('new_email')
+
+        try:
+            user = User.objects.get(email=old_email)
+            user.email = new_email
+            user.username = new_email
+            user.save()
+
+            Subscription.objects.filter(user_email=user).update(user_email=new_email)
+
+            query_params = urlencode({'email': new_email, 'success': True})
+
+            return redirect(f"{settings.FRONTEND_URI}/verify-user-email-success?{query_params}")
+
+        except User.DoesNotExist:
+            return redirect(f"{settings.FRONTEND_URI}/verify-email-failed")
 
 
 class PasswordUpdateView(APIView):
@@ -377,6 +434,7 @@ class PasswordUpdateView(APIView):
             return Response({'message': 'Password updated successfully.'}, status=status.HTTP_200_OK)
         print("Validation errors:", serializer.errors)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)    
+
 
 class UserInfoView(APIView):
     permission_classes = [IsAuthenticated]
@@ -422,6 +480,7 @@ def save_user_data(request):
             return Response(serializer.data, status=response_status)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
+
 @authentication_classes([])
 @permission_classes([AllowAny])
 def check_trial_status(user):
@@ -554,7 +613,6 @@ class GoogleTokenObtainPairView(TokenObtainPairView):
         })
 
 
-
 class GoogleLoginView(APIView):
     def post(self, request, *args, **kwargs):
         code = request.data.get('code')
@@ -646,8 +704,6 @@ class GoogleLoginView(APIView):
         }, status=status.HTTP_200_OK)
 
 
-
-
 class CompleteProfileView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -700,7 +756,6 @@ class CompleteProfileView(APIView):
 #         return Response({
 #             'access_token': access_token,
 #         }, status=status.HTTP_200_OK)
-
 
 
 class CreateSubscriptionCheckoutSessionView(APIView):
@@ -1254,13 +1309,13 @@ def get_user_estimates(request):
 @permission_classes([IsAuthenticated])
 def delete_user_estimate(request, estimate_id):
     try:
-        print(f"Received DELETE request for estimate_id: {estimate_id}")
+        # print(f"Received DELETE request for estimate_id: {estimate_id}")
         estimate = UserEstimates.objects.get(estimate_id=estimate_id, user=request.user)
         estimate.delete()
-        print(f"Successfully deleted estimate_id: {estimate_id}")
+        # print(f"Successfully deleted estimate_id: {estimate_id}")
         return Response(status=status.HTTP_204_NO_CONTENT)
     except UserEstimates.DoesNotExist:
-        print(f"Estimate_id {estimate_id} not found or already deleted.")
+        # print(f"Estimate_id {estimate_id} not found or already deleted.")
         return Response({'error': 'Estimate not found or unauthorized'}, status=status.HTTP_404_NOT_FOUND)
 
 
@@ -1286,7 +1341,7 @@ def get_saved_estimate(request, estimate_id):
     except UserEstimates.DoesNotExist:
         return Response({'error': 'Estimate not found'}, status=404)
     except Exception as e:
-        print("Error:", e)
+        # print("Error:", e)
         return Response({'error': str(e)}, status=500)
 
 
@@ -1545,7 +1600,7 @@ class DeleteSearchResponseView(APIView):
 
     def delete(self, request, estimate_id, saved_response_id):
         try:
-            print(f"Delete request: estimate_id={estimate_id}, saved_response_id={saved_response_id}")
+            # print(f"Delete request: estimate_id={estimate_id}, saved_response_id={saved_response_id}")
             user = request.user
             response = SearchResponseData.objects.filter(
                 estimate_reference_id=estimate_id,
@@ -1554,16 +1609,16 @@ class DeleteSearchResponseView(APIView):
             ).first()
 
             if not response:
-                print(f"No matching record found for estimate_id={estimate_id}, saved_response_id={saved_response_id}, user={user}")
+                # print(f"No matching record found for estimate_id={estimate_id}, saved_response_id={saved_response_id}, user={user}")
                 return Response(
                     {"error": "Task not found"}, status=status.HTTP_404_NOT_FOUND
                 )
 
             response.delete()
-            print(f"Task deleted: estimate_id={estimate_id}, saved_response_id={saved_response_id}")
+            # print(f"Task deleted: estimate_id={estimate_id}, saved_response_id={saved_response_id}")
             return Response({"message": "Task removed"}, status=status.HTTP_200_OK)
         except Exception as e:
-            print(f"Error in DeleteSearchResponseView: {e}")
+            # print(f"Error in DeleteSearchResponseView: {e}")
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
@@ -1619,7 +1674,7 @@ def get_estimate_margin(request, estimate_id):
     try:
         estimate = UserEstimates.objects.filter(estimate_id=estimate_id, user=request.user).first()
         if not estimate:
-            print("No matching estimate found")
+            # print("No matching estimate found")
             return Response({'error': 'Estimate not found.'}, status=404)
 
         estimate_margin = EstimateMarginData.objects.filter(estimate=estimate, user=request.user).first()

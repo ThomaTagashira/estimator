@@ -13,6 +13,8 @@ import {
   Footer,
   PasswordResetConfirm,
   VerifyEmailSuccess,
+  VerifyUserEmailUpdateSuccess,
+  VerifyUserEmailUpdateFailure,
 } from './components';
 
 import {
@@ -269,6 +271,8 @@ useEffect(() => {
         <Route path="/password-reset" element={<PasswordResetRequestForm />} />
         <Route path="/password-reset-confirm/:uid/:token" element={<PasswordResetConfirm />} />
         <Route path="/complete-login" element={<LoginCompletePage apiUrl={apiUrl} setIsAuthenticated={setIsAuthenticated} setHasActiveSubscription={setHasActiveSubscription} setInTrial={setInTrial} />} />
+        <Route path="/verify-user-email-success" element={<VerifyUserEmailUpdateSuccess setIsAuthenticated={setIsAuthenticated} setHasActiveSubscription={setHasActiveSubscription} setInTrial={setInTrial} setAuthIsLoading={setAuthIsLoading} />} />
+        <Route path="/verify-email-failed" element={<VerifyUserEmailUpdateFailure />} />
 
         <Route path="/search" element={
           <AuthenticatedRoute 

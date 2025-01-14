@@ -4,16 +4,23 @@ import useCreateBusinessInfo from '../hooks/useCreateBusinessInfo';
 import { Link } from 'react-router-dom';
 
 const UserProfileSettingsPage = ({apiUrl}) => {
-  const { updateEmail, updatePassword, loading, error, success } = useUserProfileSettings(apiUrl);
+  const { updateEmail, updatePassword, loading, error, success, setError } = useUserProfileSettings(apiUrl);
   const [newEmail, setNewEmail] = useState('');
   const [confirmEmail, setConfirmEmail] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
   const handleEmailUpdate = async () => {
+    if (!newEmail || !confirmEmail) {
+      setError('Please confirm Email');
+      return;
+    }
+  
     try {
       const response = await updateEmail(newEmail, confirmEmail);
       console.log('Email update response:', response);
+      setNewEmail(''); 
+      setConfirmEmail('');
     } catch (err) {
       console.error('Error updating email:', err);
     }

@@ -9,3 +9,5 @@ export { default as PasswordResetConfirm } from './PasswordResetConfirm';
 export { default as ProfileButton } from './ProfileButton';
 export { default as VerifyEmailSuccess } from './VerifyEmailSuccess';
 export { default as setupInterceptors } from './setupInterceptor';
+export { default as VerifyUserEmailUpdateSuccess } from './VerifyUserEmailUpdateSuccess';
+export { default as VerifyUserEmailUpdateFailure } from './VerifyUserEmailUpdateFailure';

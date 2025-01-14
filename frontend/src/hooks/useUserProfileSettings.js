@@ -78,30 +78,50 @@ const useUserProfileSettings = (apiUrl) => {
     }
   };
   
-  const updateEmail = async (newEmail) => {
+  const updateEmail = async (newEmail, confirmEmail) => {
     setLoading(true);
     setError('');
     setSuccess('');
-
-    try {
-      const response = await axios.post(`${apiUrl}/api/update-email/`, {
-        email: newEmail,
-      }, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('access_token')}`,
-        },
-      });
-
-      setSuccess('Email updated successfully!');
-      return response.data; 
-    } catch (err) {
+  
+    if (newEmail !== confirmEmail) {
       setError('Emails do not match.');
-      console.error(err);
-      throw err; 
-    } finally {
       setLoading(false);
+      return;
     }
+  
+    try {
+      const response = await axios.post(
+        `${apiUrl}/api/update-email/`,
+        { email: newEmail },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+          },
+        }
+      );
+  
+      setSuccess(response.data.message);
+      return response.data;
+    } catch (err) {
+      if (err.response && err.response.data) {
+          const apiErrors = err.response.data;
+          if (apiErrors.email) {
+              setError(apiErrors.email[0]); 
+          } else if (apiErrors.old_email) {
+              setError(apiErrors.old_email[0]);
+          } else {
+              setError('An unexpected error occurred. Please try again.');
+          }
+      } else {
+          setError('An unexpected error occurred. Please try again.');
+      }
+      console.error('Error updating email:', err);
+      throw err;
+  } finally {
+      setLoading(false);
+  }
   };
+  
 
   const updatePassword = async (newPassword, confirmPassword) => {
     if (newPassword !== confirmPassword) {
@@ -186,6 +206,7 @@ const useUserProfileSettings = (apiUrl) => {
     loading,
     error,
     success,
+    setError,
   };
 };
 

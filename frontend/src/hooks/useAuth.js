@@ -21,19 +21,21 @@ const useAuth = ({ setIsAuthenticated, setHasActiveSubscription, setInTrial, set
       setIsAuthenticated(profile_completed);
       setHasActiveSubscription(is_active);
       setInTrial(in_trial);
-      setAuthIsLoading(false);
 
       localStorage.setItem('isAuthenticated', profile_completed);
       localStorage.setItem('hasActiveSubscription', is_active);
       localStorage.setItem('inTrial', in_trial);
+      
     } catch (error) {
       console.error('Failed to fetch user state:', error);
       setIsAuthenticated(false);
       setHasActiveSubscription(false);
       setInTrial(false);
+
+    } finally {
       setAuthIsLoading(false);
-    }
-  }, [setIsAuthenticated, setHasActiveSubscription, setInTrial, setAuthIsLoading]);
+
+  }  }, [setIsAuthenticated, setHasActiveSubscription, setInTrial, setAuthIsLoading]);
 
   const validateAndFetchSubscriptionStatus = useCallback(async () => {
     const accessToken = localStorage.getItem('access_token');
