@@ -20,7 +20,7 @@ const UpdateEmailPage = ({apiUrl}) => {
 
   return (
     <div className='page'>
-      <div className='login-container'>
+      <div className='update-info-container'>
         <UpdateEmailForm
           newEmail={newEmail} 
           setNewEmail={setNewEmail}
@@ -30,13 +30,16 @@ const UpdateEmailPage = ({apiUrl}) => {
           success={success}
           />
 
-        <button onClick={handleCancel} disabled={loading}>
-          Cancel
-        </button>
-
-        <button onClick={handleEmailUpdate} disabled={loading}>
-          Update Email
-        </button>
+        <div className='edit'>
+          <div className='edit-buttons'>
+            <button onClick={handleCancel} disabled={loading}>
+              Cancel
+            </button>
+            <button onClick={handleEmailUpdate} disabled={loading}>
+              Update Email
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

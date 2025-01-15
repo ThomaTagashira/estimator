@@ -1,6 +1,7 @@
 const PrivacyPolicyPage = () => {
   return (
-    <div>
+    <div className='information-page'>    
+      <div className='policy-card '>
       <h1>Privacy Policy</h1>
         <p>This Privacy Policy discloses the privacy practices of FairBuild (referred to as “FairBuild,” “we,” “our,” or “us”). By using our platform, you agree to the practices outlined in this Privacy Policy. We are committed to protecting the privacy of our users and ensuring the secure handling of personal information.</p>
 
@@ -100,6 +101,7 @@ const PrivacyPolicyPage = () => {
       {/* Mailing Address: FairBuild, 123 Main Street, Seattle, WA 98101 */}
 
       <h4>Thank you for trusting FairBuild with your data. We are committed to ensuring your privacy and delivering a secure experience.</h4> 
+      </div>
     </div>
   );
 };

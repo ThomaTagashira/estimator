@@ -34,10 +34,10 @@ const UserProfileSettingsPage = ({apiUrl, isAccountOAuth}) => {
 
 
 return (
-  <div className='page'>
-    <h2>Profile Settings</h2>
-      <div>    
-        <h3>User Information</h3>
+  <div className='information-page'>    
+  <div className='page-card'>
+    <div className='user-settings-container'>    
+      <h3>User Information</h3>
         <div className="DT-form-group">
           <label htmlFor="firstName">
             <span className="form-icon">✉️</span> First Name
@@ -114,8 +114,10 @@ return (
         </div>  
       </div>
 
-      <div>
-        <h3>Business Information</h3>
+  <hr className="divider" />
+
+    <div className='user-settings-container'>    
+      <h3>Business Information</h3>
         <form>
           <div className="DT-form-group">
             <label htmlFor="businessName">
@@ -210,35 +212,46 @@ return (
         </form>
       </div>  
 
-      <div>
-          {!isAccountOAuth && (
-            <>
-              <div>
+  <hr className="divider" />
+
+      <div className='user-settings-container'>    
+        {!isAccountOAuth && (
+          <>
+            <h3>User Settings</h3>  
+              <div className='buttons'>
                 <Link to="/user-update-email">
                   <button>Update Email</button>
                 </Link>
               </div>
 
-              <div>
+              <div className='buttons'>
                 <Link to="/user-update-password">
                   <button>Update Password</button>
                 </Link>
               </div>
-            </>
-            )}
+          </>
+        )}
+      </div>
+
+  <hr className="divider" />
+
+      <div className='user-settings-container'>    
+        <h3>Subscription Settings</h3>  
+          
+          <div className='buttons'>
+            <Link to="/change-subscription-tier">
+              <button>Change Subscription</button>
+            </Link>
           </div>
 
-      <Link to="/change-subscription-tier">
-          <button>Change Subscription</button>
-      </Link>
-
-      <Link to="/cancel-subscription">
-          <button>Cancel Subscription</button>
-      </Link>
-      
-    </div>
-
-    
+          <div className='buttons'>
+            <Link to="/cancel-subscription">  
+              <button>Cancel Subscription</button>
+            </Link>
+          </div>
+      </div>
+      </div>      
+    </div>  
   );
 };
 

@@ -25,7 +25,7 @@ const UpdatePasswordPage = ({apiUrl}) => {
 
   return (
     <div className='page'>
-      <div className='login-container'>
+      <div className='update-info-container'>
         <UpdatePasswordForm
           newPassword={newPassword} 
           setNewPassword={setNewPassword}
@@ -40,13 +40,17 @@ const UpdatePasswordPage = ({apiUrl}) => {
           showStrength={showStrength}
           />
 
-        <button onClick={handleCancel} disabled={loading}>
-          Cancel
-        </button>
+        <div className='edit'>
+          <div className='edit-buttons'>
+            <button onClick={handleCancel} disabled={loading}>
+              Cancel
+            </button>
 
-        <button onClick={handlePasswordUpdate} disabled={loading}>
-          Update Password
-        </button>
+            <button onClick={handlePasswordUpdate} disabled={loading}>
+              Update Password
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -679,6 +679,14 @@ label {
   margin-left: 10px;
 }
 
+.update-form-group {
+  display: flex;
+  align-items: center; 
+  justify-content: center; 
+  gap: 10px; 
+  margin-bottom: 15px;
+}
+
 .upload-btn {
   display:flex;
   align-items: center;

@@ -399,6 +399,24 @@
   gap: 20px;
 }
 
+.information-page {
+  display: flex;
+  flex-direction: column;
+  position: relative; 
+  padding: 40px; 
+  max-width: 1600px; 
+  overflow: visible; 
+  margin: auto;
+  min-height: 100vh;
+}
+
+.information-card {
+  border-radius: 8px;
+  background-color: #fff;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+  padding: 30px;
+}
+
 .info-section {
   display: flex;
   flex-direction: column;
@@ -465,6 +483,13 @@ input, textarea {
   min-height: 100vh;
 }
 
+.page-card {
+  border-radius: 8px;
+  background-color: #fff;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+  padding: 20px;
+}
+
 .pagination {
   display: flex;
   justify-content: center;
@@ -490,6 +515,13 @@ input, textarea {
 .pagination button:disabled {
   cursor: not-allowed;
   opacity: 0.5;
+}
+
+.policy-card {
+  border-radius: 8px;
+  background-color: #fff;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+  padding: 50px;
 }
 
 .purchase-container {
@@ -714,4 +746,20 @@ td.center-input input {
   margin: 0 auto;
   display: block;
   width: 60px;
+}
+
+.update-info-container {
+  max-width: 250px; 
+  margin: auto; 
+  margin-top: 50px;
+  background: #fff; 
+  border-radius: 12px; 
+  padding: 32px; 
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5); 
+  font-family: Arial, sans-serif;
+  text-align: center;
+}
+
+.user-settings-container {
+  padding: 20px;
 }

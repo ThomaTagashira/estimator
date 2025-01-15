@@ -71,7 +71,7 @@ const SearchPage = ({ apiUrl, fetchTokenCount }) => {
     handleRemovePhoto,
     isUploading,
     addNewRow
-  } = usePhotoUpload( setIsLoading );
+  } = usePhotoUpload( setIsLoading, fetchTokenCount );
 
 const handleTabSwitch = async (tab) => {
     setActiveTab(tab);

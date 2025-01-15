@@ -3,7 +3,7 @@ import axios from 'axios';
 
 const apiUrl = process.env.REACT_APP_API_URL;
 
-const usePhotoUpload = (setIsLoading) => {
+const usePhotoUpload = (setIsLoading, fetchTokenCount) => {
     const [selectedFile, setSelectedFile] = useState(null);
     const [data, setData] = useState(() => {
         const savedData = localStorage.getItem('photoUploadData');
@@ -48,6 +48,29 @@ const usePhotoUpload = (setIsLoading) => {
         console.log("Photo removed");
     };
 
+    const fetchTokenBalance = async () => {
+        try {
+            const response = await axios.get(`${apiUrl}/api/get-user-token-count/`, {
+                headers: { Authorization: `Bearer ${localStorage.getItem('access_token')}` },
+            });
+            return response.data.token_balance || 0;
+        } catch (error) {
+            console.error('Error fetching token balance:', error.message);
+            return 0;
+        }
+    };
+
+    const deductTokens = async (tokensToDeduct) => {
+        try {
+            await axios.post(`${apiUrl}/api/deduct-tokens/`, 
+                { tokens: tokensToDeduct },
+                { headers: { Authorization: `Bearer ${localStorage.getItem('access_token')}` } }
+            );
+        } catch (error) {
+            console.error('Error deducting tokens:', error.message);
+        }
+    };
+
     const handleSubmit = async () => {
         if (!selectedFile) {
             setError("No file selected or the file is invalid.");
@@ -60,15 +83,27 @@ const usePhotoUpload = (setIsLoading) => {
         setIsUploading(true);
     
         try {
+            const tokenBalance = await fetchTokenBalance();
+
+            if (tokenBalance < 5) {
+                setError('Insufficient tokens to perform this search.');
+                return;
+            }
+
             const response = await axios.post(`${apiUrl}/api/photo/`, formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },
             });
-    
+
+            await deductTokens(5);
+
             const jsonResponse = JSON.parse(response.data);
             const strings = jsonResponse.strings || {};
             setData(strings);
+
+            await fetchTokenCount();
+
         } catch (e) {
             const errorMessage = e.response?.data?.error?.message || 'Error uploading photo';
             setError(errorMessage);
