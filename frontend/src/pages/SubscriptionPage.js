@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import {SubscriptionCheckoutButton} from '../components/StripeCheckoutButton'; 
 import './pages_css/Pages.css';
+import SubscrptionPlanCards from '../components/SubscriptionPlanCards';
 
 const SubscriptionPage = () => {
-    const [selectedTier, setSelectedTier] = useState(''); 
+    const [tier, setNewTier] = useState(''); 
 
-    const handleSelectTier = (tier) => {
-        setSelectedTier(tier);
+    const handleSelectNewTier = (tier) => {
+        setNewTier(tier);
     };
 
     return (
@@ -15,61 +15,11 @@ const SubscriptionPage = () => {
             <div className="purchase-header">
                 <h1>Subscribe to Our Service</h1>
                 <p>Please choose a subscription tier to access our features.</p>
-                <h2>Select Your Plan:</h2>
+                <h2>Select Your Plan</h2>
             </div>
 
-            <div className="cards">
-                <div className="card">
-                    <h3>Basic</h3>
-                    <p className="price">$24.99/month</p>
-                    <ul>
-                        <li>Receive 50 tokens at the beginning of each billing cycle</li>
-                        <li>Add Things Here</li>
-                        <li>Add Things Here</li>
-                    </ul>
-                    <button onClick={() => handleSelectTier('Basic')}>
-                        Basic - $24.99/month
-                    </button>
-                </div>
+            <SubscrptionPlanCards handleSelectNewTier={handleSelectNewTier} tier={tier}/>
 
-
-                <div className="card">
-                    <h3>Premium</h3>
-                    <p className="price">$39.99/month</p>
-                    <ul>
-                        <li>Receive 120 tokens at the beginning of each billing cycle</li>
-                        <li>Add Things Here</li>
-                        <li>Add Things Here</li>
-                    </ul>
-                    <button onClick={() => handleSelectTier('Premium')}>
-                        Premium - $39.99/month
-                    </button>
-                </div>
-
-
-                <div className="card">
-                    <h3>Enterprise</h3>
-                    <p className="price">$59.99</p>
-                    <ul>
-                        <li>Receive 250 tokens at the beginning of each billing cycle</li>
-                        <li>Add Things Here</li>
-                        <li>Add Things Here</li>
-                    </ul>
-                    <button onClick={() => handleSelectTier('Enterprise')}>
-                        Enterprise - $59.99/month
-                    </button>
-                </div>
-            </div>
-
-            {selectedTier && (
-                <div>
-                    <h3>You have selected the {selectedTier} plan.</h3>
-                    <SubscriptionCheckoutButton
-                        apiEndpoint="/api/payments/"
-                        tier={selectedTier}
-                    />
-                </div>
-            )}
         </div>    
     );
 };

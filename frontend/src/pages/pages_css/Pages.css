@@ -535,7 +535,7 @@ input, textarea {
 
 .purchase-container button {
   width: 100%;
-  background-color: #6a0dad;
+  background-color: #007bff;
   color: #fff;
   border: none;
   border-radius: 5px;
@@ -546,7 +546,7 @@ input, textarea {
 }
   
 .purchase-container button:hover {
-  background-color: #531482; 
+  background-color: #0056b3;
 }
 
 .purchase-container h2 {
@@ -554,6 +554,10 @@ input, textarea {
   margin-bottom: 20px;
   text-align: center;
   color: #333;
+}
+.purchase-header {
+  align-items: center;
+  text-align: center;
 }
 
 .purchase-header h1 {
