@@ -40,7 +40,7 @@ const Header = ({ handleLogout, hasActiveSubscription, tokenCount, userSubscript
         <span></span>
       </div>   
 
-      <div className='logo-container'>
+      {/* <div className='logo-container'> */}
         <div>
           <h2>FairBuild</h2>
         </div>
@@ -51,7 +51,7 @@ const Header = ({ handleLogout, hasActiveSubscription, tokenCount, userSubscript
             <div>Current Subscription: {userSubscriptionTier}</div>
           </div>
         )}
-      </div>
+      {/* </div> */}
 
       <nav className='nav' ref={dropdownRef}>       
         <ul className={`nav-link ${menuOpen ? "open" : ""}`}>
@@ -59,11 +59,11 @@ const Header = ({ handleLogout, hasActiveSubscription, tokenCount, userSubscript
           <>
             <li>
               <Link to="/" className="dropdown-link" onClick={() => setMenuOpen(false)}>
-                <button className="nav-link-button">Home</button>
+                <button>Home</button>
               </Link>
 
               <Link to="/buy-tokens" className="dropdown-link" onClick={() => setMenuOpen(false)}>
-                <button className="nav-link-button">Purchase Tokens</button>
+                <button>Purchase Tokens</button>
               </Link>
             </li>
           </>

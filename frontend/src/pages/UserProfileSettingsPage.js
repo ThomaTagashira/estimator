@@ -214,9 +214,9 @@ return (
 
   <hr className="divider" />
 
-      <div className='user-settings-container'>    
         {!isAccountOAuth && (
           <>
+          <div className='user-settings-container'>    
             <h3>User Settings</h3>  
               <div className='buttons'>
                 <Link to="/user-update-email">
@@ -229,11 +229,10 @@ return (
                   <button>Update Password</button>
                 </Link>
               </div>
+              <hr className="divider" />
+              </div>
           </>
         )}
-      </div>
-
-  <hr className="divider" />
 
       <div className='user-settings-container'>    
         <h3>Subscription Settings</h3>  

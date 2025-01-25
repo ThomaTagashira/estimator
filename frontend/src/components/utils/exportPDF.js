@@ -47,7 +47,7 @@ function generateHTMLContent({
             margin-top: 0;
           }
           body {
-            font-family: Arial, sans-serif;
+            font-family: Helvetica, sans-serif;
             margin: 0;
             padding: 0;
           }

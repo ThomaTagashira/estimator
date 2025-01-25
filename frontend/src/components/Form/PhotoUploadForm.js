@@ -1,4 +1,4 @@
-import React from 'react';
+import { React, useEffect } from 'react';
 import '../components_css/Components.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
@@ -17,8 +17,14 @@ const PhotoUploadForm = ({
   handleRemoveLine,
   addNewRow,
   isLoading,
+  numberOfSearches
 }) => {
 
+  useEffect(() => {
+    if (numberOfSearches > 0) {
+        console.log(`Number of search lines: ${numberOfSearches}`);
+    }
+}, [numberOfSearches]);
 
   return (
     <div className="photo-upload-container">
@@ -97,7 +103,7 @@ const PhotoUploadForm = ({
             {selectedFile
               ? isUploading
                 ? 'Uploading...'
-                : 'Upload Photo'
+                : 'Upload Photo 🪙 5' 
             : 'Browse'}
           </button>
         </form>
@@ -139,7 +145,7 @@ const PhotoUploadForm = ({
                 <div className="spinner"></div> Searching...
               </>
             ) : (
-              'Search All'
+              `Search All 🪙 ${numberOfSearches}`
             )}
           </button>
         </div>

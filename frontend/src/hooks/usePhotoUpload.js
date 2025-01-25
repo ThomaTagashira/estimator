@@ -11,6 +11,7 @@ const usePhotoUpload = (setIsLoading, fetchTokenCount) => {
     });
     const [error, setError] = useState(null);
     const [isUploading, setIsUploading] = useState(false); 
+    const [numberOfSearches, setNumberOfSearches] = useState(0);
 
     useEffect(() => {
         localStorage.setItem('photoUploadData', JSON.stringify(data));
@@ -87,6 +88,7 @@ const usePhotoUpload = (setIsLoading, fetchTokenCount) => {
 
             if (tokenBalance < 5) {
                 setError('Insufficient tokens to perform this search.');
+                window.alert('Insufficient tokens, photo to text requires 5 tokens.\n\nPlease purchase more tokens to continue.');
                 return;
             }
 
@@ -137,6 +139,7 @@ const usePhotoUpload = (setIsLoading, fetchTokenCount) => {
     const handleLineChange = (key, newValue) => {
         const updatedData = { ...data, [key]: newValue };
         setData(updatedData);
+
     };
 
     const handleLineSearch = async (lineKey, onSearch) => {
@@ -149,7 +152,7 @@ const usePhotoUpload = (setIsLoading, fetchTokenCount) => {
                 delete updatedData[lineKey];
                 return updatedData; 
             });
-    
+
             const photoUploadData = JSON.parse(localStorage.getItem('PhotoUploadData')) || {};
             delete photoUploadData[lineKey];
             localStorage.setItem('PhotoUploadData', JSON.stringify(photoUploadData));
@@ -163,8 +166,19 @@ const usePhotoUpload = (setIsLoading, fetchTokenCount) => {
     const handleAllSearches = async (onSearch) => {
         setError(null);
         setIsLoading(true);
-    
+
+        const tokenBalance = await fetchTokenBalance();
+
+        if (tokenBalance < numberOfSearches) {
+            setError('Insufficient tokens to perform this search.');
+            setIsLoading(false)
+
+            window.alert('Insufficient tokens.\n\nPlease reduce the number of searches or purchase more tokens to continue.');
+            return;
+        }
+
         const keys = Object.keys(data);
+        
         for (const key of keys) {
             try {
                 await handleLineSearch(key, onSearch);
@@ -183,6 +197,12 @@ const usePhotoUpload = (setIsLoading, fetchTokenCount) => {
         setData(updatedData);
     };
 
+    useEffect(() => {
+        const keys = Object.keys(data);
+        setNumberOfSearches(keys.length);
+        
+    }, [data]); 
+    
     return {
         selectedFile,
         data,
@@ -194,7 +214,8 @@ const usePhotoUpload = (setIsLoading, fetchTokenCount) => {
         handleLineChange,
         handleAllSearches,
         handleRemoveLine,
-        addNewRow
+        addNewRow,
+        numberOfSearches,
     };
 };
 

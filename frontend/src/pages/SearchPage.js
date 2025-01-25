@@ -70,7 +70,8 @@ const SearchPage = ({ apiUrl, fetchTokenCount }) => {
     handleAllSearches,
     handleRemovePhoto,
     isUploading,
-    addNewRow
+    addNewRow,
+    numberOfSearches,
   } = usePhotoUpload( setIsLoading, fetchTokenCount );
 
 const handleTabSwitch = async (tab) => {
@@ -138,6 +139,8 @@ const handleTabSwitch = async (tab) => {
             handleRemoveLine={handleRemoveLine}
             addNewRow={addNewRow}
             isLoading={isLoading}
+            numberOfSearches={numberOfSearches}
+
           />
         </div>
       )}
