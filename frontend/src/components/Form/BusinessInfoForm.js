@@ -12,7 +12,7 @@ const BusinessInfoForm = ({
   return (
     <div>
       <form>
-        <div className="DT-form-group">
+        <div className="form-group">
           <label htmlFor="businessName">
             <span className="form-icon">🏢</span> Business Name
           </label>
@@ -26,7 +26,7 @@ const BusinessInfoForm = ({
           />
         </div>
 
-        <div className="DT-form-group">
+        <div className="form-group">
           <label htmlFor="businessAddress">
               <span className="form-icon">📍</span> Business Address
           </label>
@@ -40,7 +40,7 @@ const BusinessInfoForm = ({
           />
         </div>
 
-        <div className="DT-form-group">
+        <div className="form-group">
           <label htmlFor="businessPhone">
             <span className="form-icon">📞</span> Business Phone
           </label>
@@ -54,7 +54,7 @@ const BusinessInfoForm = ({
           />
         </div>
 
-        <div className="DT-form-group">
+        <div className="form-group">
           <label htmlFor="businessEmail">
             <span className="form-icon">✉️</span> Business Email
           </label>
@@ -72,7 +72,7 @@ const BusinessInfoForm = ({
           <button type="button" className="upload-btn" onClick={handlePrevious}>
             Previous
           </button>
-          <button type="button" className="upload-btn" onClick={handleLoginCompleteSubmit}>
+          <button type="button" className="create-new-account-btn" onClick={handleLoginCompleteSubmit}>
             Complete
           </button>
         </div>

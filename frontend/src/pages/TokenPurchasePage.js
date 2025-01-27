@@ -23,9 +23,11 @@ const TokenPurchasePage = () => {
                     <ul>
                         <li>One-Time Purchase of 50 tokens</li>
                     </ul>
-                    <button onClick={() => handleSelectToken('50')}>
-                        50 Tokens - $14.99
-                    </button>
+                    <div className='edit'>
+                        <button onClick={() => handleSelectToken('50')}>
+                            50 Tokens - $14.99
+                        </button>
+                    </div>
                 </div>
 
 
@@ -35,9 +37,11 @@ const TokenPurchasePage = () => {
                     <ul>
                         <li>One-Time Purchase of 100 tokens</li>
                     </ul>
-                    <button onClick={() => handleSelectToken('75')}>
-                        100 Tokens - $29.99
-                    </button>
+                    <div className='edit'>
+                        <button onClick={() => handleSelectToken('75')}>
+                            100 Tokens - $29.99
+                        </button>
+                    </div>
                 </div>
 
 
@@ -47,19 +51,23 @@ const TokenPurchasePage = () => {
                     <ul>
                         <li>One-Time Purchase of 150 tokens</li>
                     </ul>
-                    <button onClick={() => handleSelectToken('100')}>
-                        150 Tokens - $44.99
-                    </button>
+                    <div className='edit'>
+                        <button onClick={() => handleSelectToken('100')}>
+                            150 Tokens - $44.99
+                        </button>
+                    </div>
                 </div>
             </div>
 
             {selectedToken && (
                 <div>
                     <h3>You have selected {selectedToken} Tokens.</h3>
-                    <TokenCheckoutButton
-                        apiEndpoint="/api/token-payments/"
-                        tokenQty={selectedToken}
-                    />
+                    <div className='edit'>
+                        <TokenCheckoutButton
+                            apiEndpoint="/api/token-payments/"
+                            tokenQty={selectedToken}
+                        />
+                    </div>
                 </div>
             )}
         </div>

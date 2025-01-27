@@ -53,7 +53,7 @@ const ExportPDFPage = () => {
   };
 
   return (
-    <div className='body'>
+    <div className='pdf-body'>
       <div className='pdf-wrapper'>
       <div ref={pdfRef} className="pdf-container">
         <div className="pdf-header">

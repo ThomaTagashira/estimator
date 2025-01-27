@@ -50,6 +50,8 @@ function generateHTMLContent({
             font-family: Helvetica, sans-serif;
             margin: 0;
             padding: 0;
+                color: black !important;
+
           }
           .container {
             width: 100%;
@@ -179,6 +181,17 @@ function generateHTMLContent({
             cursor: pointer;
             font-size: 16px;
           }
+          .pdf-wrapper {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.6);
+            width: 100%;
+            max-width: 1000px;
+            margin: auto;
+            padding: 50px;
+            margin-top: 50px;
+            margin-bottom: 50px;
+            background-color: white !important;
+            color: black !important;
+        }
         </style>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.2/html2pdf.bundle.min.js"></script>
         <script>
@@ -197,8 +210,9 @@ function generateHTMLContent({
           }
         </script>
       </head>
-      <body>
+      <div className="pdf-body">
         <div id="content" className="container">
+        <div className="pdf-wrapper">
           <div className="header">
             <img src="${logo}" alt="Company Logo" width="80">
             <h1>Remodel Estimate</h1>
@@ -279,6 +293,7 @@ function generateHTMLContent({
             </div>
             <button className="export-btn" onclick="exportToPDF()">Export to PDF</button>
           </div>
+        </div>
         </div>
       </body>
     </html>

@@ -422,7 +422,7 @@ const handleProjectSave = async () => {
             e.stopPropagation(); 
             confirmDelete(estimateId);
           }}
-          className="DT-delete-button"
+          className="DT-delete-button "
         >
           <p>Delete Estimate</p>
         </button>
@@ -802,12 +802,12 @@ const handleProjectSave = async () => {
         </div>
 
         <div className='DT-margins-container'>
-          <div className='buttons'>
-            <button onClick={toggleMargin}>
+        <div className="button-group">
+            <button className='upload-btn' onClick={toggleMargin}>
               {applyMargin ? 'Remove Margin' : 'Add Margin %'}
             </button>       
 
-            <button onClick={toggleDiscount}>
+            <button className='upload-btn' onClick={toggleDiscount}>
               {applyDiscount ? 'Remove Discount' : 'Apply Discount'}
             </button>        
 
@@ -826,7 +826,7 @@ const handleProjectSave = async () => {
               )}
             </div>
 
-            <div className='buttons'>
+            <div className='edit'>
               <button onClick={handleGeneratePreview}>Generate Estimate Preview</button>
             </div>
           </div>

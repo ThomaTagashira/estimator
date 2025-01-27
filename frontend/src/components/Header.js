@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import './components_css/Components.css';
 import ProfileButton from './ProfileButton';
 import { faUserCircle } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -40,10 +39,8 @@ const Header = ({ handleLogout, hasActiveSubscription, tokenCount, userSubscript
         <span></span>
       </div>   
 
-      {/* <div className='logo-container'> */}
-        <div>
+      <div className='logo-container'>
           <h2>FairBuild</h2>
-        </div>
 
         {(hasActiveSubscription || inTrial) && isAuthenticated && (
           <div className="subscription-info">
@@ -51,7 +48,7 @@ const Header = ({ handleLogout, hasActiveSubscription, tokenCount, userSubscript
             <div>Current Subscription: {userSubscriptionTier}</div>
           </div>
         )}
-      {/* </div> */}
+      </div>
 
       <nav className='nav' ref={dropdownRef}>       
         <ul className={`nav-link ${menuOpen ? "open" : ""}`}>

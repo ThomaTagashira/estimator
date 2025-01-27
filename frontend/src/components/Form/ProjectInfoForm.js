@@ -64,7 +64,7 @@ const ProjectInfoForm = ({
           <button type="button" className="upload-btn" onClick={handlePrevious}>
             Previous
           </button>
-          <button type="button" className="upload-btn" onClick={handleSubmit}>
+          <button type="button" className="create-new-account-btn" onClick={handleSubmit}>
             Create Estimate
           </button>
         </div>

@@ -102,6 +102,8 @@ const getStrengthColor = () => {
 		<div>
 			<h2>Create Account</h2>
 			<form onSubmit={handleSubmit}>
+			<div className='login-form-group'>
+
 				<input
 					type="text"
 					name="userEmail"
@@ -136,19 +138,20 @@ const getStrengthColor = () => {
 
 				{/* Show error if passwords don't match */}
 				{passwordError && <p style={{ color: 'red' }}>{passwordError}</p>}
-
-					<button type="submit" className="login-btn">
-						<strong>Register</strong>
+				<div className='register-btn-group'>
+					<button type='button' className='login-btn' onClick={handleCancel}>
+						Cancel			
 					</button>
 
-					<button type='button' className='create-new-account-btn' onClick={handleCancel}>
-						<strong>Cancel</strong>					
+					<button type="submit" className="create-new-account-btn">
+						Register
 					</button>
-
+				</div>
 				<hr className='divider'/>
 
 				<div style={{ display: "flex", justifyContent: "center"}}>
 					<  GoogleLoginButton googleID={googleID} handleGoogleLogin={handleGoogleLogin} />
+				</div>
 				</div>
 			</form>
 			{error && <p>{error}</p>}

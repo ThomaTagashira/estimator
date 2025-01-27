@@ -59,7 +59,10 @@ const LoginForm = ({ onSubmit, error }) => {
 
   return (
     <div>
+      <h2>Login</h2>
+
       <form onSubmit={handleSubmit}>
+        <div className='login-form-group'>
         <input
           type="text"
           placeholder="Email"
@@ -72,7 +75,7 @@ const LoginForm = ({ onSubmit, error }) => {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
-        <button type="submit" className="login-btn"><strong>Login</strong></button>
+        <button type="submit" className="login-btn">Login</button>
 
       {formError && 
         <p style={{ color: 'red' }}>{formError}</p>
@@ -91,15 +94,16 @@ const LoginForm = ({ onSubmit, error }) => {
           Forgot Password?
         </button>
       </div> 
-
+      
       <Link to="/register">
-        <button className="create-new-account-btn"><strong>Create New Account</strong></button>
+        <button className="create-new-account-btn">Create New Account</button>
       </Link>
 
       <hr className="divider" />
 
       <div style={{ display: "flex", justifyContent: "center" }}>
         <  GoogleLoginButton googleID={googleID} handleGoogleLogin={handleGoogleLogin} />
+      </div>
       </div>
       </form>
     </div>

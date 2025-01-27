@@ -50,11 +50,10 @@ const EstimatesPage = () => {
             </div>
           </form>
         </div>
-        <div className='create-btn'>
+
         <Link to="/create-estimate">
-          <button className="create-btn">Create New Estimate</button>
+          <button className="create-new-account-btn">Create New Estimate</button>
         </Link>
-        </div>
       </div>
 
       <div className="estimate-list-container">

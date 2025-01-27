@@ -68,7 +68,7 @@ const ClientInfoForm = ({
           <button type='button' className='upload-btn' onClick={handleCancel}>
             Cancel
           </button>
-          <button type="button" className="upload-btn" onClick={handleNext}>
+          <button type="button" className="create-new-account-btn" onClick={handleNext}>
             Next
           </button>
         </div>

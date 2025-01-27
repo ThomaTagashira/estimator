@@ -11,7 +11,7 @@ const UserInfoForm = ({
   
   return (
       <form>
-        <div className="DT-form-group">
+        <div className="form-group">
           <label htmlFor="firstName">
             <span className="form-icon">✉️</span> First Name
           </label>
@@ -26,7 +26,7 @@ const UserInfoForm = ({
           />
         </div>
 
-        <div className="DT-form-group">
+        <div className="form-group">
           <label htmlFor="lastName">
             <span className="form-icon">✉️</span> Last Name
           </label>
@@ -41,7 +41,7 @@ const UserInfoForm = ({
           />
         </div>
 
-        <div className="DT-form-group">
+        <div className="form-group">
           <label htmlFor="phone">
             <span className="form-icon">✉️</span> Phone Number
           </label>
@@ -55,7 +55,7 @@ const UserInfoForm = ({
           />
         </div>
 
-        <div className="DT-form-group">
+        <div className="form-group">
           <label htmlFor="zipcode">
             <span className="form-icon">✉️</span> Zipcode
           </label>
@@ -73,7 +73,7 @@ const UserInfoForm = ({
           <button type='button' className='upload-btn' onClick={handleCancel}>
             Cancel
           </button>
-          <button type="button" className="upload-btn" onClick={handleNext}>
+          <button type="button" className="create-new-account-btn" onClick={handleNext}>
             Next
           </button>
         </div>

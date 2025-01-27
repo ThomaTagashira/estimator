@@ -100,16 +100,14 @@ return (
           />
         </div>
         
-        <div className='edit'>
-          {!isUserDataEditable ? (
-          <button onClick={() => setIsUserDataEditable(true)}>Edit User Info</button>
+        <div className="button-group">
+        {!isUserDataEditable ? (
+          <button className="upload-btn" onClick={() => setIsUserDataEditable(true)}>Edit User Info</button>
           ) : (
-          <div className='edit-buttons'>
             <>  
-              <button onClick={handleUserDataCancel}>Cancel</button>
-              <button onClick={handleUserDataSave}>Save</button>
+              <button className="upload-btn" onClick={handleUserDataCancel}>Cancel</button>
+              <button className="create-new-account-btn" onClick={handleUserDataSave}>Save</button>
             </>
-          </div>
           )}
         </div>  
       </div>
@@ -200,7 +198,7 @@ return (
                   </button>
                   <button
                     type="button"
-                    className="upload-btn"
+                    className="create-new-account-btn"
                     onClick={handleBusinessSubmit}
                   >
                     Save
