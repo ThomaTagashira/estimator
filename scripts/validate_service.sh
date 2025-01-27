@@ -5,7 +5,7 @@ CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 if [ "$ENVIRONMENT" == "Dev" ] || [ "$CURRENT_BRANCH" == "Tokens" ]; then
     URL="http://localhost"
 else
-    URL="https://thomatagashira.com"
+    URL="https://fairbuildapp.com"
 fi
 
 echo "Validating service at $URL..."
