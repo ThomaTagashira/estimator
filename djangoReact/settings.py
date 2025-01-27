@@ -23,7 +23,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 REACT_APP_BUILD_PATH='frontend/build'
 
 SITE_ID=4
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',')
 # LOGGING = {
