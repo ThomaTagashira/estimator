@@ -1,67 +1,113 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { GoogleOAuthProvider } from '@react-oauth/google';
 import { getCookie } from '../utils/getCookies';
+import GoogleLoginButton from '../GoogleLoginButton';
+import { useNavigate  } from 'react-router-dom';
 
 const googleID = process.env.REACT_APP_GOOGLE_CLIENT_ID;
-const githubID = process.env.REACT_APP_GITHUB_CLIENT_ID;
+// const githubID = process.env.REACT_APP_GITHUB_CLIENT_ID;
 const redirUrl = process.env.REACT_APP_REDIR_URL;
 
 const LoginForm = ({ onSubmit, error }) => {
-    const [username, setUsername] = useState('');
-    const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [formError, setFormError] = useState('');
+  const navigate = useNavigate(); 
 
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        const csrftoken = getCookie('csrftoken');
-        onSubmit(username, password, csrftoken);
-    };
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setFormError(''); 
 
-    const handleGoogleLogin = () => {
-        const clientId = googleID;
-        const redirectUri = `${redirUrl}/google-callback`;
-        const scope = 'profile email';
-        const responseType = 'code';
+    if (!email) {
+      setFormError('Email is required.');
+      return;
+    }
 
-        const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=${responseType}&scope=${scope}`;
-        window.location.href = authUrl;
-    };
+    if (!password) {
+      setFormError('Password is required.');
+      return;
+    }
 
-    const handleGitHubLogin = () => {
-        const clientId = githubID;
-        const redirectUri = `${redirUrl}/github-callback`;
-        const authUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&scope=read:user`;
-        window.location.href = authUrl;
-    };
+    const csrftoken = getCookie('csrftoken');
+    onSubmit(email, password, csrftoken);
+  };
 
-    return (
-        <div>
-            <h2>Greetings Humans(?)</h2>
-            <form onSubmit={handleSubmit}>
-                <input
-                    type="text"
-                    placeholder="Username"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                />
-                <input
-                    type="password"
-                    placeholder="Password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                />
-                <button type="submit">Login using Username</button>
-            </form>
-            {error && <p>{error}</p>}
-            <p>Don't have an account? <Link to="/register">Register</Link></p>
+  const constructOAuthUrl = (baseUrl, clientId, redirectUri, scope, responseType = 'code') => {
+    return `${baseUrl}?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=${responseType}&scope=${scope}`;
+  };
 
-            <GoogleOAuthProvider clientId={googleID}>
-                <button onClick={handleGoogleLogin}>Login with Google</button>
-            </GoogleOAuthProvider>
-
-            <button onClick={handleGitHubLogin}>Login with GitHub</button>
-        </div>
+  const handleGoogleLogin = () => {
+    const authUrl = constructOAuthUrl(
+      'https://accounts.google.com/o/oauth2/v2/auth',
+      googleID,
+      `${redirUrl}/google-callback`,
+      'profile email'
     );
+    window.location.href = authUrl;
+  };
+
+  
+    // const handleGitHubLogin = () => {
+    //     const authUrl = constructOAuthUrl(
+    //         'https://github.com/login/oauth/authorize',
+    //         githubID,
+    //         `${redirUrl}/github-callback`,
+    //         'read:user'
+    //     );
+    //     window.location.href = authUrl;
+    // };
+
+  return (
+    <div>
+      <h2>Login</h2>
+
+      <form onSubmit={handleSubmit}>
+        <div className='login-form-group'>
+        <input
+          type="text"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+        <input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+        <button type="submit" className="login-btn">Login</button>
+
+      {formError && 
+        <p style={{ color: 'red' }}>{formError}</p>
+      }
+
+      {error && 
+        <p style={{ color: 'red' }}>{error}</p>
+      }
+
+      <div>
+        <button
+          type="button"
+          onClick={() => navigate('/password-reset')}
+          style={{ color: 'blue', textDecoration: 'underline', background: 'none', border: 'none' }}
+        >
+          Forgot Password?
+        </button>
+      </div> 
+      
+      <Link to="/register">
+        <button className="create-new-account-btn">Create New Account</button>
+      </Link>
+
+      <hr className="divider" />
+
+      <div style={{ display: "flex", justifyContent: "center" }}>
+        <  GoogleLoginButton googleID={googleID} handleGoogleLogin={handleGoogleLogin} />
+      </div>
+      </div>
+      </form>
+    </div>
+  );
 };
 
 export default LoginForm;

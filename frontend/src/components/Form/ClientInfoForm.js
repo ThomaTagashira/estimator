@@ -1,51 +1,78 @@
 import React from 'react';
+import '../components_css/Components.css';
 
 const ClientInfoForm = ({
-    clientInfo,
-    handleClientInfoChange,
-    handleNext
+  clientInfo,
+  handleClientInfoChange,
+  handleNext,
+  handleCancel,
 }) => {
 
+  
   return (
-    <div className="client-info">
-      <h3>Client Information</h3>
-      <div>
-        <input
-          type="text"
-          name="clientName"
-          value={clientInfo.clientName}
-          onChange={handleClientInfoChange}
-          placeholder="Client Name"
-        />
-      </div>
-      <div>
-        <input
-          type="text"
-          name="clientAddress"
-          value={clientInfo.clientAddress}
-          onChange={handleClientInfoChange}
-          placeholder="Client Address"
-        />
-      </div>
-      <div>
-        <input
-          type="text"
-          name="clientPhone"
-          value={clientInfo.clientPhone}
-          onChange={handleClientInfoChange}
-          placeholder="Client Phone"
-        />
-      </div>
-      <div>
-        <input
-          type="text"
-          name="clientEmail"
-          value={clientInfo.clientEmail}
-          onChange={handleClientInfoChange}
-          placeholder="Client Email"
-        />
-      </div>
-      <button onClick={handleNext}>Next</button>
+    <div>
+      <form>
+        <div className="form-group">
+          <label htmlFor="clientName">
+            <span className="form-icon">👤</span> Client Name
+          </label>
+          <input
+            id="clientName"
+            type="text"
+            name="clientName"
+            value={clientInfo.clientName}
+            onChange={handleClientInfoChange}
+            placeholder="Enter client's name"
+          />
+        </div>
+        <div className="form-group">
+          <label htmlFor="clientAddress">
+            <span className="form-icon">📍</span> Client Address
+          </label>
+          <input
+            id="clientAddress"
+            type="text"
+            name="clientAddress"
+            value={clientInfo.clientAddress}
+            onChange={handleClientInfoChange}
+            placeholder="Enter client's address"
+          />
+        </div>
+        <div className="form-group">
+          <label htmlFor="clientPhone">
+            <span className="form-icon">📞</span> Client Phone
+          </label>
+          <input
+            id="clientPhone"
+            type="text"
+            name="clientPhone"
+            value={clientInfo.clientPhone}
+            onChange={handleClientInfoChange}
+            placeholder="Enter client's phone number"
+          />
+        </div>
+        <div className="form-group">
+          <label htmlFor="clientEmail">
+            <span className="form-icon">✉️</span> Client Email
+          </label>
+          <input
+            id="clientEmail"
+            type="email"
+            name="clientEmail"
+            value={clientInfo.clientEmail}
+            onChange={handleClientInfoChange}
+            placeholder="Enter client's email"
+          />
+        </div>
+        <div className="button-group">
+          <button type='button' className='upload-btn' onClick={handleCancel}>
+            Cancel
+          </button>
+          <button type="button" className="create-new-account-btn" onClick={handleNext}>
+            Next
+          </button>
+        </div>
+      </form>
     </div>
   );
 };

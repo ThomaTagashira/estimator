@@ -17,11 +17,11 @@ class GoogleLoginViewTestCase(TestCase):
     @patch('api.views.requests.post')
     def test_google_oauth_error(self, mock_post):
         mock_post.return_value.status_code = 400
-        mock_post.return_value.json.return_value = {'error': 'invalid_grant'}
+        mock_post.return_value.json.return_value = {'error': 'Invalid token response'}
 
         response = self.client.post(self.url, data={'code': 'invalid_code'})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data['error'], 'invalid_grant')
+        self.assertEqual(response.data['error'], 'Invalid token response')
 
     @patch('api.views.requests.get')
     @patch('api.views.requests.post')

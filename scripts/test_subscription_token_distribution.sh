@@ -1,15 +1,11 @@
 # test_subscription_token_distribution.sh
 
-# Exit immediately if a command exits with a non-zero status.
 set -e
 
-# Print commands and their arguments as they are executed.
 set -x
 
-# Run Django migrations (if needed)
 python manage.py migrate
 
-# Set up test data for token distribution
 python manage.py shell << END
 from django.utils import timezone
 from datetime import timedelta
@@ -52,15 +48,12 @@ create_test_user('testuser_enterprise', 'Enterprise')
 print("All test users setup completed.")
 END
 
-# Call the token allocation function to distribute tokens
 python manage.py shell << END
 from api.tasks import allocate_monthly_tokens
 allocate_monthly_tokens()
 print("Token allocation function called.")
 END
 
-# Perform validation: Check if token distribution succeeded
-# Example validation command to count non-zero token balances:
 TOKEN_COUNT=$(python manage.py shell << END
 from django.db.models import Sum
 from api.models import UserToken
@@ -68,7 +61,6 @@ print(UserToken.objects.aggregate(Sum('token_balance'))['token_balance__sum'] or
 END
 )
 
-# Check if TOKEN_COUNT is greater than 0, indicating tokens were allocated.
 if [ "$TOKEN_COUNT" -gt 0 ]; then
     echo "Token distribution test completed successfully."
 else

@@ -1,11 +1,15 @@
-import { useState, useEffect, useRef } from 'react';
-import { exportPDF } from '../components/utils/exportPDF';
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 // import { resizeImage } from '../components/utils/logoResize';
 import axios from 'axios';
 
 const useDynamicTable = (apiUrl, estimateId, selectedString, setSelectedString ) => {
-    const [isEditing, setIsEditing] = useState(false);
-    const [inputFields, setInputFields] = useState([]);
+
+    const [inputFields, setInputFields] = React.useState(() => {
+        const storedFields = JSON.parse(localStorage.getItem('selectedStrings')) || [];
+        return Array.isArray(storedFields) ? storedFields : [];
+      });    
+    
     const [tableData, setTableData] = useState([]);
     const [editIndex, setEditIndex] = useState(null);
     const [editValues, setEditValues] = useState({ job: '', laborCost: '', materialCost: '' });
@@ -27,9 +31,21 @@ const useDynamicTable = (apiUrl, estimateId, selectedString, setSelectedString )
     const [endDate, setEndDate] = useState('');
     const [originalClientData, setOriginalClientData] = useState(null);
     const [originalProjectData, setOriginalProjectData] = useState(null);
-    // const [logo, setLogo] = useState(null);
+    const [originalValues] = useState(null);
+    const [isProjectEditable, setIsProjectEditable] = useState(false);
+    const [isClientEditable, setIsClientEditable] = useState(false);
+    const [deletingEstimate, setDeletingEstimate] = useState(null);
+    const navigate = useNavigate(); 
+
     const tableRef = useRef();
 
+    // const [logo, setLogo] = useState(null);
+
+
+    useEffect(() => {
+        console.log('inputFields updated:', inputFields);
+      }, [inputFields]);
+      
     useEffect(() => {
         const fetchEstimateData = async () => {
             if (!estimateId) return;
@@ -63,7 +79,6 @@ const useDynamicTable = (apiUrl, estimateId, selectedString, setSelectedString )
         fetchEstimateData();
     }, [estimateId, apiUrl]);
 
-    // Save the updated client and project data
     const saveEstimateData = async () => {
         const accessToken = localStorage.getItem('access_token');
 
@@ -132,34 +147,101 @@ const useDynamicTable = (apiUrl, estimateId, selectedString, setSelectedString )
         }
     };
 
-    const toggleEdit = () => setIsEditing(!isEditing);
-
     useEffect(() => {
-        if (selectedString) {
+        if (selectedString && Array.isArray(selectedString) && selectedString.length > 0) {
+          setInputFields((prevFields) => {
+            if (prevFields.includes(selectedString[0])) {
+              console.log('Duplicate query detected. Skipping:', selectedString[0]);
+              return prevFields; 
+            }
+            console.log('Adding first query from selectedString:', selectedString[0]);
+            return [...prevFields, selectedString[0]];
+          });
+          setSelectedString('');
+        } else if (typeof selectedString === 'string' && selectedString.trim() !== '') {
           setInputFields((prevFields) => [...prevFields, selectedString]);
           setSelectedString('');
+        } else {
+          console.log('Invalid or empty selectedString. Skipping:', selectedString);
         }
-      }, [selectedString, inputFields, setSelectedString]);
+      }, [selectedString, setSelectedString]);
+      
 
-    // const handleInputChange = (index, value) => {
-    //     const updatedFields = [...inputFields];
-    //     updatedFields[index] = value;
-    //     setInputFields(updatedFields);
-    // };
+    const handleInputChange = (index, value) => {
+        const updatedFields = [...inputFields];
+        updatedFields[index] = value;
+        setInputFields(updatedFields);
+    };
+
 
     const handleAddAllRows = async () => {
-        console.log('input:', inputFields);
+        console.log('Input fields before processing:', inputFields);
     
-        // Flatten the array and filter only strings, then trim them
         const newTasks = inputFields
-            .flat() // Flattens any nested arrays
-            .filter(value => typeof value === 'string' && value.trim() !== '');
+            .filter((field) => field.task && typeof field.task === 'string' && field.task.trim() !== '');
+        console.log('Filtered tasks to save:', newTasks);
     
-        const tasksToSave = newTasks.map(task => splitTaskIntoColumns(task));
-        console.log('Estimate ID:', estimateId);
-        console.log('Tasks to Save:', tasksToSave);
-        console.log(localStorage.getItem('access_token'));
-        console.log('API URL:', apiUrl);
+        const tasksToSave = newTasks.map((field) => splitTaskIntoColumns(field.task));
+        console.log('Tasks to save after splitting into columns:', tasksToSave);
+    
+        try {
+            const accessToken = localStorage.getItem('access_token');
+            const saveResponse = await fetch(`${apiUrl}/api/save-estimate-items/`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    estimate_id: estimateId,
+                    tasks: tasksToSave,
+                }),
+            });
+    
+            if (!saveResponse.ok) {
+                throw new Error('Failed to save tasks');
+            }
+    
+            const result = await saveResponse.json();
+            console.log('API response for saving tasks:', result);
+    
+            const savedTasks = result.tasks.map((task) => ({
+                task_number: task.task_number,
+                task_description: task.task_description,
+            }));
+    
+            setTableData((prevTableData) => [...prevTableData, ...savedTasks]);
+    
+            for (const field of newTasks) {
+                const { saved_response_id } = field;
+                if (saved_response_id) {
+                    await fetch(`${apiUrl}/api/delete-search-response/${estimateId}/${saved_response_id}/`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Authorization': `Bearer ${accessToken}`,
+                            'Content-Type': 'application/json',
+                        },
+                    });
+                    console.log(`Task with saved_response_id ${saved_response_id} deleted.`);
+                }
+            }
+    
+            setInputFields([]);
+    
+            console.log('Tasks added to the dynamic table and removed from SearchResponseData.');
+        } catch (error) {
+            console.error('Error adding tasks to table and removing from SearchResponseData:', error.message);
+        }
+    };
+    
+    
+
+    const handleAddCustomRow = async () => {
+        const customTask = {
+            job: 'Custom Job',
+            laborCost: 0.0,
+            materialCost: 0.0,
+        };
     
         try {
             const accessToken = localStorage.getItem('access_token');
@@ -171,41 +253,79 @@ const useDynamicTable = (apiUrl, estimateId, selectedString, setSelectedString )
                 },
                 body: JSON.stringify({
                     estimate_id: estimateId,
-                    tasks: tasksToSave
+                    tasks: [customTask], 
                 }),
             });
     
             if (!response.ok) {
-                throw new Error('Failed to save tasks');
+                throw new Error('Failed to save custom task');
             }
     
-            console.log('Tasks saved to database');
-            setTableData((prevTableData) => [...prevTableData, ...newTasks]);
-            setInputFields([]);
+            const result = await response.json();
+            console.log('API Response for Custom Task:', result);
     
+            const savedTask = result.tasks[0]; 
+            setTableData((prevTableData) => [...prevTableData, savedTask]);
         } catch (error) {
-            console.error('Error saving tasks:', error);
+            console.error('Error saving custom task:', error);
         }
-    
-        localStorage.removeItem('selectedStrings');
     };
     
+    const handleRemoveField = async (savedResponseId) => {
+        console.log("API URL:", `${apiUrl}/api/delete-search-response/${estimateId}/${savedResponseId}/`);
+        console.log("Estimate ID:", estimateId);
+        console.log("Saved Response ID:", savedResponseId);
+    
+        try {
+            const accessToken = localStorage.getItem('access_token');
 
-
-    const handleAddCustomRow = () => {
-        const customRow = 'Custom Job Labor Cost: $0.00 Material Cost: $0.00';
-        setTableData((prevTableData) => [...prevTableData, customRow]);
+            await axios.delete(`${apiUrl}/api/delete-search-response/${estimateId}/${savedResponseId}/`, {
+                headers: { Authorization: `Bearer ${accessToken}` },
+            });
+    
+            setInputFields((prevFields) =>
+                prevFields.filter((field) => field.saved_response_id !== savedResponseId)
+            );
+    
+            console.log(`Task with ID ${savedResponseId} removed.`);
+        } catch (error) {
+            console.error('Failed to remove task:', error.message);
+        }
     };
 
-    const handleRemoveField = (index) => {
-        const updatedFields = inputFields.filter((_, i) => i !== index);
-        setInputFields(updatedFields);
-        localStorage.removeItem('selectedStrings');
+    const confirmDelete = (estimateId) => {
+        setDeletingEstimate(estimateId); 
+    };
+    
+    const cancelDelete = () => {
+        setDeletingEstimate(null); 
     };
 
+    const handleDeleteEstimate = async () => {
+        if (!deletingEstimate) return; 
 
+        try {
+            const accessToken = localStorage.getItem('access_token');
+            const response = await fetch(`${apiUrl}/api/delete-estimate/${estimateId}/`, {
+                method: 'DELETE',
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json',
+                },
+            });
 
-    const handleDeleteRow = async (index) => {
+            if (response.ok) {
+                console.log('Estimate deleted successfully.');
+            } else {
+                console.error('Failed to delete estimate:', response.statusText);
+            }
+        } catch (err) {
+            console.error('Error deleting estimate:', err);
+        }
+        navigate('/');
+    };
+
+    const handleDeleteTask = async (index) => {
         try {
             const taskNumber = tableData[index].task_number;
             console.log('Task number for deletion:', taskNumber);
@@ -233,13 +353,27 @@ const useDynamicTable = (apiUrl, estimateId, selectedString, setSelectedString )
             console.error('Error deleting task:', error);
         }
     };
+    
 
+    const handleCancelClick = () => {
+        if (originalValues) {
+            setEditValues(originalValues);
+        }
+        setEditIndex(null);
+    };
 
+    const handleClientCancel = () => {
+        setIsClientEditable(false); 
+    };
 
+    const handleProjectCancel = () => {
+        setIsProjectEditable(false); 
+    };
 
     const handleEditClick = (index) => {
         setEditIndex(index);
         const { job, laborCost, materialCost } = splitTaskIntoColumns(tableData[index]);
+
         setEditValues({
             job,
             laborCost: laborCost.replace('$', ''),
@@ -247,6 +381,7 @@ const useDynamicTable = (apiUrl, estimateId, selectedString, setSelectedString )
         });
     };
 
+    
     const handleEditChange = (event) => {
         const { name, value } = event.target;
         setEditValues({ ...editValues, [name]: value });
@@ -295,9 +430,50 @@ const useDynamicTable = (apiUrl, estimateId, selectedString, setSelectedString )
         }
     };
 
+    const handleSalesTaxFocus = () => {
+        if (salesTaxPercent === 0) {
+          setSalesTaxPercent('');
+        }
+      };
 
-    const handleSalesTaxChange = (event) => setSalesTaxPercent(parseFloat(event.target.value) || 0);
-    const handleDiscountChange = (event) => setDiscountPercent(parseFloat(event.target.value) || 0);
+      const handleSalesTaxBlur = () => {
+        if (salesTaxPercent === '' || salesTaxPercent === null) {
+          setSalesTaxPercent(0);
+        }
+      };
+
+      const handleSalesTaxChange = (event) => {
+        setSalesTaxPercent(event.target.value);
+      };
+
+      const handleDiscountFocus = () => {
+        if (discountPercent === 0) {
+          setDiscountPercent('');
+        }
+      };
+
+      const handleDiscountBlur = () => {
+        if (discountPercent === '' || discountPercent === null) {
+          setDiscountPercent(0);
+        }
+      };
+
+      const handleDiscountChange = (event) => {
+        setDiscountPercent(event.target.value);
+      };
+
+      const handleMarginFocus = () => {
+        if (marginPercent === 0) {
+          setMarginPercent('');
+        }
+      };
+
+      const handleMarginBlur = () => {
+        if (marginPercent === '' || marginPercent === null) {
+            setMarginPercent(0);
+        }
+      };
+
 
     const toggleDiscount = () => setApplyDiscount(!applyDiscount);
     const toggleMargin = () => setApplyMargin(!applyMargin);
@@ -345,10 +521,12 @@ const useDynamicTable = (apiUrl, estimateId, selectedString, setSelectedString )
 
 
     const applyMarginToLaborCost = (laborCost) => {
-        const cost = parseFloat(laborCost.replace('$', '')) || 0;
+        const costString = typeof laborCost === 'string' ? laborCost : String(laborCost || 0);
+        const cost = parseFloat(costString.replace('$', '')) || 0; 
         const marginAmount = cost * (marginPercent / 100);
         return (cost + marginAmount).toFixed(2);
     };
+    
 
     const handleMarginChange = (event) => {
         const value = event.target.value;
@@ -392,50 +570,16 @@ const useDynamicTable = (apiUrl, estimateId, selectedString, setSelectedString )
         };
     };
 
-    const exportTablePDF = (data) => {
-        console.log("Data received in exportTablePDF:", data);
-        console.log(tableData)
-        
-        const totals = calculateTotals();
-
-        exportPDF({
-            // logo,
-            companyName:data.companyName,
-            address:data.address,
-            phone:data.phone,
-            estimateId,
-            clientName:data.clientName,
-            clientAddress:data.clientAddress,
-            clientPhone:data.clientPhone,
-            clientEmail:data.clientEmail,
-            projectName:data.projectName,
-            projectLocation:data.projectLocation,
-            startDate:data.startDate,
-            endDate:data.endDate,
-
-            
-            totalLaborCost: totals.totalLaborCost,
-            totalMaterialCost: totals.totalMaterialCost,
-            combinedTotal: totals.combinedTotal,
-            discountPercent,
-            totalDiscount: totals.totalDiscount,
-            salesTaxPercent,
-            totalSalesTax: totals.totalSalesTax,
-            grandTotal: totals.grandTotal,
-            tableData: tableData.map((item) => {
-                const { job, laborCost, materialCost } = splitTaskIntoColumns(item);
-                const adjustedLaborCost = applyMargin ? applyMarginToLaborCost(laborCost) : laborCost;
-                return { job, laborCost: `$${adjustedLaborCost}`, materialCost: `$${materialCost}` };
-            }),
-            applyDiscount,
-        });
-    };
 
     const { totalLaborCost, totalMaterialCost, combinedTotal, totalDiscount, totalSalesTax, grandTotal } = calculateTotals();
 
     return {
         handleDiscountChange,
+        handleDiscountBlur,
+        handleDiscountFocus,
         handleSalesTaxChange,
+        handleSalesTaxBlur,
+        handleSalesTaxFocus,
         totalLaborCost,
         totalMaterialCost,
         combinedTotal,
@@ -452,7 +596,6 @@ const useDynamicTable = (apiUrl, estimateId, selectedString, setSelectedString )
         startDate,
         endDate,
         saveEstimateData,
-        exportTablePDF,
         inputFields,
         editIndex,
         editValues,
@@ -478,22 +621,38 @@ const useDynamicTable = (apiUrl, estimateId, selectedString, setSelectedString )
         handleAddAllRows,
         handleAddCustomRow,
         handleRemoveField,
-        handleDeleteRow,
+        handleDeleteTask,
         handleEditClick,
         handleEditChange,
         handleUpdateClick,
+        handleInputChange,
         toggleDiscount,
         handleMarginChange,
+        handleMarginFocus,
+        handleMarginBlur,
         toggleMargin,
         splitTaskIntoColumns,
         applyMarginToLaborCost,
         setTableData,
         tableRef,
-        isEditing,
-        toggleEdit,
         setInputFields,
-
+        handleCancelClick,
+        handleProjectCancel,
+        isProjectEditable,
+        setIsProjectEditable,
+        handleClientCancel,
+        isClientEditable,
+        setIsClientEditable,
+        setSalesTaxPercent,
+        setDiscountPercent,
+        setMarginPercent,
+        confirmDelete,
+        cancelDelete,
+        handleDeleteEstimate,
+        deletingEstimate
     };
 };
 
 export default useDynamicTable;
+
+

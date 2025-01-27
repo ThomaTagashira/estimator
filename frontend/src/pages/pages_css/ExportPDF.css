@@ -1,0 +1,165 @@
+.pdf-body {
+  font-family: Helvetica, sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+.disclaimer-section {
+  display: block;
+}
+
+.disclaimer-section p {
+  font-style: italic;
+  font-size: 12px;
+  color: #555;
+  line-height: 1.5;
+}
+
+.estimate-info {
+  height: 100%;
+  border: 2px solid #5e5e5e;
+  padding: 10px;
+  font-size: 14px;
+  text-align: center;
+  font-weight: bold;
+  box-sizing: border-box;
+}
+
+.estimate-info-wrapper{
+  display: flex;
+  flex-direction: column;
+  padding-right: 40px;
+}
+
+.export-btn {
+  margin: 20px 0;
+  padding: 10px 20px;
+  background-color: #1d2a5d;
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.export-btn:hover {
+  background-color: #4d6ce9;
+}
+
+.export-btn-container{
+  display: flex;
+  justify-content: space-between;
+}
+
+.pdf-container {
+  width: 100%;
+  max-width: 1000px;
+  color: black !important;
+
+}
+
+.pdf-header {
+  background-color: #ffffff;
+  color: rgb(0, 0, 0);
+  padding-bottom: 5px;
+  text-align: center;
+}
+
+.pdf-info-container {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+  
+}
+
+.pdf-info-section {
+  padding-bottom: 15px;
+}
+
+.pdf-info-section h3 {
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.pdf-info-section p {
+  margin: 5px 0;
+  font-size: 12px;
+}
+
+.pdf-info-wrapper {
+  gap: 80px;
+  padding-left: 40px;
+}
+
+.pdf-header img {
+  max-height: 25px;
+  margin-right: 10px;
+}
+
+.pdf-header h1 {
+  margin: 0;
+}
+
+.pdf-table {
+  width: 100%;
+  border-collapse: collapse;
+  page-break-inside: auto;
+}
+
+.pdf-table thead{
+  background-color:#b1b1b19f;
+  display: table-header-group; 
+}
+
+.pdf-table th, td {
+  text-align: left;
+  page-break-inside: avoid; 
+  page-break-after: auto;
+}
+
+.pdf-table tr {
+  page-break-inside: avoid; 
+  page-break-after: auto;
+}
+
+.pdf-table td:nth-child(3),
+.pdf-table td:nth-child(4)  {
+  text-align: right;
+  padding-right: 25px;
+}
+
+.pdf-table-total td {
+  padding: 12px;
+  border-bottom: none;
+}
+
+.pdf-table th:nth-child(3),
+.pdf-table th:nth-child(4)  {
+  text-align: center;
+}
+
+.pdf-table-totals, .disclaimer-section {
+  page-break-inside: avoid;
+}
+
+.pdf-table-totals td:nth-child(2),
+.pdf-table-totals td:nth-child(3)  {
+  text-align: right;
+  padding-right: 25px;
+}
+
+.pdf-table-totals th:nth-child(3),
+.pdf-table-totals th:nth-child(4)  {
+  text-align: center;
+}
+
+.pdf-wrapper {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.6);
+  width: 100%;
+  max-width: 1000px;
+  margin: auto;
+  padding: 50px;
+  margin-top: 50px;
+  margin-bottom: 50px;
+  background-color: white !important;
+  color: black !important;
+}

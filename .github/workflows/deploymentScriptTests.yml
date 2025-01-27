@@ -4,11 +4,10 @@ on:
   pull_request:
     branches:
       - Dev
-      - Tokens
+
   push:
     branches:
       - Dev
-      - Tokens
 
 jobs:
   validate-appspec:
@@ -113,6 +112,16 @@ jobs:
           python manage.py makemigrations api
           python manage.py migrate api
 
+      - name: Add Django crontab jobs
+        run: |
+          echo "Adding crontab jobs"
+          python manage.py crontab add
+  
+      - name: Verify Django crontab jobs
+        run: |
+          echo "Verifying crontab jobs"
+          python manage.py crontab show
+                    
       - name: Run build_frontend script
         run: |
           if [ -f scripts/build_frontend.sh ]; then
@@ -174,12 +183,15 @@ jobs:
         run: |
             python manage.py test
 
-      - name: Set TOKEN_ALLOCATION_MAP
-        run: |
-            echo 'TOKEN_ALLOCATION_MAP={"Basic": 50, "Premium": 100, "Enterprise": 200}' >> $GITHUB_ENV
 
-      - name: Run Token Distribution Test
-        run: |
-          echo "Running token distribution test"
-          chmod +x scripts/test_subscription_token_distribution.sh
-          scripts/test_subscription_token_distribution.sh
+
+        #stripe handles token distribution
+      # - name: Set TOKEN_ALLOCATION_MAP
+      #   run: |
+      #       echo 'TOKEN_ALLOCATION_MAP={"Basic": 50, "Premium": 100, "Enterprise": 200}' >> $GITHUB_ENV
+
+      # # - name: Run Token Distribution Test
+      # #   run: |
+      # #     echo "Running token distribution test"
+      # #     chmod +x scripts/test_subscription_token_distribution.sh
+      # #     scripts/test_subscription_token_distribution.sh

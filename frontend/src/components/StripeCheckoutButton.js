@@ -115,3 +115,56 @@ export const TokenCheckoutButton = ({ apiEndpoint, tokenQty }) => {
         </button>
     );
 };
+
+
+
+
+export const CancelSubscriptionButton = ({ apiEndpoint }) => {
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+    const [successMessage, setSuccessMessage] = useState(null);
+
+    const handleClick = async () => {
+        setLoading(true);
+        setError(null);
+        setSuccessMessage(null);
+
+        try {
+            const token = localStorage.getItem('access_token');
+            if (!token) {
+                throw new Error('Access token not found. Please log in again.');
+            }
+
+            const response = await fetch(`${apiUrl}${apiEndpoint}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to cancel subscription.');
+            }
+
+            setSuccessMessage(data.message);
+        } catch (err) {
+            setError(err.message || 'An unexpected error occurred.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div>
+            {error && <p className="error-message">{error}</p>}
+            {successMessage && <p className="success-message">{successMessage}</p>}
+            <button role="link" onClick={handleClick} disabled={loading}>
+                {loading ? 'Processing...' : 'Cancel Subscription'}
+            </button>
+        </div>
+    );
+};
+

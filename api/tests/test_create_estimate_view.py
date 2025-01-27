@@ -54,3 +54,39 @@ class CreateEstimateTestCase(APITestCase):
         response = self.client.post(self.url, self.valid_payload, format='json')
 
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
+    def test_create_estimate_without_dates(self):
+        payload_without_dates = {
+            'client': {
+                'clientName': 'Jane Doe',
+                'clientAddress': '789 Pine St',
+                'clientPhone': '555-555-1234',
+                'clientEmail': 'janedoe@example.com'
+            },
+            'project': {
+                'projectName': 'Project Without Dates',
+                'projectLocation': '123 Oak St',
+                # omit startDate or endDate
+            }
+        }
+
+        response = self.client.post(self.url, payload_without_dates, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        estimate = UserEstimates.objects.get(user=self.user)
+        self.assertIsNotNone(estimate)
+
+        client_data = ClientData.objects.get(estimate=estimate)
+        self.assertEqual(client_data.client_name, 'Jane Doe')
+
+        project_data = ProjectData.objects.get(estimate=estimate)
+        self.assertEqual(project_data.project_name, 'Project Without Dates')
+        self.assertIsNone(project_data.start_date)
+        self.assertIsNone(project_data.end_date)
+
+        response_data = response.json()
+        self.assertEqual(response_data['estimate_id'], estimate.estimate_id)
+        self.assertEqual(response_data['client_name'], 'Jane Doe')
+        self.assertEqual(response_data['project_name'], 'Project Without Dates')

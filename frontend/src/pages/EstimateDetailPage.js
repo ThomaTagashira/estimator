@@ -9,6 +9,7 @@ const EstimateDetailPage = ({ apiUrl }) => {
 
   if (loading) return <p>Loading...</p>;
   if (error) return <p>{error}</p>;
+  if (!estimate) return <p>No estimate found</p>;
 
   return (
     <div>

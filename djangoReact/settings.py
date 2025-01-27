@@ -6,6 +6,8 @@ from datetime import timedelta
 
 load_dotenv()
 
+BACKEND_URI = os.getenv('BACKEND_URI')
+FRONTEND_URI = os.getenv('REDIR_URI')
 
 SECRET_KEY = os.getenv('TEST_SECRET_KEY', os.getenv('SECRET_KEY'))
 
@@ -27,20 +29,32 @@ ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',')
 # LOGGING = {
 #     'version': 1,
 #     'disable_existing_loggers': False,
-#     'handlers': {
-#         'console': {
-#             'level': 'DEBUG',
-#             'class': 'logging.StreamHandler',
+#     'formatters': {
+#         'verbose': {
+#             'format': '{levelname} {asctime} {module} {message}',
+#             'style': '{',
 #         },
+#         'simple': {
+#             'format': '{levelname} {message}',
+#             'style': '{',
+#         },
+#     },
+#     'handlers': {
 #         'file': {
 #             'level': 'DEBUG',
 #             'class': 'logging.FileHandler',
-#             'filename': 'debug.log',
+#             'filename': os.path.join(BASE_DIR, 'debug.log'),  # File to store logs
+#             'formatter': 'verbose',
+#         },
+#         'console': {
+#             'level': 'DEBUG',
+#             'class': 'logging.StreamHandler',
+#             'formatter': 'simple',
 #         },
 #     },
 #     'loggers': {
 #         'django': {
-#             'handlers': ['console', 'file'],
+#             'handlers': ['file', 'console'],  # Logs to both file and console
 #             'level': 'DEBUG',
 #             'propagate': True,
 #         },
@@ -65,15 +79,14 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'dj_rest_auth',
     'dj_rest_auth.registration',
-    'api',
+    # 'api',
     'corsheaders',
     'util',
     'rest_framework_simplejwt',
     'django_crontab',
     'rest_framework_simplejwt.token_blacklist',
     'pgvector.django',
-
-
+    'api.apps.ApiConfig',
 ]
 
 AUTHENTICATION_BACKENDS = (
@@ -100,24 +113,35 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.AllowAny',
     ],
+
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.TokenAuthentication',
         'rest_framework.authentication.SessionAuthentication',
         'rest_framework_simplejwt.authentication.JWTAuthentication',
-
     ],
+
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.UserRateThrottle',
+        'rest_framework.throttling.AnonRateThrottle',
+    ],
+
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '1000/day',  
+        'user': '5000/day', 
+        'resend_email': '5/hour', 
+        'login': '5/hour',  
+        'password_reset': '3/hour',  
+    }
 }
 
-CRONJOBS = [
-    ('0 0 * * *', 'api.tasks.allocate_monthly_tokens')  # Runs at midnight
-]
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    #'django.middleware.csrf.CsrfViewMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -175,6 +199,9 @@ AUTH_PASSWORD_VALIDATORS = [
     },
     {
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        'OPTIONS': {
+            'min_length': 8, 
+        },
     },
     {
         'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
@@ -182,8 +209,22 @@ AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
+    {
+        'NAME': 'util.validators.CustomPasswordValidator',  
+    },
 ]
+import logging
 
+logging.basicConfig(level=logging.DEBUG)
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = os.getenv('APP_EMAIL')
+EMAIL_HOST_PASSWORD = os.getenv('APP_PASS')
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_EMAIL')
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/

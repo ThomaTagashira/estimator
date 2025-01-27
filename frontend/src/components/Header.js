@@ -1,74 +1,99 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
+import ProfileButton from './ProfileButton';
+import { faUserCircle } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
-const Header = ({ handleLogout, hasActiveSubscription, tokenCount }) => {
-    return (
-        <header style={headerStyle}>
-            <div style={logoStyle}>
-                <h1>MyApp</h1>
-            </div>
-            <div style={{ fontSize: '18px', fontWeight: 'bold' }}>
-                Tokens: {tokenCount}
-            </div>
-            <nav style={navStyle}>
-                <ul style={ulStyle}>
-                    {hasActiveSubscription ? (
-                        <>
-                            <li style={liStyle}><Link to="/">Home</Link></li>
-                            <li style={liStyle}><Link to="/saved-estimates">Saved Estimates</Link></li>
-                            <li style={liStyle}><Link to="/buy-tokens">Buy Tokens</Link></li>
-                        </>
-                    ) : (
-                        <>
-                            <li style={liStyle}><Link to="/">Sign Up</Link></li>
-                        </>
-                    )}
-                    <li style={liStyle}><Link to="/about">About</Link></li>
-                </ul>
-            </nav>
-            <button style={logoutButtonStyle} onClick={handleLogout}>Logout</button>
-        </header>
-    );
-};
 
-const headerStyle = {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: '10px 20px',
-    backgroundColor: '#333',
-    color: '#fff'
-};
+const Header = ({ handleLogout, hasActiveSubscription, tokenCount, userSubscriptionTier, inTrial, apiUrl, isAuthenticated }) => {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const dropdownRef = useRef(null); 
 
-const logoStyle = {
-    fontSize: '24px',
-    fontWeight: 'bold'
-};
+  const toggleNavMenu = () => {
+    setMenuOpen(!menuOpen);
+  };
+  
+  const userProfileHeader = (
+    <FontAwesomeIcon icon={faUserCircle} className="user-icon" />
+  );
 
-const navStyle = {
-    flex: '1',
-    textAlign: 'center'
-};
+  useEffect(() => {
+    const handleClickOutsideNav = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setMenuOpen(false);
+      }
+    };
 
-const ulStyle = {
-    listStyle: 'none',
-    margin: '0',
-    padding: '0',
-    display: 'inline-flex',
-    gap: '15px'
-};
+      document.addEventListener('mousedown', handleClickOutsideNav);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutsideNav);
+    };
+  }, []);
 
-const liStyle = {
-    fontSize: '18px'
-};
+  return (
+    <header className="header">
 
-const logoutButtonStyle = {
-    padding: '5px 10px',
-    backgroundColor: '#f00',
-    color: '#fff',
-    border: 'none',
-    cursor: 'pointer',
-    fontSize: '18px'
+      <div className="nav-hamburger" onClick={toggleNavMenu}>
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>   
+
+      <div className='logo-container'>
+          <h2>FairBuild</h2>
+
+        {(hasActiveSubscription || inTrial) && isAuthenticated && (
+          <div className="subscription-info">
+            <div>Tokens: {tokenCount}</div>
+            <div>Current Subscription: {userSubscriptionTier}</div>
+          </div>
+        )}
+      </div>
+
+      <nav className='nav' ref={dropdownRef}>       
+        <ul className={`nav-link ${menuOpen ? "open" : ""}`}>
+        {(hasActiveSubscription || inTrial) && isAuthenticated ? (
+          <>
+            <li>
+              <Link to="/" className="dropdown-link" onClick={() => setMenuOpen(false)}>
+                <button>Home</button>
+              </Link>
+
+              <Link to="/buy-tokens" className="dropdown-link" onClick={() => setMenuOpen(false)}>
+                <button>Purchase Tokens</button>
+              </Link>
+            </li>
+          </>
+          ) : (
+          <>
+            <li>
+              <Link to="/">
+                  <button>Login</button>
+              </Link>
+            </li>
+            <li>
+              <Link to="/register" className='signup-btn'>
+                <button>Sign Up</button>
+              </Link>
+            </li>
+            <div className="dropdown-link" onClick={() => { handleLogout(); }}>
+            <button className="dropdown-button">Logout</button>
+        </div>
+          </>
+            )}
+          </ul>
+        </nav>
+          <div className='user-icon'>
+          {(hasActiveSubscription || inTrial) && isAuthenticated && (
+              <ProfileButton
+                header={userProfileHeader}
+                handleLogout={handleLogout}
+                apiUrl={apiUrl}
+              />
+            )}
+          </div>
+    </header>
+  );
 };
 
 export default Header;

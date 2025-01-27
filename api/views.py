@@ -1,15 +1,15 @@
 import json, requests, logging, os, stripe
 from rest_framework.views import APIView
 from util.embedding import get_embedding
-from pgvector.django import L2Distance, CosineDistance
-from rest_framework.decorators import api_view, permission_classes
+from pgvector.django import CosineDistance
+from rest_framework.decorators import api_view, permission_classes, throttle_classes, authentication_classes
 from rest_framework.response import Response
 from rest_framework import status
 from util.serializers import *
 from util.multi_query_retriever import generate_response
 from util.ai_response import get_response
 from util.image_encoder import encode_image
-from django.http import JsonResponse, HttpResponse
+from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from util.text_converter import image_to_text
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -20,12 +20,29 @@ from .models import *
 from django.utils._os import safe_join
 from django.views.static import serve as static_serve
 from datetime import timedelta
-from django.utils import timezone
 from rest_framework_simplejwt.views import TokenObtainPairView
 from django.contrib.auth.models import User
-from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.db import transaction
+from rest_framework.exceptions import ValidationError
+from django.utils.timezone import now as timezone_now
+from django.core.validators import validate_email
+from django.contrib.auth.password_validation import validate_password
+from django.core.mail import send_mail
+from django.conf import settings
+from django.db.models import Q, Max
+from django.core.paginator import Paginator
+from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
+from .throttles import ResendEmailThrottle
+from .permissions import HasActiveSubscriptionOrTrial, ProfileCompletedPermission
+from django.shortcuts import redirect
+from urllib.parse import urlencode
+from django.urls import reverse
+
+import logging
+logger = logging.getLogger(__name__)
+
+
 
 load_dotenv()
 logger = logging.getLogger('django')
@@ -38,6 +55,7 @@ GITHUB_CLIENT_ID = os.getenv('GITHUB_CLIENT_ID')
 GITHUB_SECRET_KEY = os.getenv('GITHUB_SECRET_KEY')
 
 STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET')
+stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
 
 def serve_react(request, path, document_root=None):
     path = posixpath.normpath(path).lstrip("/")
@@ -46,6 +64,13 @@ def serve_react(request, path, document_root=None):
         return static_serve(request, path, document_root)
     else:
         return static_serve(request, "index.html", document_root)
+    
+
+class ProtectedView(APIView):
+    permission_classes = [IsAuthenticated, HasActiveSubscriptionOrTrial, ProfileCompletedPermission]
+
+    def get(self, request):
+        return Response({"message": "Access granted to protected content."})
     
 
 @api_view(['GET', 'POST'])
@@ -129,7 +154,7 @@ def upload_photo(request):
 
             else:
                 logger.error('Serializer errors: %s', serializer.errors)
-                print("invalid: ", serializer.errors)
+                # print("invalid: ", serializer.errors)
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         else:
             return Response({'error': 'No photo provided'}, status=status.HTTP_400_BAD_REQUEST)
@@ -141,62 +166,453 @@ def upload_photo(request):
 
 
 @api_view(['POST'])
+@authentication_classes([])
 @permission_classes([AllowAny])
 def register_user(request):
-    serializer = UserSerializer(data=request.data)
-    if serializer.is_valid():
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    email = request.data.get('userEmail', '').lower()  
+    password = request.data.get('password')
+
+    if not email:
+        return Response({'email': 'Email is required.'}, status=status.HTTP_400_BAD_REQUEST) 
+
+    try:
+        validate_email(email)
+    except ValidationError:
+        return Response({'email': 'Invalid email format.'}, status=status.HTTP_400_BAD_REQUEST) 
+
+    if User.objects.filter(email__iexact=email).exists():
+        return Response({'email': 'Email already in use.'}, status=status.HTTP_400_BAD_REQUEST)  
+
+    try:
+        validate_password(password)
+    except ValidationError as e:
+        return Response({'password': e.messages}, status=status.HTTP_400_BAD_REQUEST)
+
+    with transaction.atomic():
+        user = User.objects.create_user(
+            username=email,
+            email=email,
+            password=password,
+            is_active=False  
+        )
+
+        send_verification_email(user)  
+
+    return Response({'message': 'Registration successful. Please verify your email to proceed.'}, status=status.HTTP_201_CREATED)
+
+
+serializer = URLSafeTimedSerializer(settings.SECRET_KEY)
+def generate_verification_token(email):
+    return serializer.dumps(email, salt='email-verify-salt')
+
+
+def send_verification_email(user):
+    token = generate_verification_token(user.email)
+    verification_url = f"{settings.BACKEND_URI}/api/verify-email/{token}"
+
+    subject = "Welcome to FairBuild!"
+    message = f"Hi {user.username},\n\nPlease verify your email by clicking the link below:\n{verification_url}\n\nThank you! This link is only valid for 15 minutes."
+    from_email = settings.DEFAULT_FROM_EMAIL
+    recipient_list = [user.email]
+
+    send_mail(subject, message, from_email, recipient_list)
+
+
+@api_view(['POST'])
+@authentication_classes([])
+@permission_classes([AllowAny])
+@throttle_classes([ResendEmailThrottle])
+def resend_verification_email(request):
+    email = request.data.get('email')
+    try:
+        user = User.objects.get(email=email)
+        if user.is_active:
+            logger.info(f"User {user.email} attempted to resend a verification email but is already verified.")
+            return Response({'message': 'Email already verified.'}, status=status.HTTP_200_OK)
+
+        send_verification_email(user)
+        logger.info(f"Verification email resent to {user.email}.")
+        return Response({'message': 'Verification email resent.'}, status=status.HTTP_200_OK)
+    except User.DoesNotExist:
+        logger.warning(f"Resend verification email attempted for non-existent email: {email}.")
+        return Response({'error': 'User not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+
+def confirm_verification_token(token, expiration=3600):
+    try:
+        email = serializer.loads(token, salt='email-verify-salt', max_age=expiration)
+        print("Decoded email:", email)  # Debugging
+
+        return email
+    except SignatureExpired:
+        print("Token expired in confirm_verification_token")
+        return None  
+    except BadSignature:
+        print("Invalid token in confirm_verification_token")
+        return None  
+
+
+@api_view(['GET'])
+@authentication_classes([])
+@permission_classes([AllowAny])
+def verify_email(request, token):
+    print(f"Received token: {token}")
+    email = confirm_verification_token(token)
+    
+    if not email:
+        print("Token invalid or expired")
+        return Response({'error': 'Invalid or expired token.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        user = User.objects.get(email=email)
+
+        if user.is_active:
+            print(f"User {user.email} is already active.")
+            return redirect(f'{REDIR_URI}/verify-email-success?email={email}')
+
+        user.is_active = True
+        user.save()
+        print(f"User {user.email} activated.")
+
+        stripe_profile, stripe_created = StripeProfile.objects.get_or_create(
+            user=user,
+            defaults={
+                'stripe_customer_id': stripe.Customer.create(email=user.email)['id']
+            }
+        )
+        if stripe_created:
+            print(f"Stripe profile created for {user.email}.")
+        else:
+            print(f"Stripe profile already exists for {user.email}.")
+
+        subscription, created = Subscription.objects.get_or_create(
+            user=user,
+            defaults={
+                'is_active': True,
+                'trial_start_date': timezone_now(),
+                'trial_end_date': timezone_now() + timedelta(days=7),
+                'in_trial': True,
+                'subscription_type': 'Trial'
+            }
+        )
+        if not created and not subscription.is_active:
+            subscription.is_active = True
+            subscription.in_trial = True
+            subscription.trial_start_date = now()
+            subscription.trial_end_date = now() + timedelta(days=7)
+            subscription.subscription_type = 'Trial'
+            subscription.save()
+            print(f"Updated subscription for {user.email}.")
+
+        refresh = RefreshToken.for_user(user)
+        access_token = str(refresh.access_token)
+
+        query_params = urlencode({
+            'email': email,
+            'access': access_token,
+            'refresh': str(refresh),
+            'has_active_subscription': str(subscription.is_active).lower(),  
+            'in_trial': str(subscription.in_trial).lower(), 
+            'trial_end_date': subscription.trial_end_date.isoformat(),
+        })
+        redirect_url = f'{REDIR_URI}/verify-email-success?{query_params}'
+
+        print(f"Redirect URL: {redirect_url}")
+
+        return redirect(redirect_url)
+
+    except User.DoesNotExist:
+        print(f"User with email {email} does not exist.")
+        return Response({'error': 'User not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+
+@api_view(['GET'])
+@authentication_classes([])
+@permission_classes([AllowAny])
+def check_verification_status(request):
+    user = request.user
+    return Response({'is_verified': user.is_active}, status=status.HTTP_200_OK)
+
+
+class PasswordResetRequestView(APIView):
+    def post(self, request):
+        serializer = PasswordResetSerializer(data=request.data)
+        if serializer.is_valid():
+            email = serializer.validated_data['email']
+            user = User.objects.filter(email=email).first()
+            if user:
+                serializer.send_reset_email(user, request)
+            return Response({'message': 'If this email is registered, a reset link has been sent.'}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class PasswordResetConfirmView(APIView):
+    def post(self, request):
+        serializer = PasswordResetConfirmSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(serializer.validated_data)
+            return Response({'message': 'Password reset successful.'}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+def generate_email_update_verification_token(old_email, new_email):
+    return serializer.dumps({'old_email': old_email, 'new_email': new_email}, salt='email-verify-salt')
+
+
+def confirm_email_update_verification_token(token, expiration=3600):
+    try:
+        data = serializer.loads(token, salt='email-verify-salt', max_age=expiration)
+        return data  
+    except SignatureExpired:
+        print("Token expired in confirm_verification_token")
+        return None
+    except BadSignature:
+        print("Invalid token in confirm_verification_token")
+        return None
+    
+
+class EmailUpdateView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        print("Request data:", request.data)  
+        serializer = EmailUpdateSerializer(data=request.data, context={'request': request})
+        if serializer.is_valid():
+            new_email = serializer.validated_data['email']
+            token = generate_email_update_verification_token(request.user.email, new_email)
+
+            verification_url = f"{settings.BACKEND_URI}/api/confirm-user-updated-email/{token}"
+            email_subject = "Confirm Your Email Address Change"
+            email_body = (
+                f"Hi {request.user.username},\n\n"
+                f"To confirm your email change to {new_email}, please click the link below:\n"
+                f"{verification_url}\n\n"
+                "If you did not request this change, please ignore this email.\n\n"
+                "Best regards,\nYourApp Team"
+            )
+            send_mail(email_subject, email_body, settings.DEFAULT_FROM_EMAIL, [new_email])
+
+            return Response({'message': 'Verification email sent. Please confirm your new email.'}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        
+class ConfirmEmailChangeView(APIView):
+    permission_classes = [AllowAny] 
+
+    def get(self, request, token):
+        data = confirm_verification_token(token)
+        print('Decoded data: ', data)
+        if not data:
+            return redirect(f"{settings.FRONTEND_URI}/verify-email-failed")
+
+        old_email = data.get('old_email')
+        new_email = data.get('new_email')
+
+        try:
+            user = User.objects.get(email=old_email)
+            user.email = new_email
+            user.username = new_email
+            user.save()
+
+            Subscription.objects.filter(user_email=user).update(user_email=new_email)
+
+            query_params = urlencode({'email': new_email, 'success': True})
+
+            return redirect(f"{settings.FRONTEND_URI}/verify-user-email-success?{query_params}")
+
+        except User.DoesNotExist:
+            return redirect(f"{settings.FRONTEND_URI}/verify-email-failed")
+
+
+class PasswordUpdateView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = PasswordUpdateSerializer(data=request.data, context={'request': request})
+        if serializer.is_valid():
+            serializer.save(request.user)
+            return Response({'message': 'Password updated successfully.'}, status=status.HTTP_200_OK)
+        print("Validation errors:", serializer.errors)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)    
+
+
+class UserInfoView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        try:
+            user_info = UserInfo.objects.get(user=request.user)
+        except UserInfo.DoesNotExist:
+            return Response({'error': 'User info not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = UserInfoSerializer(user_info)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def patch(self, request):
+        try:
+            user_info = UserInfo.objects.get(user=request.user)
+        except UserInfo.DoesNotExist:
+            return Response({'error': 'User info not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = UserInfoSerializer(user_info, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['POST', 'PATCH'])
+@permission_classes([IsAuthenticated])
+def save_user_data(request):
+    logger.debug(f"Incoming data: {request.data}")
+
+    user = request.user
+
+    user_data = request.data.get('user_data', {})
+
+    user_info, created = UserInfo.objects.get_or_create(user=user)
+
+    if request.method in ['POST', 'PATCH']:
+        serializer = UserInfoSerializer(user_info, data=user_data, partial=(request.method == 'PATCH'))
+        if serializer.is_valid():
+            serializer.save()
+            response_status = status.HTTP_201_CREATED if created else status.HTTP_200_OK
+            return Response(serializer.data, status=response_status)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+
+@authentication_classes([])
+@permission_classes([AllowAny])
+def check_trial_status(user):
+    subscription = user.subscription
+    if subscription.in_trial and subscription.trial_end_date < timezone.now():
+        subscription.in_trial = False
+        subscription.save()
 
 
 @api_view(['GET', 'POST'])
+@authentication_classes([])
 @permission_classes([AllowAny])
 def subscription_status(request):
     user = request.user
-    try:
-        subscription = Subscription.objects.get(user=user)
-        response_data = {'has_active_subscription': subscription.is_active}
-        logger.debug('Subscription True: %s', response_data)
-        return Response(response_data)
-    except Subscription.DoesNotExist:
-        response_data = {'has_active_subscription': False}
-        logger.debug('Subscription False: %s', response_data)
-        return Response(response_data)
+    response_data = {
+        'has_active_subscription': False,
+        'in_trial': False,
+        'trial_end_date': None,
+    }
 
+    if user.is_authenticated:
+        try:
+            subscription = Subscription.objects.get(user=user)
+            response_data['has_active_subscription'] = subscription.is_active
+            response_data['in_trial'] = subscription.in_trial
+            response_data['trial_end_date'] = subscription.trial_end_date
+
+            if subscription.in_trial and subscription.trial_end_date < timezone.now():
+                subscription.in_trial = False
+                subscription.save()
+                response_data['in_trial'] = False
+                logger.debug('Trial period ended for user: %s', user.username)
+
+            logger.debug('Subscription data: %s', response_data)
+        except Subscription.DoesNotExist:
+            logger.debug('No subscription found for user: %s', user.username)
+    else:
+        logger.debug('Unauthenticated access to subscription status.')
+
+    return Response(response_data)
+
+
+class UserStateView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        if not user.is_authenticated:
+            return Response({'error': 'User is not authenticated'}, status=401)
+
+        subscription = getattr(user, 'subscription', None)
+        return Response({
+            'is_active': subscription.is_active if subscription else False,
+            'in_trial': subscription.in_trial if subscription else False,
+            'profile_completed': subscription.profile_completed if subscription else False,
+            'is_account_OAuth': subscription.is_account_OAuth if subscription else False,
+        })
 
 
 class UsernameTokenObtainPairView(TokenObtainPairView):
     def post(self, request, *args, **kwargs):
-        response = super().post(request, *args, **kwargs)
-        username = request.data.get('username')
+        username = request.data.get('username', '').lower()  
+
+        if not username:
+            return Response(
+                {'detail': "Username is required."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         try:
-            user = User.objects.get(username=username)
-            active_subscription = Subscription.objects.filter(user=user, is_active=True).exists()
+            user = User.objects.get(username__iexact=username)
 
-            response.data['has_active_subscription'] = active_subscription
+            if not user.is_active:
+                return Response(
+                    {'detail': "Email not verified. Please verify your email to proceed."},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+
+            subscription = Subscription.objects.filter(user=user).first()
+            active_subscription = subscription.is_active if subscription else False
+            profile_completed = subscription.profile_completed if subscription else False
 
             if not active_subscription:
-                response.data['detail'] = "Subscription required."
-                response.status_code = status.HTTP_403_FORBIDDEN
-        except User.DoesNotExist:
-            response.data['detail'] = "Invalid credentials."
-            response.status_code = status.HTTP_401_UNAUTHORIZED
+                return Response(
+                    {'detail': "Subscription required."},
+                    status=status.HTTP_403_FORBIDDEN
+                )
 
+        except User.DoesNotExist:
+            return Response(
+                {'detail': "Invalid credentials."},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+
+        response = super().post(request, *args, **kwargs)
+        response.data['has_active_subscription'] = active_subscription
+        response.data['profile_completed'] = profile_completed
         return response
 
 
 class GoogleTokenObtainPairView(TokenObtainPairView):
     def post(self, request, *args, **kwargs):
-        response = super().post(request, *args, **kwargs)
-        user = self.get_user(request.data['username'])
-        active_subscription = Subscription.objects.filter(user=user, is_active=True).exists()
-        response.data['has_active_subscription'] = active_subscription
-        return response
+        username = request.data.get('username')
 
+        if not username:
+            return Response(
+                {'detail': 'Username is required.'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
-from django.db import transaction
+        try:
+            user = User.objects.get(username=username)
+        except User.DoesNotExist:
+            return Response(
+                {'detail': "Invalid credentials."}, 
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+
+        refresh = RefreshToken.for_user(user)
+        access = str(refresh.access_token)
+
+        subscription = Subscription.objects.filter(user=user).first()
+        active_subscription = subscription.is_active if subscription else False
+        profile_completed = subscription.profile_completed if subscription else False
+
+        return Response({
+            'refresh': str(refresh),
+            'access': access,
+            'has_active_subscription': active_subscription,
+            'profile_completed': profile_completed,
+        })
+
 
 class GoogleLoginView(APIView):
     def post(self, request, *args, **kwargs):
@@ -214,15 +630,12 @@ class GoogleLoginView(APIView):
                     'redirect_uri': f'{REDIR_URI}/google-callback',
                     'grant_type': 'authorization_code'
                 },
-                timeout=10  #timeout for network stability
+                timeout=10
             )
-            token_response.raise_for_status()  #raise an HTTPError for bad responses
+            token_response.raise_for_status()
             token_data = token_response.json()
         except requests.exceptions.RequestException as e:
             return Response({'error': f'Failed to exchange token: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-        if 'error' in token_data:
-            return Response({'error': token_data['error']}, status=status.HTTP_400_BAD_REQUEST)
 
         access_token = token_data.get('access_token')
         id_token = token_data.get('id_token')
@@ -234,30 +647,43 @@ class GoogleLoginView(APIView):
             user_info_response = requests.get(
                 'https://www.googleapis.com/oauth2/v1/userinfo',
                 params={'access_token': access_token},
-                timeout=10 
+                timeout=10
             )
             user_info_response.raise_for_status()
+            user_info = user_info_response.json()
         except requests.exceptions.RequestException as e:
             return Response({'error': f'Failed to fetch user info: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        user_info = user_info_response.json()
         email = user_info.get('email')
-
         if not email:
             return Response({'error': 'Email not provided by Google'}, status=status.HTTP_400_BAD_REQUEST)
 
-        with transaction.atomic():
-            user, created = User.objects.get_or_create(username=email, defaults={'email': email})
+        email = email.lower()  
 
-            if created:
-                existing_profile = StripeProfile.objects.filter(user=user).exists()
-                if not existing_profile:
-                    try:
-                        customer = stripe.Customer.create(email=user.email)
-                        StripeProfile.objects.create(user=user, stripe_customer_id=customer['id'])
-                    except Exception as e:
-                        user.delete()
-                        return Response({'error': f'Failed to create Stripe customer: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        with transaction.atomic():
+            user = User.objects.filter(email__iexact=email).first()
+            if not user:
+                user = User.objects.create_user(username=email, email=email, is_active=True)
+
+            if not StripeProfile.objects.filter(user=user).exists():
+                try:
+                    customer = stripe.Customer.create(email=user.email)
+                    StripeProfile.objects.create(user=user, stripe_customer_id=customer['id'])
+                except Exception as e:
+                    user.delete()  
+                    return Response({'error': f'Failed to create Stripe customer: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+            Subscription.objects.get_or_create(
+                user=user,
+                defaults={
+                    'is_account_OAuth': True,
+                    'is_active': True,
+                    'trial_start_date': timezone_now(),
+                    'trial_end_date': timezone_now() + timedelta(days=7),
+                    'in_trial': True,
+                    'subscription_type': 'Trial'
+                }
+            )
 
         try:
             refresh = RefreshToken.for_user(user)
@@ -266,48 +692,74 @@ class GoogleLoginView(APIView):
         except Exception as e:
             return Response({'error': f'Failed to generate JWT: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        has_active_subscription = Subscription.objects.filter(user=user, is_active=True).exists()
+        subscription = Subscription.objects.filter(user=user).first()
+        has_active_subscription = subscription.is_active if subscription else False
+        in_trial = subscription.in_trial if subscription else False
+        profile_completed = subscription.profile_completed if subscription else False
 
         return Response({
             'access': jwt_access_token,
             'refresh': jwt_refresh_token,
-            'has_active_subscription': has_active_subscription
+            'has_active_subscription': has_active_subscription,
+            'in_trial': in_trial,
+            'profile_completed': profile_completed,
+            'is_account_OAuth': True
         }, status=status.HTTP_200_OK)
 
 
+class CompleteProfileView(APIView):
+    permission_classes = [IsAuthenticated]
 
+    def post(self, request):
+        try:
+            subscription = Subscription.objects.get(user=request.user)
+        except Subscription.DoesNotExist:
+            return Response({'error': 'No subscription found'}, status=404)
 
+        if not subscription.profile_completed:
+            subscription.profile_completed = True
+            subscription.save()
+        else:
+            return Response({'message': 'Profile already completed'}, status=400)
 
-class GitHubLoginView(APIView):
-    def post(self, request, *args, **kwargs):
-        code = request.data.get('code')
-        if not code:
-            return Response({'error': 'Authorization code is missing'}, status=status.HTTP_400_BAD_REQUEST)
-        token_response = requests.post(
-            'https://github.com/login/oauth/access_token',
-            data={
-                'client_id': GITHUB_CLIENT_ID,
-                'client_secret': GITHUB_SECRET_KEY,
-                'code': code,
-                'redirect_uri': f'{REDIR_URI}/github-callback',
-            },
-            headers={'Accept': 'application/json'}
-        )
-
-        token_data = token_response.json()
-
-        if 'error' in token_data:
-            return Response({'error': token_data['error_description']}, status=status.HTTP_400_BAD_REQUEST)
-
-        access_token = token_data.get('access_token')
+        user_token, created = UserToken.objects.get_or_create(user=request.user)
+        user_token.token_balance += 15  # Trial gift tokens
+        user_token.save()
 
         return Response({
-            'access_token': access_token,
-        }, status=status.HTTP_200_OK)
+            'message': 'Profile completed and tokens distributed',
+            'token_balance': user_token.token_balance,
+            'last_updated': user_token.last_updated.isoformat(),
+        })
 
 
+# class GitHubLoginView(APIView):
+#     def post(self, request, *args, **kwargs):
+#         code = request.data.get('code')
+#         if not code:
+#             return Response({'error': 'Authorization code is missing'}, status=status.HTTP_400_BAD_REQUEST)
+#         token_response = requests.post(
+#             'https://github.com/login/oauth/access_token',
+#             data={
+#                 'client_id': GITHUB_CLIENT_ID,
+#                 'client_secret': GITHUB_SECRET_KEY,
+#                 'code': code,
+#                 'redirect_uri': f'{REDIR_URI}/github-callback',
+#             },
+#             headers={'Accept': 'application/json'}
+#         )
 
-stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
+#         token_data = token_response.json()
+
+#         if 'error' in token_data:
+#             return Response({'error': token_data['error_description']}, status=status.HTTP_400_BAD_REQUEST)
+
+#         access_token = token_data.get('access_token')
+
+#         return Response({
+#             'access_token': access_token,
+#         }, status=status.HTTP_200_OK)
+
 
 class CreateSubscriptionCheckoutSessionView(APIView):
 
@@ -352,6 +804,199 @@ class CreateSubscriptionCheckoutSessionView(APIView):
         except Exception as e:
             logger.error(f"Error creating checkout session: {str(e)}")
             return JsonResponse({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+def handle_checkout_session_completed(session):
+    logger.info("Handling checkout.session.completed")
+    customer_id = session.get('customer')
+    subscription_id = session.get('subscription')  
+
+    if not customer_id or not subscription_id:
+        logger.error("Customer ID or Subscription ID is None, skipping processing.")
+        return
+
+    try:
+        user = User.objects.get(profile__stripe_customer_id=customer_id)
+        logger.info(f"Processing user: {user.username}")
+
+        if user.is_staff or user.is_superuser or getattr(user.profile, 'is_exempt', False):
+            logger.info(f"Skipping processing for exempt user: {user.username}")
+            return
+
+        user.is_active = True
+        user.save()
+
+        subscription, created = Subscription.objects.get_or_create(
+            user=user,
+            defaults={'stripe_subscription_id': subscription_id}  
+        )
+        if created:
+            logger.info(f"New subscription created for user: {user.username}")
+        else:
+            logger.info(f"Existing subscription found for user: {user.username}")
+
+            if subscription.stripe_subscription_id != subscription_id:
+                subscription.stripe_subscription_id = subscription_id
+
+        subscription.is_active = True
+
+        line_items = session.get('lines', {}).get('data', [])
+        logger.info(f"Line items: {line_items}")
+
+        for item in line_items:
+            price = item.get('price', {})
+            product_id = price.get('product')
+            logger.info(f"Product ID: {product_id}")
+
+            PRODUCT_TYPE_MAP = json.loads(os.getenv('PRODUCT_TYPE_MAP', '{}'))
+            subscription_type = PRODUCT_TYPE_MAP.get(product_id)
+
+            if not subscription_type:
+                logger.error(f"Unknown Product ID: {product_id}. Skipping token allocation.")
+                continue
+
+            TOKEN_ALLOCATION_MAP = json.loads(os.getenv('TOKEN_ALLOCATION_MAP', '{}'))
+            tokens_to_add = int(TOKEN_ALLOCATION_MAP.get(subscription_type, 0))
+
+            subscription.subscription_type = subscription_type
+            subscription.token_allocation = tokens_to_add
+            subscription.cancellation_pending=False
+            subscription.last_payment_date = now()
+            subscription.auto_renew = True
+            subscription.save()
+
+            user_token, _ = UserToken.objects.get_or_create(user=user)
+            user_token.token_balance += tokens_to_add
+            user_token.save()
+
+        subscription.last_token_allocation_date = now()
+        subscription.save()
+
+        logger.info(f"Subscription set up for user: {user.username}, tokens added: {tokens_to_add}")
+
+    except User.DoesNotExist:
+        logger.error(f"No user found for customer ID: {customer_id}")
+    except Exception as e:
+        logger.error(f"Error processing checkout.session.completed: {e}")
+
+
+def handle_invoice_payment_succeeded(invoice):
+    logger.info("Handling invoice.payment_succeeded")
+    customer_id = invoice.get('customer')
+    subscription_id = invoice.get('subscription')
+    invoice_id = invoice.get('id')
+
+    if not customer_id or not subscription_id:
+        logger.error("Customer ID or Subscription ID is missing, skipping processing.")
+        return
+
+    try:
+        user = User.objects.get(profile__stripe_customer_id=customer_id)
+        subscription, created = Subscription.objects.get_or_create(user=user)
+
+        if created:
+            logger.info(f"New subscription created for user: {user.username}")
+
+        if subscription.stripe_subscription_id != subscription_id:
+            logger.info(f"Updating subscription ID for user: {user.username}")
+            subscription.stripe_subscription_id = subscription_id
+
+        if subscription.last_processed_invoice_id == invoice_id:
+            logger.info(f"Invoice {invoice_id} already processed for user: {user.username}. Skipping.")
+            return
+
+        subscription.is_active = True
+        subscription.last_payment_date = now()
+        subscription.last_processed_invoice_id = invoice_id
+
+        line_items = invoice.get('lines', {}).get('data', [])
+        for item in line_items:
+            price = item.get('price', {})
+            product_id = price.get('product')
+
+            try:
+                PRODUCT_TYPE_MAP = json.loads(os.getenv('PRODUCT_TYPE_MAP', '{}'))
+                TOKEN_ALLOCATION_MAP = json.loads(os.getenv('TOKEN_ALLOCATION_MAP', '{}'))
+            except json.JSONDecodeError as e:
+                logger.error(f"Error decoding environment variables: {e}")
+                return
+
+            subscription_type = PRODUCT_TYPE_MAP.get(product_id)
+
+            if not subscription_type:
+                logger.error(f"Unknown Product ID: {product_id}. Skipping token allocation.")
+                continue
+
+            tokens_to_add = int(TOKEN_ALLOCATION_MAP.get(subscription_type, 0))
+
+            subscription.subscription_type = subscription_type
+            subscription.token_allocation = tokens_to_add
+            subscription.cancellation_pending = False
+            subscription.auto_renew = True
+
+            user_token, _ = UserToken.objects.get_or_create(user=user)
+            user_token.token_balance += tokens_to_add
+            user_token.save()
+
+            logger.info(f"Tokens added for user: {user.username}, tokens: {tokens_to_add}")
+
+        subscription.save()
+
+    except User.DoesNotExist:
+        logger.error(f"No user found for customer ID: {customer_id}")
+    except Exception as e:
+        logger.error(f"Error processing invoice.payment_succeeded: {e}")
+
+
+class ChangeSubscriptionTierView(APIView):
+    def post(self, request):
+        try:
+            logger.info(f"Request data: {request.data}")
+            new_tier = request.data.get('newTier')
+
+            if not new_tier:
+                raise ValidationError({'error': 'Subscription tier is required'})
+
+            TOKEN_ALLOCATION_MAP = json.loads(os.getenv('TOKEN_ALLOCATION_MAP', '{}'))
+            tier_data = TOKEN_ALLOCATION_MAP.get(new_tier)
+
+            if not tier_data:
+                logger.error(f"Invalid subscription tier: {new_tier}")
+                raise ValidationError({'error': 'Invalid subscription tier'})
+
+
+            stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
+            session = stripe.checkout.Session.create(
+                customer=request.user.profile.stripe_customer_id,
+                payment_method_types=['card'],
+                line_items=[{
+                    'price': tier_data['stripe_price_id'],
+                    'quantity': 1,
+                }],
+                mode='subscription',
+                subscription_data={
+                    'proration_behavior': 'none', 
+                },
+                success_url=f'{REDIR_URI}/success',
+                cancel_url=f'{REDIR_URI}/cancel',
+            )
+
+            logger.info(f"Stripe session created: {session['id']}")
+            return Response({
+                'sessionId': session['id'],
+                'newTier': new_tier,
+                'priceId': tier_data['stripe_price_id'],
+            }, status=200)
+
+        except ValidationError as e:
+            logger.error(f"Validation error: {str(e)}")
+            return Response({'error': str(e.detail)}, status=400)
+        except stripe.error.StripeError as e:
+            logger.error(f"Stripe error: {str(e)}")
+            return Response({'error': 'An error occurred with Stripe'}, status=500)
+        except Exception as e:
+            logger.error(f"Unexpected error: {str(e)}")
+            return Response({'error': str(e)}, status=500)
 
 
 class CreateTokenCheckoutSessionView(APIView):
@@ -402,76 +1047,6 @@ class CreateTokenCheckoutSessionView(APIView):
             return Response({'error': str(e)}, status=400)
 
 
-
-
-@csrf_exempt
-@api_view(['POST'])
-def stripe_webhook(request):
-    payload = request.body.decode('utf-8')
-    #logger.info(f"Raw payload: {payload}")
-
-    try:
-        webhook_secret = os.getenv('STRIPE_WEBHOOK_SECRET')
-        event = stripe.Webhook.construct_event(
-            payload, request.META['HTTP_STRIPE_SIGNATURE'], webhook_secret
-        )
-        logger.info(f"Stripe event constructed successfully: {event}")
-
-    except json.JSONDecodeError as e:
-        logger.error(f"Failed to parse JSON payload: {e}")
-        return HttpResponse(status=400)
-    except stripe.error.SignatureVerificationError as e:
-        logger.error(f"Invalid signature: {e}")
-        return HttpResponse(status=400)
-    except Exception as e:
-        logger.error(f"Unexpected error: {e}")
-        return HttpResponse(status=400)
-
-    # logger.info(f"Event type: {event['type']} with event data: {event['data']}")
-
-    if event['type'] == 'checkout.session.completed':
-        session = event['data']['object']
-        if session.get('mode') == 'subscription':
-            handle_checkout_session_completed(session)
-        elif session.get('mode') == 'payment' and session.get('metadata', {}).get('type') == 'token_purchase':
-            handle_token_purchase(session)
-    
-    
-    # elif event['type'] == 'invoice.payment_succeeded':
-    #     handle_subscription_invoice(event['data']['object'])
-
-    else:
-        logger.info(f"Unhandled event type: {event['type']}")
-
-    return JsonResponse({'status': 'success'})
-
-
-def handle_payment_failed(event):
-    subscription_id = event['data']['object']['subscription']
-    stripe_customer_id = event['data']['object']['customer']
-
-    try:
-        subscription = Subscription.objects.get(stripe_subscription_id=subscription_id)
-        subscription.is_active = False
-        subscription.save()
-        # add notify user payment failed email logic (Email)
-    except Subscription.DoesNotExist:
-        pass
-
-
-def handle_subscription_deleted(event):
-    subscription_id = event['data']['object']['id']
-    stripe_customer_id = event['data']['object']['customer']
-
-    try:
-        subscription = Subscription.objects.get(stripe_subscription_id=subscription_id)
-        subscription.is_active = False
-        subscription.cancellation_date = timezone.now()
-        subscription.save()
-        # Add notify user subscription canceled logic here (Email)
-    except Subscription.DoesNotExist:
-        pass
-
 def handle_token_purchase(session):
     stripe_customer_id = session.get('customer')
     logger.info(f"Received customer data: {session.get('customer')}")
@@ -498,91 +1073,156 @@ def handle_token_purchase(session):
         logger.error(f"Error updating token balance for user: {e}")
 
 
-def handle_checkout_session_completed(event):
-    logger.info("handle_checkout_session_completed called")
-    logger.info(f"Full event data: {event}")
+class CancelSubscriptionView(APIView):
+    """
+    Allows a user to cancel their subscription at the end of the billing cycle.
+    """
+    permission_classes = [IsAuthenticated]
 
-    session = event['data']['object']
-    logger.info(f"Session Data: {session}")
-    customer_id = session.get('customer')
-    logger.info(f"Customer ID from session: {customer_id}")
+    def post(self, request):
+        try:
+            with transaction.atomic():
+                subscription = Subscription.objects.select_for_update().get(user=request.user, is_active=True)
 
-    if not customer_id:
-        logger.error("Customer ID is None, skipping processing.")
-        return
+                if subscription.stripe_subscription_id:
+                    stripe.Subscription.modify(
+                        subscription.stripe_subscription_id,
+                        cancel_at_period_end=True
+                    )
+
+                subscription.cancellation_pending = True
+                subscription.end_date = subscription.last_payment_date + timedelta(days=30)
+                subscription.auto_renew = False
+                subscription.save()
+
+                return JsonResponse({
+                    'message': 'Subscription cancellation requested successfully. Your access will continue until the end of the billing cycle.',
+                    'end_date': subscription.end_date,
+                })
+
+        except Subscription.DoesNotExist:
+            return JsonResponse({'error': 'No active subscription found.'}, status=404)
+
+        except stripe.error.StripeError as e:
+            return JsonResponse({'error': f'Stripe error: {str(e)}'}, status=500)
+
+        except Exception as e:
+            return JsonResponse({'error': f'An unexpected error occurred: {str(e)}'}, status=500)
+
+
+def handle_cancel_subscription(subscription_data):
+    """
+    Handles the cancellation of a subscription when notified by Stripe.
+    """
+    customer_id = subscription_data.get('customer')
+    subscription_id = subscription_data.get('id')
+
+    if not customer_id or not subscription_id:
+        logger.error("Missing customer ID or subscription ID in webhook data.")
+        return False
 
     try:
-        users = User.objects.filter(profile__stripe_customer_id=customer_id)
-        logger.info(f"Users found with customer ID {customer_id}: {users.count()}")
+        user = User.objects.get(profile__stripe_customer_id=customer_id)
+        subscription = Subscription.objects.get(user=user, stripe_subscription_id=subscription_id)
 
-        if users.count() == 1:
-            user = users.first()
-            logger.info(f"Processing user: {user.username}")
+        subscription.is_active = False
+        subscription.cancellation_pending = False
+        subscription.save()
 
-            if user.is_staff or user.is_superuser or getattr(user.profile, 'is_exempt', False):
-                logger.info(f"Skipping Stripe processing for exempt user: {user.username}")
-                return
-        else:
-            logger.error(f"Expected 1 user, found {users.count()} for customer ID: {customer_id}")
-            return
+        logger.info(f"Subscription {subscription_id} for user {user.username} has been finalized.")
+        return True
 
-        user.is_active = True
-        user.save()
-        logger.info(f"User's is_active set to True for login authorization: {user.username}")
-
-        subscription, created = Subscription.objects.get_or_create(user=user)
-        subscription.is_active = True
-        logger.info(f"Setting subscription.is_active to True for user: {user.username}")
-
-        line_items = session['lines']['data']
-
-        logger.info(f"Line items: {line_items}")
-
-        for item in line_items:
-            price = item.get('price', {})
-            logger.info(f"Price: {price}")
-            product_id = price.get('product')
-            logger.info(f"Product ID: {product_id}")
-
-        PRODUCT_TYPE_MAP = os.getenv('PRODUCT_TYPE_MAP')
-        PRODUCT_TYPE_MAP = json.loads(PRODUCT_TYPE_MAP)
-
-        logger.info(f"Product Type Map from .env: {PRODUCT_TYPE_MAP}")
-
-        if product_id:
-            if product_id in PRODUCT_TYPE_MAP:
-                subscription_type = PRODUCT_TYPE_MAP[product_id]
-                logger.info(f"Subscription type determined from product map: {subscription_type}")
-            else:
-                logger.error(f"Unknown Product ID: {product_id}. Unable to determine subscription type.")
-                subscription_type = None
-        else:
-            logger.error("Product ID is None or not found in line items.")
-            subscription_type = None
-
-        TOKEN_ALLOCATION_MAP = os.getenv('TOKEN_ALLOCATION_MAP')
-        TOKEN_ALLOCATION_MAP = json.loads(TOKEN_ALLOCATION_MAP)
-
-        logger.info(f"Token Allocation Map from .env: {TOKEN_ALLOCATION_MAP}")
-
-        if subscription_type:
-            tokens_to_add  = int(TOKEN_ALLOCATION_MAP.get(subscription_type, 0))
-            subscription.subscription_type = subscription_type
-            subscription.token_allocation = tokens_to_add
-            logger.info(f"Tokens to be Added: {tokens_to_add}")
-            subscription.save()
-            logger.info(f"Subscription saved with is_active = {subscription.is_active} for user: {user.username}")
-
-            user_token, created = UserToken.objects.get_or_create(user=user)
-            user_token.token_balance += tokens_to_add
-            user_token.save()
-            logger.info(f"Token balance updated for user: {user.username}, new balance: {user_token.token_balance}")
-        else:
-            logger.error(f"Subscription type could not be determined. User: {user.username}")
-
+    except User.DoesNotExist:
+        logger.error(f"No user found for Stripe customer ID: {customer_id}")
+    except Subscription.DoesNotExist:
+        logger.error(f"No subscription found for Stripe subscription ID: {subscription_id}")
     except Exception as e:
-        logger.error(f"Error handling subscription: {e}")
+        logger.error(f"Error finalizing subscription cancellation: {e}")
+    return False
 
+
+@csrf_exempt
+@api_view(['POST'])
+def stripe_webhook(request):
+    payload = request.body.decode('utf-8')
+    logger.info(f"Raw payload (truncated): {payload[:500]}")
+
+    webhook_secret = os.getenv('STRIPE_WEBHOOK_SECRET')
+    if not webhook_secret:
+        logger.error("Stripe webhook secret is not configured.")
+        return JsonResponse({'status': 'error', 'message': 'Server misconfiguration'}, status=500)
+
+    try:
+        event = stripe.Webhook.construct_event(
+            payload, request.META['HTTP_STRIPE_SIGNATURE'], webhook_secret
+        )
+        logger.info(f"Stripe event constructed successfully: {event['type']}")
+    except ValueError as e:
+        logger.error(f"Invalid payload: {e}")
+        return JsonResponse({'status': 'error', 'message': 'Invalid payload'}, status=400)
+    except stripe.error.SignatureVerificationError as e:
+        logger.error(f"Invalid signature: {e}")
+        return JsonResponse({'status': 'error', 'message': 'Invalid signature'}, status=400)
+    except Exception as e:
+        logger.error(f"Unexpected error: {e}")
+        return JsonResponse({'status': 'error', 'message': 'Unexpected error'}, status=400)
+
+    event_type = event['type']
+    event_data = event['data']['object']
+    logger.info(f"Processing event type: {event_type}")
+
+    if event_type == 'customer.subscription.updated':
+        handle_invoice_payment_succeeded(event_data)
+
+    elif event_type == 'customer.subscription.deleted':
+        success = handle_cancel_subscription(event_data)
+        logger.info(f"Subscription {event_data['id']} was canceled.")
+        if not success:
+            return JsonResponse({'status': 'error', 'message': 'Failed to cancel subscription'}, status=500)
+
+    elif event_type == 'checkout.session.completed':
+        session = event_data
+        if session.get('mode') == 'subscription':
+            handle_checkout_session_completed(session)
+        elif session.get('mode') == 'payment' and session.get('metadata', {}).get('type') == 'token_purchase':
+            handle_token_purchase(session)
+
+    elif event_type == 'invoice.payment_succeeded':
+        handle_invoice_payment_succeeded(event_data)
+
+    elif event_type == 'invoice.payment_failed':
+        handle_payment_failed(event_data)
+
+    else:
+        logger.warning(f"Unhandled event type received: {event_type}")
+
+    return JsonResponse({'status': 'success'})
+
+
+def handle_payment_failed(event):
+    subscription_id = event['data']['object']['subscription']
+
+    try:
+        subscription = Subscription.objects.get(stripe_subscription_id=subscription_id)
+        subscription.is_active = False
+        subscription.save()
+
+        user_email = subscription.user.email
+
+        send_mail(
+            subject="Subscription Payment Failed",
+            message=f"Greetings,\n\nWe encountered an issue processing your subscription payment. "
+                    f"Please update your payment information to continue enjoying our services.\n\n"
+                    f"Visit your account: (add URL to app here)",
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[user_email],
+            fail_silently=False,
+        )
+
+    except Subscription.DoesNotExist:
+        logger.error(f"Subscription with ID {subscription_id} does not exist.")
+    except Exception as e:
+        logger.error(f"Failed to send email: {e}")
 
 
 def user_estimate_view(request):
@@ -596,7 +1236,6 @@ def user_estimate_view(request):
     return context
 
 
-
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def create_estimate(request):
@@ -605,8 +1244,10 @@ def create_estimate(request):
 
     try:
         estimate = UserEstimates.objects.create(user=user)
+        # print(f"Created estimate with ID: {estimate.estimate_id}") 
 
         client_data = data.get('client', {})
+        # print(f"Client Data: {client_data}")  
         ClientData.objects.create(
             user=user,
             estimate=estimate,
@@ -617,6 +1258,7 @@ def create_estimate(request):
         )
 
         project_data = data.get('project', {})
+        # print(f"Project Data: {project_data}") 
         ProjectData.objects.create(
             user=user,
             estimate=estimate,
@@ -633,18 +1275,51 @@ def create_estimate(request):
         }, status=status.HTTP_201_CREATED)
 
     except Exception as e:
+        # print(f"Error creating estimate: {e}")  
         return JsonResponse({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
 
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_user_estimates(request):
     user = request.user
-    estimates = UserEstimates.objects.filter(user=user)
-    serializer = UserEstimatesSerializer(estimates, many=True)
-    return Response(serializer.data)
+    search_query = request.query_params.get('search', '')
+    limit = int(request.query_params.get('limit', 10))  
+    offset = int(request.query_params.get('offset', 0))  
 
+    estimates = UserEstimates.objects.filter(user=user)
+    if search_query:
+        estimates = estimates.filter(
+            Q(estimate_id__icontains=search_query) | Q(project_name__icontains=search_query)
+        )
+
+    estimates = estimates.order_by('estimate_id')
+
+    paginator = Paginator(estimates, limit)
+    page_number = offset // limit + 1  
+    page = paginator.get_page(page_number)
+
+    serializer = UserEstimatesSerializer(page.object_list, many=True)
+    return Response({
+        'estimates': serializer.data,
+        'total': paginator.count,  
+        'page': page_number,
+        'total_pages': paginator.num_pages,
+    })
+
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def delete_user_estimate(request, estimate_id):
+    try:
+        # print(f"Received DELETE request for estimate_id: {estimate_id}")
+        estimate = UserEstimates.objects.get(estimate_id=estimate_id, user=request.user)
+        estimate.delete()
+        # print(f"Successfully deleted estimate_id: {estimate_id}")
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    except UserEstimates.DoesNotExist:
+        # print(f"Estimate_id {estimate_id} not found or already deleted.")
+        return Response({'error': 'Estimate not found or unauthorized'}, status=status.HTTP_404_NOT_FOUND)
 
 
 @api_view(['GET'])
@@ -669,21 +1344,15 @@ def get_saved_estimate(request, estimate_id):
     except UserEstimates.DoesNotExist:
         return Response({'error': 'Estimate not found'}, status=404)
     except Exception as e:
-        print("Error:", e)
+        # print("Error:", e)
         return Response({'error': str(e)}, status=500)
 
-
-
-
-from django.db.models import Max
 
 class SaveEstimateItems(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        # print("Request received with data:", request.data)  
         estimate_id = request.data.get('estimate_id')
-        # print('estimate_id:', estimate_id)
         tasks = request.data.get('tasks')
         user = request.user
 
@@ -696,20 +1365,25 @@ class SaveEstimateItems(APIView):
             max_task_number=Max('task_number')
         )['max_task_number'] or 0
 
+        saved_tasks = []  
+
         for task in tasks:
             current_max_task_number += 1
             task_description = f"{task['job']} Labor Cost: ${task['laborCost']} Material Cost: ${task['materialCost']}"
 
-            EstimateItems.objects.create(
+            estimate_item = EstimateItems.objects.create(
                 user=user,
                 estimate=estimate,
                 task_number=current_max_task_number,
                 task_description=task_description
             )
 
-        return Response({'message': 'Tasks saved successfully'}, status=status.HTTP_201_CREATED)
+            saved_tasks.append({
+                'task_number': estimate_item.task_number,
+                'task_description': estimate_item.task_description,
+            })
 
-
+        return Response({'message': 'Tasks saved successfully', 'tasks': saved_tasks}, status=status.HTTP_201_CREATED)
 
 
 class FetchEstimateItems(APIView):
@@ -733,9 +1407,6 @@ class FetchEstimateItems(APIView):
         return Response(task_data, status=status.HTTP_200_OK)
 
 
-
-import logging
-
 class UpdateTaskView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -753,8 +1424,6 @@ class UpdateTaskView(APIView):
         return Response({'message': 'Task updated successfully'}, status=status.HTTP_200_OK)
 
 
-
-
 class DeleteTaskView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -765,8 +1434,6 @@ class DeleteTaskView(APIView):
             return Response(status=status.HTTP_204_NO_CONTENT)
         except EstimateItems.DoesNotExist:
             return Response({'error': 'Task not found'}, status=status.HTTP_404_NOT_FOUND)
-
-
 
 
 class UpdateEstimateInfoView(APIView):
@@ -801,7 +1468,6 @@ class UpdateEstimateInfoView(APIView):
         return Response({'message': 'Estimate information updated successfully'}, status=status.HTTP_200_OK)
 
 
-
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def save_business_info(request):
@@ -828,6 +1494,7 @@ def save_business_info(request):
         response_data,
         status=status.HTTP_201_CREATED if created else status.HTTP_200_OK
     )
+
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -862,3 +1529,173 @@ def deduct_tokens(request):
         return Response({'new_token_balance': user_token.token_balance})
     except UserToken.DoesNotExist:
         return Response({'error': 'Token balance not found'}, status=404)
+    
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_user_subscription_tier(request):
+    try:
+        subscription_tier = Subscription.objects.get(user=request.user)
+        return Response({'subscription tier': subscription_tier.subscription_type})
+    
+    except Subscription.DoesNotExist:
+        return Response({'error': 'User subscription not found'}, status=404)
+    
+
+class SaveSearchResponseView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, estimate_id):
+        user = request.user
+        search_responses = request.data.get('search_responses', [])
+
+        try:
+            estimate = UserEstimates.objects.get(estimate_id=estimate_id, user=user)
+        except UserEstimates.DoesNotExist:
+            return Response({'error': 'Estimate not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        current_max_saved_response_id = SearchResponseData.objects.filter(estimate=estimate).aggregate(
+            max_saved_response_id=Max('saved_response_id')
+        )['max_saved_response_id'] or 0
+
+        saved_responses = [] 
+
+        for response in search_responses:
+            current_max_saved_response_id += 1
+            task_text = response.get('task')
+
+            if not task_text:
+                return Response({'error': 'Each response must contain a "task" field'}, status=status.HTTP_400_BAD_REQUEST)
+
+            search_response = SearchResponseData.objects.create(
+                user=user,
+                estimate=estimate,
+                task=task_text,
+                saved_response_id=current_max_saved_response_id
+            )
+
+            saved_responses.append({
+                'saved_response_id': search_response.saved_response_id,
+                'task': search_response.task,
+                'created_at': search_response.created_at,
+            })
+
+        return Response({'message': 'Search responses saved successfully', 'responses': saved_responses}, status=status.HTTP_201_CREATED)
+
+
+class RetrieveSearchResponseView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, estimate_id):
+        user = request.user
+        search_responses = SearchResponseData.objects.filter(user=user, estimate_reference_id=estimate_id)
+
+        tasks = [
+            {"saved_response_id": response.saved_response_id, "task": response.task}
+            for response in search_responses
+        ]
+        
+        return Response({"tasks": tasks}, status=status.HTTP_200_OK)
+
+    
+class DeleteSearchResponseView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, estimate_id, saved_response_id):
+        try:
+            # print(f"Delete request: estimate_id={estimate_id}, saved_response_id={saved_response_id}")
+            user = request.user
+            response = SearchResponseData.objects.filter(
+                estimate_reference_id=estimate_id,
+                saved_response_id=saved_response_id,
+                user=user,
+            ).first()
+
+            if not response:
+                # print(f"No matching record found for estimate_id={estimate_id}, saved_response_id={saved_response_id}, user={user}")
+                return Response(
+                    {"error": "Task not found"}, status=status.HTTP_404_NOT_FOUND
+                )
+
+            response.delete()
+            # print(f"Task deleted: estimate_id={estimate_id}, saved_response_id={saved_response_id}")
+            return Response({"message": "Task removed"}, status=status.HTTP_200_OK)
+        except Exception as e:
+            # print(f"Error in DeleteSearchResponseView: {e}")
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def save_or_update_estimate_margin(request, estimate_id):
+    try:
+        data = request.data
+        user = request.user
+        # estimate_id = data.get('estimate_id')
+        margin_percent = data.get('margin_percent') or 0
+        tax_percent = data.get('tax_percent') or 0
+        discount_percent = data.get('discount_percent') or 0
+
+        margin_percent = int(margin_percent) if margin_percent else 0
+        tax_percent = int(tax_percent) if tax_percent else 0
+        discount_percent = int(discount_percent) if discount_percent else 0
+
+        estimate = UserEstimates.objects.filter(estimate_id=estimate_id, user=user).first()
+        if not estimate:
+            return Response({'error': 'Estimate not found.'}, status=404)
+
+        estimate_margin, created = EstimateMarginData.objects.get_or_create(
+            user=user,
+            estimate=estimate,
+            defaults={
+                'margin_percent': margin_percent,
+                'tax_percent': tax_percent,
+                'discount_percent': discount_percent,
+            }
+        )
+
+        if not created:
+            estimate_margin.margin_percent = margin_percent
+            estimate_margin.tax_percent = tax_percent
+            estimate_margin.discount_percent = discount_percent
+            estimate_margin.save()
+
+        return Response({
+            'message': 'Record saved successfully.',
+            'estimate_margin_id': estimate_margin.id,
+        }, status=200)
+
+    except ValueError as e:
+        return Response({'error': f'Invalid value: {e}'}, status=400)
+    except Exception as e:
+        return Response({'error': f'Unexpected error: {e}'}, status=500)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_estimate_margin(request, estimate_id):
+    try:
+        estimate = UserEstimates.objects.filter(estimate_id=estimate_id, user=request.user).first()
+        if not estimate:
+            # print("No matching estimate found")
+            return Response({'error': 'Estimate not found.'}, status=404)
+
+        estimate_margin = EstimateMarginData.objects.filter(estimate=estimate, user=request.user).first()
+
+        if estimate_margin:
+            data = {
+                'margin_percent': estimate_margin.margin_percent or 0,
+                'tax_percent': estimate_margin.tax_percent or 0,
+                'discount_percent': estimate_margin.discount_percent or 0,
+            }
+        else:
+            data = {
+                'margin_percent': 0,
+                'tax_percent': 0,
+                'discount_percent': 0,
+            }
+
+        return Response(data, status=200)
+
+    except Exception as e:
+        return Response({'error': str(e)}, status=400)

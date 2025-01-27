@@ -1,6 +1,6 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useCallback } from 'react';
 import refreshAccessToken from '../components/utils/refreshAccessToken';
+import validateBusinessInfo from '../components/utils/validateBusinessInfo';
 
 const useCreateBusinessInfo = (apiUrl) => {
     const [businessInfo, setBusinessInfo] = useState({
@@ -11,8 +11,9 @@ const useCreateBusinessInfo = (apiUrl) => {
     });
 
     const [error, setError] = useState(null);
+    const [isBusinessEditable, setIsBusinessEditable] = useState(false);
+    const [originalBusinessData, setOriginalBusinessData] = useState({}); 
 
-    const navigate = useNavigate();
     const accessToken = localStorage.getItem('access_token');
 
     const handleBusinessInfoChange = (e) => {
@@ -27,15 +28,18 @@ const useCreateBusinessInfo = (apiUrl) => {
             console.error('No authentication token found');
             return;
         }
+        
         const businessPayload = {
-
                 business_name: businessInfo.businessName,
                 business_address: businessInfo.businessAddress,
                 business_phone: businessInfo.businessPhone,
                 business_email: businessInfo.businessEmail,
-
         };
         console.log('businessPayload', JSON.stringify(businessPayload));
+
+        if (!validateBusinessInfo(businessInfo)) {
+          return;
+        }
 
         try {
             let response = await fetch(`${apiUrl}/api/save-business-info/`, {
@@ -72,7 +76,7 @@ const useCreateBusinessInfo = (apiUrl) => {
 
             if (response.ok) {
             console.log('Business Info created successfully', responseData);
-            navigate(`/business-info-update-success`);
+            setIsBusinessEditable(false);
         } else {
             console.error('Failed to create Business Info', responseData);
             setError('Failed to create Business Info');
@@ -83,12 +87,59 @@ const useCreateBusinessInfo = (apiUrl) => {
         }
     };
 
+    const handleBusinessCancel = () => {
+        setOriginalBusinessData(originalBusinessData);
+        setIsBusinessEditable(false);
+    };
+
+
+    const fetchBusinessData = useCallback(async () => {
+      const accessToken = localStorage.getItem('access_token');
+      try {
+        const response = await fetch(`${apiUrl}/api/get-saved-business-info/`, {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+        });
+    
+        const data = await response.json();
+        console.log('API Response:', data);
+    
+        if (data && data.length > 0) {
+          const businessData = {
+            businessName: data[0].business_name || '',
+            businessAddress: data[0].business_address || '',
+            businessPhone: data[0].business_phone || '',
+            businessEmail: data[0].business_email || '',
+          };
+    
+          setBusinessInfo(businessData);
+          setOriginalBusinessData(businessData);
+        } else {
+          console.error('Business data not found');
+          alert('No business data found. Please create it.');
+        }
+      } catch (error) {
+        console.error('Error fetching business data:', error);
+        alert('Failed to fetch business data. Please try again.');
+      }
+    }, [apiUrl]);
+    
+
         return {
             businessInfo,
             handleBusinessInfoChange,
             handleBusinessSubmit,
             setBusinessInfo,
+            isBusinessEditable,
+            setIsBusinessEditable,
             error,
+            originalBusinessData,
+            setOriginalBusinessData,
+            handleBusinessCancel,
+            fetchBusinessData,
         };
     };
 

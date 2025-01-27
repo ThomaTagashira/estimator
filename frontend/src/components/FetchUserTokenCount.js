@@ -5,22 +5,22 @@ import axios from 'axios';
 const UserTokenCount = () => {
     const [tokenCount, setTokenCount] = useState(0);
 
-    useEffect(() => {
-        const fetchTokenCount = async () => {
-            try {
-                const response = await axios.get('/api/get-user-token-count/'); 
-                setTokenCount(response.data.tokenCount);
-            } catch (error) {
-                console.error('Error fetching token count:', error);
-            }
-        };
+  useEffect(() => {
+    const fetchTokenCount = async () => {
+      try {
+        const response = await axios.get('/api/get-user-token-count/'); 
+        setTokenCount(response.data.tokenCount);
+      } catch (error) {
+        console.error('Error fetching token count:', error);
+      }
+    };
 
-        fetchTokenCount();
-    }, []);
+    fetchTokenCount();
+  }, []);
 
-    return (
-        <Header tokenCount={tokenCount} />
-    );
+  return (
+    <Header tokenCount={tokenCount} />
+  );
 };
 
 export default UserTokenCount;
