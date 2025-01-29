@@ -4,12 +4,10 @@ on:
   pull_request:
     branches:
       - Dev
-      - main
 
   push:
     branches:
       - Dev
-      - main
 
 jobs:
   validate-appspec:

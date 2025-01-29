@@ -3,7 +3,7 @@ name: Deploy to AWS Production
 on:
   push:
     branches:
-      - Main
+      - main
 
 jobs:
   deploy:
@@ -13,43 +13,19 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.12.5'
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '20.x'
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-
-      - name: Zip the deployment package
-        run: zip -r deploy-package.zip . -x ".*" -x "*/.*"
-
-      - name: Upload deployment package to S3
+      - name: SSH into EC2 and run update script
         env:
-          AWS_BUCKET_NAME: ${{ secrets.AWS_BUCKET_NAME }}
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_REGION: ${{ secrets.AWS_REGION }}
+          SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_USER: ${{ secrets.EC2_USER }}
         run: |
-          aws s3 cp deploy-package.zip s3://$AWS_BUCKET_NAME/deploy-package.zip
+          echo "Adding EC2 SSH key"
+          mkdir -p ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
 
-      - name: Deploy to AWS CodeDeploy
-        env:
-          AWS_BUCKET_NAME: ${{ secrets.AWS_BUCKET_NAME }}
-          AWS_REGION: ${{ secrets.AWS_REGION }}
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          CODEDEPLOY_APPLICATION: "ConstructionEstimator"
-          CODEDEPLOY_DEPLOYMENT_GROUP: "ConstructionEstimatorDeploy"
-        run: |
-          aws deploy create-deployment \
-            --application-name $CODEDEPLOY_APPLICATION \
-            --deployment-group-name $CODEDEPLOY_DEPLOYMENT_GROUP \
-            --s3-location bucket=$AWS_BUCKET_NAME,key=deploy-package.zip,bundleType=zip
+          echo "Connecting to EC2..."
+          ssh -o StrictHostKeyChecking=no $EC2_USER@$EC2_HOST << 'EOF'
+            cd /home/ubuntu/estimator/scripts
+            ./update_deploy.sh
+          EOF
