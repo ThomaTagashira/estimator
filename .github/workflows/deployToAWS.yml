@@ -31,3 +31,6 @@ jobs:
             cd /home/ubuntu/estimator/scripts
             ./update_deploy.sh
           EOF
+
+
+
