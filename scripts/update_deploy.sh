@@ -1,5 +1,3 @@
-#!/bin/bash
-
 set -e  
 
 echo "🔻 Stopping services..."
@@ -19,9 +17,13 @@ source venv/bin/activate
 pip install --upgrade pip
 pip install -r requirements.txt
 
+echo "🧹 Cleaning old dependencies..."
+rm -rf frontend/node_modules frontend/package-lock.json
+npm cache clean --force
+
 echo "⚙️ Checking for Node.js dependency updates..."
 cd frontend
-npm install --production
+npm install --omit=dev
 npm run build
 cd ..
 
