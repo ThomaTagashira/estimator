@@ -25,7 +25,9 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
 
           echo "Connecting to EC2..."
-          ssh -o StrictHostKeyChecking=no $EC2_USER@$EC2_HOST << 'EOF'
+          ssh -o ForwardAgent=yes -o StrictHostKeyChecking=no $EC2_USER@$EC2_HOST << 'EOF'
+            eval "$(ssh-agent -s)"
+            ssh-add ~/.ssh/id_ed25519
             cd /home/ubuntu/estimator/scripts
             ./update_deploy.sh
           EOF

@@ -6,6 +6,10 @@ echo "🔻 Stopping services..."
 sudo systemctl stop gunicorn
 sudo systemctl stop nginx
 
+echo "Starting SSH agent and adding key..."
+eval "$(ssh-agent -s)"
+ssh-add ~/.ssh/id_ed25519
+
 echo "📥 Pulling latest changes from GitHub..."
 cd /home/ubuntu/estimator
 git pull origin main
