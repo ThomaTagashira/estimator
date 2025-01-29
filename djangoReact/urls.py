@@ -1,5 +1,5 @@
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path, include, re_path
 from api.views import *
 from rest_framework_simplejwt.views import (
     TokenRefreshView,
@@ -68,7 +68,7 @@ urlpatterns = [
 
 
 
-    #re_path(r"^(?P<path>.*)$", serve_react, {"document_root": settings.REACT_APP_BUILD_PATH}),
+    re_path(r"^(?P<path>.*)$", serve_react, {"document_root": settings.REACT_APP_BUILD_PATH}),
 ]
 
  

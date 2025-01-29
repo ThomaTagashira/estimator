@@ -20,7 +20,6 @@ if not OPENAI_API_KEY:
     raise ImproperlyConfigured("The OPENAI_API_KEY setting must not be empty.")
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-REACT_APP_BUILD_PATH='frontend/build'
 
 SITE_ID=4
 DEBUG = False
@@ -239,7 +238,8 @@ USE_TZ = True
 
 
 
-STATIC_URL = 'django_static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATIC_URL = "/static/"
+STATIC_ROOT = os.path.join(BASE_DIR, "static")
+REACT_APP_BUILD_PATH = os.path.join(BASE_DIR, "frontend", "build")
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
