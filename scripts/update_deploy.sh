@@ -12,6 +12,29 @@ echo "📥 Pulling latest changes from GitHub..."
 cd /home/ubuntu/estimator
 git pull origin main
 
+# ✅ MOVE TEMPLATE DEPLOYMENT UP
+S3_BUCKET="fairbuildapp-templates"
+TEMPLATES_DIR="/var/www/fairbuildapp"
+ZIP_FILE="Template.zip"
+
+echo "📥 Downloading latest templates from S3..."
+aws s3 cp s3://$S3_BUCKET/$ZIP_FILE /home/ubuntu/$ZIP_FILE
+
+echo "📂 Ensuring template directory exists..."
+sudo rm -rf /var/www/fairbuildapp
+sudo mkdir -p $TEMPLATES_DIR
+sudo chown -R ubuntu:ubuntu $TEMPLATES_DIR
+
+echo "📦 Extracting templates..."
+unzip -o /home/ubuntu/$ZIP_FILE -d /home/ubuntu/tmp_templates
+sudo mv /home/ubuntu/tmp_templates/Template/* $TEMPLATES_DIR/
+rm -rf /home/ubuntu/tmp_templates
+
+# Clean up
+rm /home/ubuntu/$ZIP_FILE
+
+echo "✅ Templates updated successfully!"
+
 echo "⚙️ Checking for Python dependency updates..."
 source venv/bin/activate
 pip install --upgrade pip
@@ -38,25 +61,6 @@ cp -r frontend/build/static/* static/
 
 echo "⚡ Running Django migrations..."
 python manage.py migrate
-
-# ✅ S3 BUCKET INTEGRATION: DOWNLOAD & EXTRACT TEMPLATES
-S3_BUCKET="fairbuildapp-templates"
-TEMPLATES_DIR="/var/www/templates"
-ZIP_FILE="templates.zip"
-
-echo "📥 Downloading latest templates from S3..."
-aws s3 cp s3://$S3_BUCKET/$ZIP_FILE /home/ubuntu/$ZIP_FILE
-
-echo "📂 Ensuring template directory exists..."
-mkdir -p $TEMPLATES_DIR
-
-echo "📦 Extracting templates..."
-unzip -o /home/ubuntu/$ZIP_FILE -d $TEMPLATES_DIR
-
-# Clean up
-rm /home/ubuntu/$ZIP_FILE
-
-echo "✅ Templates updated successfully!"
 
 echo "🚀 Restarting services..."
 sudo systemctl restart gunicorn
