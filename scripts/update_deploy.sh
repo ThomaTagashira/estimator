@@ -12,13 +12,11 @@ echo "📥 Pulling latest changes from GitHub..."
 cd /home/ubuntu/estimator
 git pull origin main
 
-# ✅ Install Python dependencies
 echo "⚙️ Checking for Python dependency updates..."
 source venv/bin/activate
 pip install --upgrade pip
 pip install -r requirements.txt
 
-# ✅ Clean & reinstall Node.js dependencies
 echo "🧹 Cleaning old Node.js dependencies..."
 rm -rf frontend/node_modules frontend/package-lock.json
 npm cache clean --force
@@ -29,21 +27,36 @@ npm install --omit=dev
 npm run build
 cd ..
 
-# ✅ Ensure the static directory exists before collecting files
 echo "📁 Ensuring static directory exists..."
 mkdir -p static/
 
-# ✅ Run Django collectstatic FIRST
 echo "⚡ Running Django collectstatic..."
 python manage.py collectstatic --noinput
 
-# ✅ Copy React static files AFTER collectstatic
 echo "📦 Copying frontend static files..."
 cp -r frontend/build/static/* static/
 
-# ✅ Run Django migrations
 echo "⚡ Running Django migrations..."
 python manage.py migrate
+
+# ✅ S3 BUCKET INTEGRATION: DOWNLOAD & EXTRACT TEMPLATES
+S3_BUCKET="fairbuildapp-templates"
+TEMPLATES_DIR="/var/www/templates"
+ZIP_FILE="templates.zip"
+
+echo "📥 Downloading latest templates from S3..."
+aws s3 cp s3://$S3_BUCKET/$ZIP_FILE /home/ubuntu/$ZIP_FILE
+
+echo "📂 Ensuring template directory exists..."
+mkdir -p $TEMPLATES_DIR
+
+echo "📦 Extracting templates..."
+unzip -o /home/ubuntu/$ZIP_FILE -d $TEMPLATES_DIR
+
+# Clean up
+rm /home/ubuntu/$ZIP_FILE
+
+echo "✅ Templates updated successfully!"
 
 echo "🚀 Restarting services..."
 sudo systemctl restart gunicorn
