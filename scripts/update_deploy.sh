@@ -8,7 +8,6 @@ echo "Starting SSH agent and adding key..."
 eval "$(ssh-agent -s)"
 ssh-add ~/.ssh/id_ed25519
 
-echo "📥 Pulling latest changes from GitHub..."
 cd /home/ubuntu/estimator
 git pull origin main
 
@@ -50,14 +49,15 @@ npm install --omit=dev
 npm run build
 cd ..
 
+echo "Deletiong old estimator/static directory..."
+sudo rm -rf static/
+
 echo "📁 Ensuring static directory exists..."
 mkdir -p static/
 
 echo "⚡ Running Django collectstatic..."
 python manage.py collectstatic --noinput
 
-echo "📦 Copying frontend static files..."
-cp -r frontend/build/static/* static/
 
 echo "⚡ Running Django migrations..."
 python manage.py migrate
