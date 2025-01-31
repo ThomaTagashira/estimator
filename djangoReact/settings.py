@@ -78,7 +78,6 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'dj_rest_auth',
     'dj_rest_auth.registration',
-    # 'api',
     'corsheaders',
     'util',
     'rest_framework_simplejwt',
@@ -86,6 +85,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt.token_blacklist',
     'pgvector.django',
     'api.apps.ApiConfig',
+    'django_extensions',
 ]
 
 AUTHENTICATION_BACKENDS = (

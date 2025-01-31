@@ -26,11 +26,17 @@ jobs:
 
           echo "Connecting to EC2..."
           ssh -o ForwardAgent=yes -o StrictHostKeyChecking=no $EC2_USER@$EC2_HOST << 'EOF'
+            echo "🔹 Starting SSH agent..."
             eval "$(ssh-agent -s)"
             ssh-add ~/.ssh/id_ed25519
+
+            echo "🔹 Navigating to scripts directory..."
             cd /home/ubuntu/estimator/scripts
-            ./update_deploy.sh
+
+            echo "🔹 Setting execute permissions on update_deploy.sh..."
+            chmod +x update_deploy.sh  # ✅ Adds execute permission
+
+            echo "🚀 Running deployment script..."
+            ./update_deploy.sh  # ✅ Runs the script
+
           EOF
-
-
-

@@ -8,6 +8,8 @@ from rest_framework_simplejwt.views import (
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path("api/", include("api.urls")),  # ✅ Ensure this exists!
+
     path('api/index/', index, name='index'),
     path('api/scope/', handle_scope, name='scope'),
     path('api/photo/', upload_photo, name='photo_submission'),
@@ -62,13 +64,14 @@ urlpatterns = [
     path('api/confirm-user-updated-email/<str:token>/', ConfirmEmailChangeView.as_view(), name='confirm-user-updated-email'),
 
 
-
-
-
-
+ #   re_path(r"^(?!api/|admin/|dj-rest-auth/|auth/|accounts/|stripe_webhook/).*$", serve_react, {"document_root": settings.REACT_APP_BUILD_PATH}),
 
 
     re_path(r"^(?P<path>.*)$", serve_react, {"document_root": settings.REACT_APP_BUILD_PATH}),
+
+
+
+
 ]
 
  
