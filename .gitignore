@@ -34,3 +34,9 @@ ENV/
 Dockerfile
 
 *.ipynb
+
+#etc
+aws/
+awscliv2.zip
+static/
+static_backup/
