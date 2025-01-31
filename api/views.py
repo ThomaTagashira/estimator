@@ -58,13 +58,17 @@ STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET')
 stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
 
 def serve_react(request, path, document_root=None):
+    if path.startswith("api/"):
+        return HttpResponseNotFound("API route not found")  
+
     path = posixpath.normpath(path).lstrip("/")
     fullpath = Path(safe_join(document_root, path))
+
     if fullpath.is_file():
         return static_serve(request, path, document_root)
     else:
         return static_serve(request, "index.html", document_root)
-    
+
 
 class ProtectedView(APIView):
     permission_classes = [IsAuthenticated, HasActiveSubscriptionOrTrial, ProfileCompletedPermission]
@@ -169,37 +173,35 @@ def upload_photo(request):
 @authentication_classes([])
 @permission_classes([AllowAny])
 def register_user(request):
-    email = request.data.get('userEmail', '').lower()  
-    password = request.data.get('password')
-
-    if not email:
-        return Response({'email': 'Email is required.'}, status=status.HTTP_400_BAD_REQUEST) 
-
     try:
+        email = request.data.get('userEmail', '').lower()  
+        password = request.data.get('password')
+
+        if not email:
+            return Response({'email': 'Email is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
         validate_email(email)
-    except ValidationError:
-        return Response({'email': 'Invalid email format.'}, status=status.HTTP_400_BAD_REQUEST) 
 
-    if User.objects.filter(email__iexact=email).exists():
-        return Response({'email': 'Email already in use.'}, status=status.HTTP_400_BAD_REQUEST)  
+        if User.objects.filter(email__iexact=email).exists():
+            return Response({'email': 'Email already in use.'}, status=status.HTTP_400_BAD_REQUEST)
 
-    try:
         validate_password(password)
-    except ValidationError as e:
-        return Response({'password': e.messages}, status=status.HTTP_400_BAD_REQUEST)
 
-    with transaction.atomic():
-        user = User.objects.create_user(
-            username=email,
-            email=email,
-            password=password,
-            is_active=False  
-        )
+        with transaction.atomic():
+            user = User.objects.create_user(
+                username=email,
+                email=email,
+                password=password,
+                is_active=False  
+            )
 
-        send_verification_email(user)  
+            send_verification_email(user)  # ✅ If this fails, it will log an error
 
-    return Response({'message': 'Registration successful. Please verify your email to proceed.'}, status=status.HTTP_201_CREATED)
+        return Response({'message': 'Registration successful. Please verify your email to proceed.'}, status=status.HTTP_201_CREATED)
 
+    except Exception as e:
+        logger.error(f"🔥 ERROR in register_user: {str(e)}", exc_info=True)  # ✅ Full stack trace
+        return Response({'error': 'Something went wrong on our end.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 serializer = URLSafeTimedSerializer(settings.SECRET_KEY)
 def generate_verification_token(email):
@@ -256,11 +258,11 @@ def confirm_verification_token(token, expiration=3600):
 @authentication_classes([])
 @permission_classes([AllowAny])
 def verify_email(request, token):
-    print(f"Received token: {token}")
+    logger.debug(f"Received token: {token}")  # ✅ Log the token
     email = confirm_verification_token(token)
     
     if not email:
-        print("Token invalid or expired")
+        logger.warning("Token invalid or expired")
         return Response({'error': 'Invalid or expired token.'}, status=status.HTTP_400_BAD_REQUEST)
 
     try:
@@ -317,7 +319,7 @@ def verify_email(request, token):
         })
         redirect_url = f'{REDIR_URI}/verify-email-success?{query_params}'
 
-        print(f"Redirect URL: {redirect_url}")
+        logger.info(f"Final Redirect URL: {redirect_url}")
 
         return redirect(redirect_url)
 
