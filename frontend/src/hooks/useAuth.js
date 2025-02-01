@@ -16,6 +16,8 @@ const useAuth = ({ setIsAuthenticated, setHasActiveSubscription, setInTrial, set
         },
       });
 
+      console.log("🟢 User state response:", response.data);
+
       const { is_active, in_trial, profile_completed, is_account_OAuth } = response.data;
 
       setIsAuthenticated(profile_completed);
@@ -80,44 +82,62 @@ const useAuth = ({ setIsAuthenticated, setHasActiveSubscription, setInTrial, set
     }
   }, [fetchUserState, setIsAuthenticated, setAuthIsLoading, navigate]);
 
-  const login = async (username, password, csrftoken) => {
-    try {
-      const response = await axios.post(
-        `${apiUrl}/api/userToken/`,
-        { username, password },
-        { headers: { 'X-CSRFToken': csrftoken } }
-      );
+const login = async (username, password) => {
+  try {
+    console.log("🟢 Attempting login...");
 
-      const { access, refresh, has_active_subscription, profile_completed } = response.data;
+    const csrftoken = document.cookie
+      .split("; ")
+      .find((row) => row.startsWith("csrftoken="))
+      ?.split("=")[1];
 
-      localStorage.setItem('access_token', access);
-      localStorage.setItem('refresh_token', refresh);
-      axios.defaults.headers.common['Authorization'] = `Bearer ${access}`;
-
-      setIsAuthenticated(profile_completed);
-      setHasActiveSubscription(has_active_subscription);
-
-      if (has_active_subscription) {
-        if (profile_completed) {
-          navigate('/');
-        } else {
-          navigate('/complete-login');
-        }
-      } else {
-        navigate('/subscribe');
+    const response = await axios.post(
+      `${apiUrl}/api/userToken/`,
+      { username, password },
+      {
+        headers: {
+          "X-CSRFToken": csrftoken,
+          "Content-Type": "application/json",
+        },
+        withCredentials: true, // ✅ Important for CSRF
       }
+    );
 
-      await fetchUserState();
-    } catch (err) {
-      if (err.response?.status === 401) {
-        setError('Invalid credentials. Please try again.');
-      } else if (err.response?.status === 403) {
-        setError('Subscription required. Please subscribe.');
-      } else {
-        setError('An unexpected error occurred. Please try again later.');
-      }
+    console.log("🟢 Login response:", response.data);
+
+    const { access, refresh, has_active_subscription, profile_completed } = response.data;
+
+    localStorage.setItem("access_token", access);
+    localStorage.setItem("refresh_token", refresh);
+    axios.defaults.headers.common["Authorization"] = `Bearer ${access}`;
+
+    setIsAuthenticated(profile_completed);
+    setHasActiveSubscription(has_active_subscription);
+
+    console.log("🟢 Checking fetchUserState type:", typeof fetchUserState);
+
+    if (typeof fetchUserState !== "function") {
+      console.error("❌ ERROR: fetchUserState is not a function!");
+      return; // Stop execution here to prevent crashing.
     }
-  };
+
+    console.log("🟢 Fetching user state after login...");
+    await fetchUserState();
+
+    console.log("🟢 Navigation will happen next...");
+    setTimeout(() => navigate(has_active_subscription ? (profile_completed ? "/app" : "/complete-login") : "/subscribe"), 100);
+  } catch (err) {
+    console.error("❌ Login error:", err.response?.data || err.message);
+
+    if (err.response?.status === 401) {
+      setError("Invalid credentials. Please try again.");
+    } else if (err.response?.status === 403) {
+      setError("Subscription required. Please subscribe.");
+    } else {
+      setError("An unexpected error occurred. Please try again later.");
+    }
+  }
+};
 
   const loginWithGoogle = async (code) => {
     try {

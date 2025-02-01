@@ -38,6 +38,7 @@ from .permissions import HasActiveSubscriptionOrTrial, ProfileCompletedPermissio
 from django.shortcuts import redirect
 from urllib.parse import urlencode
 from django.urls import reverse
+from django.http import HttpResponseNotFound
 
 import logging
 logger = logging.getLogger(__name__)
@@ -544,7 +545,7 @@ class UserStateView(APIView):
 
 class UsernameTokenObtainPairView(TokenObtainPairView):
     def post(self, request, *args, **kwargs):
-        username = request.data.get('username', '').lower()  
+        username = request.data.get('username', '').lower()
 
         if not username:
             return Response(
