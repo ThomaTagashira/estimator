@@ -25,8 +25,6 @@ const useAuth = ({ setIsAuthenticated, setHasActiveSubscription, setInTrial, set
       setInTrial(in_trial);
       setIsAccountOAuth(is_account_OAuth);
 
-      // console.log('is_account_OAuth: ', is_account_OAuth)
-
       localStorage.setItem('isAuthenticated', profile_completed);
       localStorage.setItem('hasActiveSubscription', is_active);
       localStorage.setItem('inTrial', in_trial);
@@ -105,7 +103,7 @@ const login = async (username, password) => {
 
     console.log("🟢 Login response:", response.data);
 
-    const { access, refresh, has_active_subscription, profile_completed } = response.data;
+    const { access, refresh, has_active_subscription, profile_completed, in_trial } = response.data;
 
     localStorage.setItem("access_token", access);
     localStorage.setItem("refresh_token", refresh);
@@ -113,19 +111,11 @@ const login = async (username, password) => {
 
     setIsAuthenticated(profile_completed);
     setHasActiveSubscription(has_active_subscription);
+    setInTrial(in_trial);
 
-    console.log("🟢 Checking fetchUserState type:", typeof fetchUserState);
-
-    if (typeof fetchUserState !== "function") {
-      console.error("❌ ERROR: fetchUserState is not a function!");
-      return; // Stop execution here to prevent crashing.
-    }
-
-    console.log("🟢 Fetching user state after login...");
-    await fetchUserState();
 
     console.log("🟢 Navigation will happen next...");
-    setTimeout(() => navigate(has_active_subscription ? (profile_completed ? "/app" : "/complete-login") : "/subscribe"), 100);
+    setTimeout(() => navigate(has_active_subscription ? (profile_completed ? "/" : "/complete-login") : "/subscribe"), 100);
   } catch (err) {
     console.error("❌ Login error:", err.response?.data || err.message);
 
@@ -138,6 +128,7 @@ const login = async (username, password) => {
     }
   }
 };
+
 
   const loginWithGoogle = async (code) => {
     try {

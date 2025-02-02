@@ -565,6 +565,7 @@ class UsernameTokenObtainPairView(TokenObtainPairView):
             subscription = Subscription.objects.filter(user=user).first()
             active_subscription = subscription.is_active if subscription else False
             profile_completed = subscription.profile_completed if subscription else False
+            in_trial = subscription.in_trial if subscription else False
 
             if not active_subscription:
                 return Response(
@@ -581,6 +582,8 @@ class UsernameTokenObtainPairView(TokenObtainPairView):
         response = super().post(request, *args, **kwargs)
         response.data['has_active_subscription'] = active_subscription
         response.data['profile_completed'] = profile_completed
+        response.data['in_trial'] = in_trial
+
         return response
 
 
