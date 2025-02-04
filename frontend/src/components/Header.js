@@ -40,7 +40,9 @@ const Header = ({ handleLogout, hasActiveSubscription, tokenCount, userSubscript
       </div>   
 
       <div className='logo-container'>
-          <h2>FairBuild</h2>
+        <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
+            <h2>FairBuild</h2>
+        </Link>
 
         {(hasActiveSubscription || inTrial) && isAuthenticated && (
           <div className="subscription-info">
