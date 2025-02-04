@@ -422,7 +422,8 @@ const handleProjectSave = async () => {
             e.stopPropagation(); 
             confirmDelete(estimateId);
           }}
-          className="DT-delete-button "
+          className="DT-delete-button"
+          disabled={isLoading} 
         >
           <p>Delete Estimate</p>
         </button>
@@ -462,7 +463,7 @@ const handleProjectSave = async () => {
                   <td>{index + 1}</td> 
                   <td>{field.task}</td> 
                   <td>
-                    <button onClick={() => handleRemoveField(field.saved_response_id)} style={{float: 'right'}}>
+                    <button onClick={() => handleRemoveField(field.saved_response_id)} style={{float: 'right'}} disabled={isLoading}>
                       <FontAwesomeIcon icon={faTrash} style={{ color: 'red', cursor: 'pointer'}} />
                     </button>
                   </td>

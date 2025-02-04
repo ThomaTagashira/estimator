@@ -56,7 +56,7 @@ const Header = ({ handleLogout, hasActiveSubscription, tokenCount, userSubscript
           <>
             <li>
               <Link to="/" className="dropdown-link" onClick={() => setMenuOpen(false)}>
-                <button>Home</button>
+                <button>Estimates</button>
               </Link>
 
               <Link to="/buy-tokens" className="dropdown-link" onClick={() => setMenuOpen(false)}>
@@ -76,9 +76,6 @@ const Header = ({ handleLogout, hasActiveSubscription, tokenCount, userSubscript
                 <button>Sign Up</button>
               </Link>
             </li>
-            <div className="dropdown-link" onClick={() => { handleLogout(); }}>
-            <button className="dropdown-button">Logout</button>
-        </div>
           </>
             )}
           </ul>

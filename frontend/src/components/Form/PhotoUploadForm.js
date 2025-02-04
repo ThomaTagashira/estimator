@@ -127,8 +127,10 @@ const PhotoUploadForm = ({
                 onChange={(e) => handleLineChange(key, e.target.value)}
               />
 
-              <button onClick={() => handleRemoveLine(key)} >
-                <FontAwesomeIcon icon={faTrash} style={{ color: 'red', cursor: 'pointer' }} />
+              <button 
+                onClick={() => handleRemoveLine(key)} 
+                disabled={isLoading} >
+                  <FontAwesomeIcon icon={faTrash} style={{ color: 'red', cursor: 'pointer' }} />
               </button>
             </li>
           ))}

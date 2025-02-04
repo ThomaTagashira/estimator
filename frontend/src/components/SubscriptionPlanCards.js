@@ -10,8 +10,8 @@ const SubscrptionPlanCards = ({ handleSelectNewTier, tier }) => {
           <p className="price">$24.99/month</p>
           <ul>
               <li>Receive 50 tokens at the beginning of each billing cycle</li>
-              <li>Add Things Here</li>
-              <li>Add Things Here</li>
+              {/* <li>Add Things Here</li> */}
+              {/* <li>Add Things Here</li> */}
           </ul>
           <div className='edit'>
             <button onClick={() => handleSelectNewTier('Basic')}>
@@ -26,8 +26,8 @@ const SubscrptionPlanCards = ({ handleSelectNewTier, tier }) => {
           <p className="price">$39.99/month</p>
           <ul>
               <li>Receive 120 tokens at the beginning of each billing cycle</li>
-              <li>Add Things Here</li>
-              <li>Add Things Here</li>
+              {/* <li>Add Things Here</li> */}
+              {/* <li>Add Things Here</li> */}
               
           </ul>
           <div className='edit'>
@@ -43,8 +43,8 @@ const SubscrptionPlanCards = ({ handleSelectNewTier, tier }) => {
           <p className="price">$59.99/month</p>
           <ul>
               <li>Receive 250 tokens at the beginning of each billing cycle</li>
-              <li>Add Things Here</li>
-              <li>Add Things Here</li>
+              {/* <li>Add Things Here</li> */}
+              {/* <li>Add Things Here</li> */}
           </ul>
           <div className='edit'>
             <button onClick={() => handleSelectNewTier('Enterprise')}>

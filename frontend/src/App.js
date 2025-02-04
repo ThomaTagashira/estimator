@@ -174,7 +174,7 @@ useEffect(() => {
     setHasActiveSubscription(false);
     setInTrial(false);
 
-    redirect('/login');
+    redirect('https://fairbuildapp.com/home.html');
   };
 
   
