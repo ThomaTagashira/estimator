@@ -20,6 +20,10 @@ TEMPLATES_DIR="/var/www/fairbuildapp/public"
 echo "📂 Clearing old landing page files..."
 sudo rm -rf $TEMPLATES_DIR/*
 
+echo "🔑 Setting correct permissions for template directory..."
+sudo chown -R ubuntu:www-data $TEMPLATES_DIR
+sudo chmod -R 775 $TEMPLATES_DIR
+
 echo "📦 Copying landing page templates from repo..."
 cp -R /home/ubuntu/estimator/template/landingPage/* $TEMPLATES_DIR/
 
