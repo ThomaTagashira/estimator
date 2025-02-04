@@ -13,24 +13,15 @@ cd /home/ubuntu/estimator
 echo "📦 Pulling latest code from Git..."
 git pull origin main
 
-# ✅ MOVE TEMPLATE DEPLOYMENT UP
-S3_BUCKET="fairbuildapp-templates"
-TEMPLATES_DIR="/var/www/fairbuildapp/public"
-ZIP_FILE="Template.zip"
-
-echo "📥 Downloading latest templates from S3..."
-aws s3 cp s3://$S3_BUCKET/$ZIP_FILE /home/ubuntu/$ZIP_FILE
-
 echo "📂 Ensuring template directory exists..."
-sudo rm -rf /var/www/fairbuildapp
-sudo mkdir -p $TEMPLATES_DIR
-sudo chown -R ubuntu:ubuntu $TEMPLATES_DIR
 
-echo "📦 Extracting templates..."
-unzip -o /home/ubuntu/$ZIP_FILE -d /home/ubuntu/tmp_templates
-sudo mv /home/ubuntu/tmp_templates/Template/* $TEMPLATES_DIR/
-rm -rf /home/ubuntu/tmp_templates
-rm /home/ubuntu/$ZIP_FILE
+TEMPLATES_DIR="/var/www/fairbuildapp/public"
+
+echo "📂 Clearing old landing page files..."
+sudo rm -rf $TEMPLATES_DIR/*
+
+echo "📦 Copying landing page templates from repo..."
+cp -R /home/ubuntu/estimator/template/landingPage/* $TEMPLATES_DIR/
 
 echo "✅ Templates updated successfully!"
 

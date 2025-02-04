@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, createContext } from 'react';
 import axios from 'axios';
-import { Route, Routes, redirect } from 'react-router-dom';
+import { Route, Routes } from 'react-router-dom';
 import AuthenticatedRoute from './components/Auth/AuthenticatedRoute';
 import PasswordResetRequestForm from './components/Form/PasswordResetRequestForm';
 import useAuth from './hooks/useAuth';
@@ -174,8 +174,9 @@ useEffect(() => {
     setHasActiveSubscription(false);
     setInTrial(false);
 
-    redirect('https://fairbuildapp.com/home.html');
-  };
+    window.location.href = 'https://fairbuildapp.com/home.html';
+};
+
 
   
 
